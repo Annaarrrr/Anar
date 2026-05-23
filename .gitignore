@@ -78,7 +78,7 @@ web_modules/
 .next
 out
 
-# Nuxt.js build / generate output
+# Nuxt.js / NestJS build / generate output
 .nuxt
 dist
 
@@ -137,3 +137,31 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# ────────────────────────────────────────────────────────────────────────────────
+# NEW ADDITIONS: Python, .NET, and OS Files
+# ────────────────────────────────────────────────────────────────────────────────
+
+# Python (ai-logic service)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.pytest_cache/
+.coverage
+
+# .NET / C# (auth-service)
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS & IDE System Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
