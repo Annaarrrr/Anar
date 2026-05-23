@@ -55,6 +55,11 @@ export default function App() {
     setToken(newToken);
   };
 
+  const handleLogout = () => {
+    api.setToken(null);
+    setToken(null);
+  };
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -70,7 +75,7 @@ export default function App() {
         width: "100%",
         height: "100%",
         minHeight: "100vh",
-        background: isMobile ? "#FAFAFB" : "linear-gradient(155deg, #EDE9FF 0%, #FAFAFB 45%, #E6FFF7 100%)",
+        background: isMobile ? "#FAFAFB" : "linear-gradient(135deg, #EDE9FF 0%, #FAFAFB 45%, #E6FFF7 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -79,39 +84,6 @@ export default function App() {
         overflow: "hidden",
       }}
     >
-      {/* Brand header - visible only on desktop */}
-      {!isMobile && (
-        <div style={{ marginBottom: 16, textAlign: "center", flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 900, color: "#6C5CE7", fontFamily: "'Cairo', sans-serif" }}>أنار</span>
-            <span style={{ fontSize: 28 }}>✨</span>
-          </div>
-          <p style={{ margin: "4px 0 0", fontSize: 14, color: "#636E72", fontFamily: "'Cairo', sans-serif", direction: "rtl" }}>
-            مساعدك الذكي لتحقيق أهدافك
-          </p>
-          {token && (
-            <button
-              onClick={() => {
-                api.setToken(null);
-                setToken(null);
-              }}
-              style={{
-                marginTop: 8,
-                background: "none",
-                border: "none",
-                color: "#D63031",
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: "pointer",
-                fontFamily: "'Cairo', sans-serif",
-              }}
-            >
-              تسجيل الخروج
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Main app container */}
       <div
         style={
@@ -125,54 +97,46 @@ export default function App() {
                 position: "relative",
               }
             : {
-                width: 430,
-                height: "min(880px, 92vh)",
+                width: 412,
+                height: "min(880px, 94vh)",
                 display: "flex",
                 flexDirection: "column",
                 background: "#FAFAFB",
-                borderRadius: 28,
+                borderRadius: 40,
                 overflow: "hidden",
-                boxShadow: "0 24px 64px rgba(108, 92, 231, 0.16)",
-                border: "1px solid rgba(108, 92, 231, 0.12)",
+                boxShadow: "0 28px 72px rgba(108, 92, 231, 0.22), inset 0 0 2px rgba(255,255,255,0.2)",
+                border: "12px solid #1C1C1E",
                 position: "relative",
               }
         }
       >
-        {/* On mobile, show a small header with brand + logout button */}
-        {isMobile && token && (
+        {/* Sleek camera punch hole / speaker notch for desktop preview */}
+        {!isMobile && (
           <div style={{
-            height: 56,
-            background: "#FFFFFF",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            position: "absolute",
+            top: 10,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 100,
+            height: 24,
+            background: "#1C1C1E",
+            borderRadius: 14,
+            zIndex: 1000,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 18px",
-            flexShrink: 0,
-            boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
+            justifyContent: "center",
+            gap: 6,
           }}>
-            <button
-              onClick={() => {
-                api.setToken(null);
-                setToken(null);
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#D63031",
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: "pointer",
-                fontFamily: "'Cairo', sans-serif",
-              }}
-            >
-              تسجيل الخروج
-            </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 18, fontWeight: 900, color: "#6C5CE7", fontFamily: "'Cairo', sans-serif" }}>أنار</span>
-              <span style={{ fontSize: 16 }}>✨</span>
-            </div>
+            {/* Camera lens */}
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#09090b" }} />
+            {/* Speaker grill */}
+            <div style={{ width: 38, height: 3, borderRadius: 2, background: "#2a2a2f" }} />
           </div>
+        )}
+
+        {/* Spacing below camera notch for desktop layout */}
+        {!isMobile && (
+          <div style={{ height: 26, background: "#FAFAFB", flexShrink: 0 }} />
         )}
 
         {/* Screen content */}
@@ -186,7 +150,7 @@ export default function App() {
                   initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
                   transition={{ duration: 0.28, ease: "easeInOut" }}
                 >
-                  <HomeScreen onNavigate={setScreen} activeGoal={activeGoal} tasks={tasks} />
+                  <HomeScreen onNavigate={setScreen} activeGoal={activeGoal} tasks={tasks} onLogout={handleLogout} />
                 </motion.div>
               )}
               {screen === "chat" && (

@@ -131,7 +131,7 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
       </div>
 
       {/* Messages */}
-      <div style={{
+      <div className="no-scrollbar" style={{
         flex: 1, overflowY: "auto",
         padding: "14px 16px",
         display: "flex", flexDirection: "column", gap: 12,

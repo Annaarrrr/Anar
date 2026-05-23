@@ -1,11 +1,12 @@
 import { motion } from "motion/react";
-import { Bell, ChevronLeft, Plus, ArrowLeft } from "lucide-react";
+import { Bell, ChevronLeft, Plus, ArrowLeft, LogOut } from "lucide-react";
 
 type Screen = "home" | "chat" | "vision";
 interface Props {
   onNavigate: (s: Screen) => void;
   activeGoal: { id: string; text: string } | null;
   tasks: any[];
+  onLogout: () => void;
 }
 
 const quickChips = [
@@ -17,7 +18,7 @@ const quickChips = [
   { emoji: "✍️", label: "آخر" },
 ];
 
-export function HomeScreen({ onNavigate, activeGoal, tasks }: Props) {
+export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout }: Props) {
   const completedCount = tasks.filter((t) => t.completed).length;
   const totalCount = tasks.length;
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -41,7 +42,7 @@ export function HomeScreen({ onNavigate, activeGoal, tasks }: Props) {
   ];
 
   return (
-    <div dir="rtl" style={{
+    <div dir="rtl" className="no-scrollbar" style={{
       height: "100%", background: "#FAFAFB",
       display: "flex", flexDirection: "column",
       fontFamily: "'Cairo', sans-serif", overflow: "hidden",
@@ -52,20 +53,35 @@ export function HomeScreen({ onNavigate, activeGoal, tasks }: Props) {
 
         {/* Row 1: bell / greeting / avatar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <button style={{
-            width: 40, height: 40, borderRadius: 13,
-            background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", position: "relative",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          }}>
-            <Bell size={17} color="#2D3436" />
-            <div style={{
-              position: "absolute", top: 8, right: 8,
-              width: 8, height: 8, borderRadius: "50%",
-              background: "#6C5CE7", border: "2px solid #FAFAFB",
-            }} />
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={onLogout}
+              title="تسجيل الخروج"
+              style={{
+                width: 40, height: 40, borderRadius: 13,
+                background: "#FFFFFF", border: "1px solid rgba(214, 48, 49, 0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(214, 48, 49, 0.05)",
+              }}
+            >
+              <LogOut size={16} color="#D63031" />
+            </button>
+            <button style={{
+              width: 40, height: 40, borderRadius: 13,
+              background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", position: "relative",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            }}>
+              <Bell size={17} color="#2D3436" />
+              <div style={{
+                position: "absolute", top: 8, right: 8,
+                width: 8, height: 8, borderRadius: "50%",
+                background: "#6C5CE7", border: "2px solid #FAFAFB",
+              }} />
+            </button>
+          </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ textAlign: "right" }}>
@@ -97,7 +113,7 @@ export function HomeScreen({ onNavigate, activeGoal, tasks }: Props) {
       </div>
 
       {/* ── Scrollable body ── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 20px" }}>
+      <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "0 24px 20px" }}>
 
         {/* ━━ PRIORITY ━━ */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>

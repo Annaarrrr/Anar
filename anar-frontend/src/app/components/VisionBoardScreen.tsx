@@ -88,7 +88,7 @@ export function VisionBoardScreen({ onNavigate, activeGoal, tasks, setTasks, ref
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 110px" }}>
+      <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 16px 110px" }}>
         {activeGoal ? (
           <>
             {/* Goal Card */}
