@@ -17,7 +17,8 @@ export class GoalService {
         this.httpService.post(`${process.env.AI_BRIDGE_SERVICE_URL}/generate-tasks`, { goalText: text })
       );
       tasks = response.data.tasks;
-    } catch (e) {
+    } catch (e: any) {
+      console.error('AI Bridge call failed:', e?.message || e);
       throw new InternalServerErrorException('AI Bridge service failed');
     }
 
