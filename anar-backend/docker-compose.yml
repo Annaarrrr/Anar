@@ -29,6 +29,8 @@ services:
     build: ./services/ai-bridge-service
     ports:
       - "3004:3004"
+    environment:
+      - PORT=3004
     env_file: .env
     depends_on:
       - postgres
@@ -37,6 +39,8 @@ services:
     build: ./services/notification-service
     ports:
       - "3005:3005"
+    environment:
+      - PORT=3005
     env_file: .env
     depends_on:
       - postgres
