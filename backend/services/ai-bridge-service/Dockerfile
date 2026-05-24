@@ -1,7 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
 #  ai-bridge-service — Dockerfile (multi-stage)
-#  Stage 1: builder  — installs all deps and compiles TypeScript → dist/
-#  Stage 2: runner   — copies only the compiled output and prod deps
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Stage 1: Builder ──────────────────────────────────────────────────────────
@@ -9,14 +7,14 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy manifests first for better layer caching.
-COPY package*.json ./
+# Copy manifests using full monorepo path
+COPY backend/services/ai-bridge-service/package*.json ./
 
-# Install ALL dependencies (including devDependencies needed for tsc).
+# Install ALL dependencies
 RUN npm install
 
-# Copy source and compile.
-COPY . .
+# Copy source and compile
+COPY backend/services/ai-bridge-service/ .
 RUN npm run build
 
 
@@ -25,17 +23,14 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Only install production dependencies in the final image.
-COPY package*.json ./
+# Only install production dependencies
+COPY backend/services/ai-bridge-service/package*.json ./
 RUN npm install --omit=dev
 
-# Copy compiled output from builder.
+# Copy compiled output from builder
 COPY --from=builder /app/dist ./dist
 
-# Expose the service port (must match PORT env var).
 EXPOSE 3004
-
-# Run as non-root for security.
 USER node
 
 CMD ["node", "dist/main"]
