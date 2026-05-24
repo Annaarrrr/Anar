@@ -9,8 +9,6 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./", 
-    "ignoreDeprecations": "5.0",
     "rootDir": "./src",
     "incremental": true,
     "skipLibCheck": true,
@@ -18,6 +16,6 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": false
   }
 }

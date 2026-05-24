@@ -9,23 +9,31 @@ export class EmailProvider implements OnModuleInit {
 
   onModuleInit(): void {
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: false, // false = STARTTLS (Mailtrap default); set true for port 465
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+      // Default to 'mailpit' if SMTP_HOST is not found in the .env file
+      host: process.env.SMTP_HOST || 'mailpit',
+      // Default to 1025 if SMTP_PORT is not found
+      port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 1025,
+      secure: false, 
+      ignoreTLS: true, // Prevents certificate errors during local Docker testing
+      
+      // Only attach the auth block if the user actually provided a username
+      ...(process.env.SMTP_USER && {
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      }),
     });
 
     this.logger.log(
-      `Email transporter initialised → ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`,
+      `Email transporter initialised → ${process.env.SMTP_HOST || 'mailpit'}:${process.env.SMTP_PORT || 1025}`,
     );
   }
 
   async send(to: string, subject: string, body: string): Promise<void> {
     const info = await this.transporter.sendMail({
-      from: `"AI Bridge" <${process.env.SMTP_USER}>`,
+      // Use a dummy email for local testing if SMTP_USER is not set
+      from: `"Anar Notifications" <${process.env.SMTP_USER || 'noreply@anar.local'}>`,
       to,
       subject,
       html: body,

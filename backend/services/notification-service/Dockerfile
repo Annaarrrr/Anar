@@ -5,10 +5,12 @@
 # ────────────────────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS deps
 
-WORKDIR /app
+# Set the working directory to match the service path
+WORKDIR /app/backend/services/notification-service
 
-COPY package*.json ./
-RUN npm ci --frozen-lockfile
+# Copy from the root context
+COPY backend/services/notification-service/package*.json ./
+RUN npm ci
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -17,11 +19,20 @@ RUN npm ci --frozen-lockfile
 # ────────────────────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS build
 
+# Start at the root to copy everything properly
 WORKDIR /app
 
+# Copy the shared contracts so the NestJS build can access them
+COPY backend/shared ./backend/shared
+
+# Copy the entire notification service code
+COPY backend/services/notification-service ./backend/services/notification-service
+
 # Re-use the full (dev) install from the deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=deps /app/backend/services/notification-service/node_modules ./backend/services/notification-service/node_modules
+
+# Change directory into the service to run the build
+WORKDIR /app/backend/services/notification-service
 
 RUN npm run build
 
@@ -38,19 +49,20 @@ FROM node:20-alpine AS runner
 # Security: run as a non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-WORKDIR /app
+# Set WORKDIR to match where the app was built
+WORKDIR /app/backend/services/notification-service
 
-# Copy only what the running process needs
-COPY --from=build /app/dist        ./dist
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
+# Copy only what the running process needs from the build stage
+COPY --from=build /app/backend/services/notification-service/dist        ./dist
+COPY --from=build /app/backend/services/notification-service/node_modules ./node_modules
+COPY --from=build /app/backend/services/notification-service/package.json ./package.json
 
 # Hand ownership to the non-root user before switching to it
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-# Document the port — override via docker run -p or compose ports
-EXPOSE 3000
+# Document the port — overrides via docker-compose (notification-service runs on 3005)
+EXPOSE 3005
 
 # Use the compiled entry point directly (no ts-node, no shell wrapper)
 CMD ["node", "dist/main"]
