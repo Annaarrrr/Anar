@@ -1,0 +1,23 @@
+[
+    {
+        "input": "عايز أتعلم AI",
+        "ai_output": {
+            "main_goal": "learn AI",
+            "response_ar": "طيب هتعلم إيه عن ال AI؟ عايز تتعلم البرمجة أو Uses Cases بتاعتها؟"
+        }
+    },
+    {
+        "input": "عايز أظبط الإنجليزي",
+        "ai_output": {
+            "main_goal": "Improving English skills",
+            "response_ar": "طيب قوللي إنت عايز تطور إنجليزيتك فين؟ في الكلام، القراءة، أو الكتابه؟"
+        }
+    },
+    {
+        "input": "نفسي أشتغل فريلانسر",
+        "ai_output": {
+            "main_goal": "User wants to work as a freelancer",
+            "response_ar": "أهلاً! عاوز تعمل إيه بالضبط كفريلانسر؟ تصميم، برمجة، كتابة، أو حاجة تانية؟"
+        }
+    }
+]
