@@ -9,6 +9,8 @@ public class AuthService
 {
     private readonly AppDbContext _context;
     private readonly JwtService _jwtService;
+    // يمكن ضبط عدد جولات bcrypt (كلما زاد العدد، زاد الأمان والأداء)
+    private const int BcryptWorkFactor = 12; // يوصى بـ 10-12 للتطبيقات العادية
 
     public AuthService(AppDbContext context, JwtService jwtService)
     {
@@ -23,10 +25,14 @@ public class AuthService
         if (existingUser != null)
             return null; // أو إثارة استثناء مخصص
 
+        // تشفير كلمة المرور باستخدام bcrypt مع salt تلقائي
+        // يتم إنشاء salt عشوائي قوي لكل مستخدم ودمجه في الناتج
+        string passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, BcryptWorkFactor);
+
         var user = new User
         {
             Email = dto.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+            PasswordHash = passwordHash
         };
 
         _context.Users.Add(user);
@@ -46,7 +52,13 @@ public class AuthService
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+        if (user == null)
+            return null;
+
+        // التحقق من كلمة المرور: bcrypt يستخرج الـ salt من الـ hash المخزن ويستخدمه للتحقق
+        bool passwordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
+
+        if (!passwordValid)
             return null;
 
         var token = _jwtService.GenerateToken(user.Id, user.Email);
