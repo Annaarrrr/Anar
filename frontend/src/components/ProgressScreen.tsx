@@ -211,19 +211,18 @@ function makeStyles(colors: Colors) {
 
     /* ── Goals list ── */
     goalsSection: {
-      flex: 1,
       backgroundColor: colors.surface,
-      borderTopLeftRadius: 30,
-      borderTopRightRadius: 30,
-      borderTopWidth: 1,
-      borderLeftWidth: 1,
-      borderRightWidth: 1,
+      borderRadius: 30,
+      borderWidth: 1,
       borderColor: colors.borderLight,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: -4 },
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.05,
       shadowRadius: 10,
       elevation: 5,
+      marginHorizontal: 20,
+      marginBottom: 30,
+      overflow: 'hidden',
     },
     goalsHeader: {
       paddingHorizontal: 24,
@@ -340,7 +339,12 @@ export function ProgressScreen({ goals, tasks }: Props) {
   });
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: colors.bg }]}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
+      showsVerticalScrollIndicator={false}
+      bounces={true}
+    >
       {/* ── Background glow blobs ── */}
       <View style={styles.bgPurple} />
       <View style={styles.bgTeal} />
@@ -496,18 +500,15 @@ export function ProgressScreen({ goals, tasks }: Props) {
         </View>
       </ScrollView>
 
-      {/* ── Goals breakdown (Constrained ScrollView) ── */}
-      <View style={styles.goalsSection}>
+      {/* ── Goals breakdown (Now part of main scroll) ── */}
+      <View style={[styles.goalsSection, { minHeight: 300 }]}>
         <View style={styles.goalsHeader}>
           <Text style={styles.goalsHeaderTitle}>
             {isRTL ? 'تفاصيل الأهداف' : 'Goals Breakdown'}
           </Text>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
-        >
+        <View style={{ paddingHorizontal: 24, paddingBottom: 40, paddingTop: 10 }}>
           {goalStats.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>🌱</Text>
@@ -537,8 +538,8 @@ export function ProgressScreen({ goals, tasks }: Props) {
               </View>
             ))
           )}
-        </ScrollView>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
