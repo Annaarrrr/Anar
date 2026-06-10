@@ -232,4 +232,48 @@ export const api = {
       await AsyncStorage.setItem('mock_tasks', JSON.stringify(updatedTasks));
     }
   },
+
+  async updateGoal(goalId: string, newText: string): Promise<void> {
+    const goals = await this.getGoals();
+    const updatedGoals = goals.map((g) =>
+      g.id === goalId ? { ...g, text: newText } : g
+    );
+    await AsyncStorage.setItem('anar_goals', JSON.stringify(updatedGoals));
+
+    // Update legacy key if it matches the edited goal
+    const legacyGoalJson = await AsyncStorage.getItem('mock_goal');
+    if (legacyGoalJson) {
+      const legacyGoal = JSON.parse(legacyGoalJson) as Goal;
+      if (legacyGoal.id === goalId) {
+        await AsyncStorage.setItem('mock_goal', JSON.stringify({ id: goalId, text: newText }));
+      }
+    }
+  },
+
+  async deleteGoal(goalId: string): Promise<void> {
+    const goals = await this.getGoals();
+    const updatedGoals = goals.filter((g) => g.id !== goalId);
+    await AsyncStorage.setItem('anar_goals', JSON.stringify(updatedGoals));
+
+    // Fallback active goal logic if we deleted the current active goal
+    const activeId = await AsyncStorage.getItem('anar_active_goal');
+    if (activeId === goalId) {
+      if (updatedGoals.length > 0) {
+        const nextActiveId = updatedGoals[updatedGoals.length - 1].id;
+        await AsyncStorage.setItem('anar_active_goal', nextActiveId);
+      } else {
+        await AsyncStorage.removeItem('anar_active_goal');
+      }
+    }
+
+    // Clean up legacy keys if they matched this goal
+    const legacyGoalJson = await AsyncStorage.getItem('mock_goal');
+    if (legacyGoalJson) {
+      const legacyGoal = JSON.parse(legacyGoalJson) as Goal;
+      if (legacyGoal.id === goalId) {
+        await AsyncStorage.removeItem('mock_goal');
+        await AsyncStorage.removeItem('mock_tasks');
+      }
+    }
+  },
 };

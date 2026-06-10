@@ -9,8 +9,9 @@ import {
   Dimensions,
   Modal,
   Platform,
+  TextInput,
 } from 'react-native';
-import { Share2, Plus, Check, X, MessageSquare } from 'lucide-react-native';
+import { Share2, Plus, Check, X, MessageSquare, Pencil, Trash2 } from 'lucide-react-native';
 import { ActiveTab, GoalPin } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -34,6 +35,53 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
   const styles = useMemo(() => makeStyles(colors, theme), [colors, theme]);
 
   const [taskModalGoal, setTaskModalGoal] = useState<GoalPin | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editGoalText, setEditGoalText] = useState('');
+
+  const handleEditSave = async () => {
+    if (!taskModalGoal) return;
+    if (!editGoalText.trim()) {
+      Alert.alert(isRTL ? 'تنبيه' : 'Alert', isRTL ? 'يرجى إدخال اسم للهدف' : 'Please enter a goal name');
+      return;
+    }
+    try {
+      await api.updateGoal(taskModalGoal.id, editGoalText.trim());
+      setIsEditing(false);
+      await refreshGoals();
+      // Reload taskModalGoal reference
+      const fresh = await api.getGoals();
+      const updated = fresh.find((g) => g.id === taskModalGoal.id) ?? null;
+      setTaskModalGoal(updated);
+    } catch {
+      Alert.alert(t.error, isRTL ? 'فشل تحديث الهدف' : 'Failed to update goal');
+    }
+  };
+
+  const handleDelete = () => {
+    if (!taskModalGoal) return;
+    Alert.alert(
+      isRTL ? 'حذف الهدف' : 'Delete Goal',
+      isRTL
+        ? 'هل أنت متأكد من حذف هذا الهدف؟ سيتم حذف جميع المهام والتقدم المرتبط به.'
+        : 'Are you sure you want to delete this goal? All associated tasks and progress will be permanently lost.',
+      [
+        { text: isRTL ? 'إلغاء' : 'Cancel', style: 'cancel' },
+        {
+          text: isRTL ? 'حذف' : 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deleteGoal(taskModalGoal.id);
+              setTaskModalGoal(null);
+              await refreshGoals();
+            } catch {
+              Alert.alert(t.error, isRTL ? 'فشل حذف الهدف' : 'Failed to delete goal');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // The "focus" goal: user-chosen active or fallback to latest
   const focusGoal = goals.length > 0
@@ -204,7 +252,11 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                             isActive && { borderWidth: 2.5, borderColor: '#00BFA6' },
                           ]}
                           activeOpacity={0.85}
-                          onLongPress={() => setTaskModalGoal(goal)}
+                          onLongPress={() => {
+                            setTaskModalGoal(goal);
+                            setIsEditing(false);
+                            setEditGoalText(goal.text);
+                          }}
                         >
                           <View style={[styles.pinDot, { backgroundColor: goal.pinColor, top: -8, alignSelf: 'center' }]} />
                           {/* Active goal star badge */}
@@ -287,12 +339,47 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setTaskModalGoal(null)}>
-                <X size={20} color="#64748B" />
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>
-                {taskModalGoal?.emoji} {taskModalGoal?.text}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <TouchableOpacity onPress={() => setTaskModalGoal(null)}>
+                  <X size={20} color="#64748B" />
+                </TouchableOpacity>
+
+                {taskModalGoal && (
+                  isEditing ? (
+                    <>
+                      <TouchableOpacity onPress={handleEditSave}>
+                        <Check size={20} color="#00BFA6" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => setIsEditing(false)}>
+                        <X size={20} color="#64748B" />
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity onPress={() => setIsEditing(true)}>
+                        <Pencil size={18} color="#64748B" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={handleDelete}>
+                        <Trash2 size={18} color="#EF4444" />
+                      </TouchableOpacity>
+                    </>
+                  )
+                )}
+              </View>
+
+              {isEditing ? (
+                <TextInput
+                  style={styles.modalTitleInput}
+                  value={editGoalText}
+                  onChangeText={setEditGoalText}
+                  autoFocus
+                  maxLength={60}
+                />
+              ) : (
+                <Text style={styles.modalTitle}>
+                  {taskModalGoal?.emoji} {taskModalGoal?.text}
+                </Text>
+              )}
             </View>
 
             {taskModalGoal && (
@@ -801,6 +888,17 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       flex: 1,
       textAlign: 'right',
       paddingRight: 12,
+    },
+    modalTitleInput: {
+      flex: 1,
+      fontSize: 14,
+      fontFamily: 'Cairo_600SemiBold',
+      color: colors.textPrimary,
+      textAlign: 'right',
+      paddingRight: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.accent,
+      paddingVertical: 2,
     },
     modalProgressRow: {
       flexDirection: 'row',

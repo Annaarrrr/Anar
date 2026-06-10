@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,14 +9,15 @@ import {
   Dimensions,
   Modal,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
-import { Lock, Check, X, ArrowRight } from 'lucide-react-native';
+import { Lock, Check, X, ArrowRight, ChevronRight, Trophy, Zap, Target } from 'lucide-react-native';
 import { GoalPin, Task } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
-import { Colors } from '../theme/colors';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const SPINE_X = width / 2;
 
 interface Props {
@@ -27,129 +28,161 @@ interface Props {
 
 type NodeStatus = 'completed' | 'active' | 'locked';
 
+
 export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const { colors, theme, language } = useAppSettings();
   const isRTL = language === 'ar';
 
-  // Bilingual UI strings
   const jt = {
     headerLabel:   isRTL ? 'خريطة رحلة'                              : 'Journey Map',
     finish:        isRTL ? 'نهاية المسار'                            : 'Finish Line',
-    start:         isRTL ? 'البداية'                                : 'Start',
+    start:         isRTL ? 'البداية'                                  : 'Start',
     now:           isRTL ? 'الآن ⚡'                                  : 'NOW ⚡',
-    badgeDone:     isRTL ? 'مكتمل ✓'                                : 'Done ✓',
-    badgeActive:   isRTL ? 'نشط ⚡'                                  : 'Active ⚡',
-    badgeLocked:   isRTL ? 'مقفل 🔒'                                : 'Locked 🔒',
+    badgeDone:     isRTL ? 'مكتمل'                                    : 'Done',
+    badgeActive:   isRTL ? 'نشط'                                      : 'Active',
+    badgeLocked:   isRTL ? 'مقفل'                                     : 'Locked',
     lockMsg:       isRTL ? 'أكمل مهام المرحلة الحالية أولاً لإلغاء القفل' : 'Complete current stage tasks to unlock',
-    preDone:       isRTL ? '✓ هذه المرحلة مكتملة' : '✓ This stage is completed',
     moreTasks:     (n: number) => isRTL ? `+ ${n} مهام أخرى` : `+ ${n} more tasks`,
-    viewAll:       isRTL ? 'عرض خريطة المهام الكاملة'     : 'View all tasks',
+    viewAll:       isRTL ? 'عرض جميع المهام'                          : 'View All Tasks',
     alertErr:      isRTL ? 'خطأ'                                       : 'Error',
-    alertErrMsg:   isRTL ? 'فشل تحديث المهمة'                    : 'Failed to update task',
+    alertErrMsg:   isRTL ? 'فشل تحديث المهمة'                        : 'Failed to update task',
+    tasksFor:      isRTL ? 'مهام المرحلة'                            : 'Stage Tasks',
+    complete:      isRTL ? 'أكملها اليوم ✓'                          : 'Mark Complete ✓',
+    stageDone:     isRTL ? 'تهانينا! تم إتقان المرحلة 🎉'            : 'Stage Mastered! 🎉',
+    proceedNext:   isRTL ? 'انطلق للمرحلة التالية →'                 : 'Proceed to Next Stage →',
+    goalDone:      isRTL ? 'تم تحقيق الهدف بنجاح! 🎓'               : 'Goal Accomplished! 🎓',
+    reviewTasks:   isRTL ? 'مراجعة المهام'                           : 'Review Tasks',
+    streakDays:    isRTL ? 'يوم متتالي'                              : 'day streak',
+    tasks:         isRTL ? 'مهمة'                                     : 'tasks',
+    completed:     isRTL ? 'مكتملة'                                   : 'completed',
   };
-
-  // Dynamic styles for the drawer/modal (theme-aware)
-  const dynStyles = useMemo(() => StyleSheet.create({
-    drawer: {
-      position: 'absolute' as const,
-      bottom: 0, left: 0, right: 0,
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
-      paddingHorizontal: 24,
-      paddingTop: 12,
-      paddingBottom: 20,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -8 },
-      shadowOpacity: theme === 'light' ? 0.15 : 0.4,
-      shadowRadius: 16,
-      elevation: 12,
-    },
-    drawerHandle:    { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border },
-    drawerTitle:     { fontSize: 15, fontFamily: 'Cairo_700Bold', color: colors.textPrimary },
-    drawerBorderBottom: { borderColor: colors.borderLight },
-    drawerLockText:  { fontSize: 13, fontFamily: 'Cairo_600SemiBold', color: colors.textSecondary, textAlign: 'center' as const, paddingHorizontal: 20, lineHeight: 22 },
-    drawerLockIcon:  { width: 52, height: 52, borderRadius: 26, backgroundColor: theme === 'light' ? '#F3F0FF' : 'rgba(108,92,231,0.18)', alignItems: 'center' as const, justifyContent: 'center' as const },
-    drawerPreText:   { fontSize: 13, fontFamily: 'Cairo_600SemiBold', color: colors.accentAlt, textAlign: 'center' as const },
-    drawerCheck:     { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.border, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: colors.surface },
-    drawerTaskText:  { flex: 1, fontSize: 13, fontFamily: 'Cairo_400Regular', color: colors.textSecondary, textAlign: 'right' as const },
-    drawerBorderRow: { borderColor: colors.borderLight },
-    drawerMoreText:  { fontSize: 12, fontFamily: 'Cairo_600SemiBold', color: colors.accent },
-    drawerFullBtn:   { marginTop: 14, backgroundColor: theme === 'light' ? '#F3F0FF' : 'rgba(108,92,231,0.18)', borderRadius: 14, paddingVertical: 10, alignItems: 'center' as const },
-    drawerFullBtnText: { fontSize: 13, fontFamily: 'Cairo_700Bold', color: colors.accent },
-    modalSheet:      { backgroundColor: colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40, maxHeight: '78%' as any },
-    modalHandle:     { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderLight, alignSelf: 'center' as const, marginBottom: 18 },
-    modalTitle:      { fontSize: 14, fontFamily: 'Cairo_700Bold', color: colors.textPrimary, flex: 1, textAlign: 'right' as const, paddingRight: 12 },
-    modalProgressBar: { flex: 1, height: 8, backgroundColor: colors.borderLight, borderRadius: 4, overflow: 'hidden' as const },
-    mCheckbox:       { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.border, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: colors.surface },
-    mTaskText:       { flex: 1, fontSize: 13, fontFamily: 'Cairo_400Regular', color: colors.textSecondary, textAlign: 'right' as const },
-    mBorderRow:      { borderColor: colors.borderLight },
-  }), [colors, theme]);
-
-  // closeIconColor is a plain value, not a style object
-  const closeIconColor = colors.textMuted;
 
   const [tasks, setTasks] = useState<Task[]>(goal.tasks);
   const [selectedStageIdx, setSelectedStageIdx] = useState<number | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const hasScrolledRef = useRef(false);
 
-  const handleContentSizeChange = () => {
-    if (!hasScrolledRef.current && scrollViewRef.current) {
-      scrollViewRef.current.scrollToEnd({ animated: false });
-      hasScrolledRef.current = true;
-    }
-  };
+  // Animations
+  const drawerAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnims = useRef(Array.from({ length: 20 }, () => new Animated.Value(1))).current;
 
-  // ── Stage status logic ─────────────────────────────────────────────────────
-  // Distribute all tasks across all stages (0..4) and unlock sequentially
+  // Floating emoji particles
+  interface FloatingEmojiParticle {
+    id: string;
+    emoji: string;
+    x: number;
+    y: number;
+    animY: Animated.Value;
+    animOpacity: Animated.Value;
+    animScale: Animated.Value;
+  }
+  const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmojiParticle[]>([]);
+
+  // Pulse animation for active node
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.12, duration: 1400, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+        Animated.timing(pulseAnim, { toValue: 1.0,  duration: 1400, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  // Drawer slide animation
+  useEffect(() => {
+    Animated.spring(drawerAnim, {
+      toValue: drawerVisible ? 1 : 0,
+      friction: 8,
+      tension: 60,
+      useNativeDriver: true,
+    }).start();
+  }, [drawerVisible]);
+
+  // Stage logic
   const N = tasks.length;
+  const numStages = goal.stages.length;
 
-  const getTasksForStage = (stageIdx: number): Task[] => {
-    const numStages = 5;
+  const getTasksForStage = useCallback((stageIdx: number): Task[] => {
     const base = Math.floor(N / numStages);
     const extra = N % numStages;
-    
     let startIdx = 0;
     for (let i = 0; i < stageIdx; i++) {
       startIdx += base + (i < extra ? 1 : 0);
     }
     const count = base + (stageIdx < extra ? 1 : 0);
     return tasks.slice(startIdx, startIdx + count);
-  };
+  }, [tasks, N, numStages]);
 
-  const getStatus = (stageIdx: number): NodeStatus => {
+  const getStatus = useCallback((stageIdx: number): NodeStatus => {
     const stageTasks = getTasksForStage(stageIdx);
     const allDone = stageTasks.length > 0 && stageTasks.every((t) => t.completed);
-
-    if (stageIdx === 0) {
-      return allDone ? 'completed' : 'active';
-    }
-
-    // Unlock stage N when stage N-1 is completed
+    if (stageIdx === 0) return allDone ? 'completed' : 'active';
     const prevStatus = getStatus(stageIdx - 1);
-    if (prevStatus !== 'completed') {
-      return 'locked';
-    }
+    if (prevStatus !== 'completed') return 'locked';
     return allDone ? 'completed' : 'active';
-  };
+  }, [getTasksForStage]);
 
   const completedCount = tasks.filter((t) => t.completed).length;
-  const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+  const progressPercent = N > 0 ? Math.round((completedCount / N) * 100) : 0;
 
-  // stages displayed top→bottom = advanced→beginner (reversed)
-  const displayedStages = [...goal.stages].reverse(); // index 0 in display = stage 4 (most advanced)
+  // Displayed: top = most advanced (reverse)
+  const displayedStages = [...goal.stages].reverse();
   const toRealIdx = (displayIdx: number) => goal.stages.length - 1 - displayIdx;
 
   const handleNodePress = (displayIdx: number) => {
     const realIdx = toRealIdx(displayIdx);
     setSelectedStageIdx(realIdx);
+    setShowCompletedTasks(false);
     setDrawerVisible(true);
   };
 
-  const toggleTask = async (taskId: string, currentlyCompleted: boolean) => {
+  const spawnEmojiBurst = (taskIndex: number) => {
+    const emojis = ['🎉', '✨', '👍', '🔥', '🌟', '🎯'];
+    const newParticles: FloatingEmojiParticle[] = [];
+    const baseX = width / 2;
+    const baseY = height * 0.55;
+
+    for (let i = 0; i < 6; i++) {
+      const id = Math.random().toString(36).substring(7);
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+      const x = baseX + (Math.random() * 120 - 60);
+      const y = baseY + (Math.random() * 20 - 10);
+      const animY = new Animated.Value(0);
+      const animOpacity = new Animated.Value(1);
+      const animScale = new Animated.Value(0.3);
+
+      newParticles.push({ id, emoji, x, y, animY, animOpacity, animScale });
+      Animated.parallel([
+        Animated.timing(animY,       { toValue: -110 - Math.random() * 60, duration: 1000, useNativeDriver: true }),
+        Animated.timing(animOpacity, { toValue: 0,  duration: 900,  useNativeDriver: true }),
+        Animated.timing(animScale,   { toValue: 1.6, duration: 700, useNativeDriver: true }),
+      ]).start(() => setFloatingEmojis((prev) => prev.filter((p) => p.id !== id)));
+    }
+    setFloatingEmojis((prev) => [...prev, ...newParticles]);
+  };
+
+  const toggleTask = async (taskId: string, currentlyCompleted: boolean, taskIndex: number = -1) => {
+    if (taskIndex >= 0 && taskIndex < scaleAnims.length) {
+      scaleAnims[taskIndex].setValue(1);
+      Animated.sequence([
+        Animated.timing(scaleAnims[taskIndex],  { toValue: 1.35, duration: 100, useNativeDriver: true }),
+        Animated.spring(scaleAnims[taskIndex],  { toValue: 1.0, friction: 4, tension: 40, useNativeDriver: true }),
+      ]).start();
+    }
+    if (!currentlyCompleted && taskIndex >= 0) spawnEmojiBurst(taskIndex);
+
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, completed: !currentlyCompleted } : t))
     );
@@ -164,64 +197,92 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
     }
   };
 
-  // Drawer content for selected stage
+  const handleContentSizeChange = () => {
+    if (!hasScrolledRef.current && scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: false });
+      hasScrolledRef.current = true;
+    }
+  };
+
   const drawerStage = selectedStageIdx !== null ? goal.stages[selectedStageIdx] : null;
   const drawerStatus = selectedStageIdx !== null ? getStatus(selectedStageIdx) : 'locked';
   const drawerTasks = selectedStageIdx !== null ? getTasksForStage(selectedStageIdx) : [];
+  const drawerProgress = drawerTasks.length > 0
+    ? Math.round((drawerTasks.filter((t) => t.completed).length / drawerTasks.length) * 100)
+    : 0;
 
-  const lockReasons = [
-    '',
-    jt.lockMsg,
-    jt.lockMsg,
-    jt.lockMsg,
-    jt.lockMsg,
-  ];
+  const drawerTranslateY = drawerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [400, 0],
+  });
 
   return (
     <View style={styles.container}>
+      {/* ── Gradient Background Layers ── */}
+      <View style={styles.bgGrad1} />
+      <View style={styles.bgGrad2} />
+      <View style={styles.bgGrad3} />
 
       {/* ── Header ── */}
-      <View style={[styles.header, { borderBottomColor: goal.pinColor + '55' }]}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <ArrowRight size={20} color="#FFFFFF" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
+          <ArrowRight size={18} color="#FFFFFF" />
         </TouchableOpacity>
-
         <View style={styles.headerCenter}>
-          {/* Goal-colored left accent bar */}
-          <View style={[styles.headerAccent, { backgroundColor: goal.pinColor }]} />
-          <View style={styles.headerTextBlock}>
-            <Text style={styles.headerLabel}>{jt.headerLabel}</Text>
-            <Text style={styles.headerGoal} numberOfLines={1}>{goal.emoji} {goal.text}</Text>
-            <View style={styles.headerBarTrack}>
-              <View style={[styles.headerBarFill, { width: `${progressPercent}%` as any, backgroundColor: goal.pinColor }]} />
-            </View>
-          </View>
+          <Text style={styles.headerSub}>{jt.headerLabel}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>{goal.emoji} {goal.text}</Text>
         </View>
-
-        <View style={styles.headerRight}>
-          <Text style={[styles.headerPercent, { color: goal.pinColor }]}>{progressPercent}%</Text>
-          <Text style={styles.headerTasks}>{completedCount}/{tasks.length}</Text>
+        <View style={styles.headerPct}>
+          <Text style={[styles.headerPctNum, { color: goal.pinColor }]}>{progressPercent}%</Text>
         </View>
       </View>
 
-      {/* ── Scrollable Roadmap ── */}
+      {/* ── Goal Summary Card ── */}
+      <View style={[styles.goalCard, { borderColor: goal.pinColor + '33' }]}>
+        {/* Left: text */}
+        <View style={styles.goalCardLeft}>
+          <Text style={styles.goalCardTitle} numberOfLines={2}>{goal.text}</Text>
+          <Text style={styles.goalCardSub}>
+            {completedCount}/{N} {jt.tasks} {jt.completed}
+          </Text>
+          <View style={styles.goalCardStreak}>
+            <Zap size={11} color={goal.pinColor} />
+            <Text style={[styles.goalCardStreakText, { color: goal.pinColor }]}>
+              {isRTL ? `5 ${jt.streakDays}` : `5 ${jt.streakDays}`}
+            </Text>
+          </View>
+        </View>
+
+        {/* Right: circular progress ring */}
+        <View style={styles.goalCardRight}>
+          <View style={[styles.progressRingOuter, { borderColor: goal.pinColor + '22' }]}>
+            <View style={[styles.progressRingInner, { borderColor: goal.pinColor }]}>
+              <Text style={[styles.progressRingNum, { color: goal.pinColor }]}>{progressPercent}%</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Road Map Scroll ── */}
       <ScrollView
         ref={scrollViewRef}
         onContentSizeChange={handleContentSizeChange}
-        contentContainerStyle={styles.mapContent}
-        style={[styles.mapScroll, { marginBottom: drawerVisible ? 270 : 0 }]}
+        contentContainerStyle={[
+          styles.mapContent,
+          { paddingBottom: drawerVisible ? 320 : 60 },
+        ]}
+        style={styles.mapScroll}
         showsVerticalScrollIndicator={false}
       >
         {/* Finish banner */}
         <View style={styles.finishBanner}>
-          <Text style={styles.finishEmoji}>🏆</Text>
-          <Text style={styles.finishText}>{jt.finish}</Text>
+          <View style={[styles.finishIcon, { backgroundColor: goal.pinColor + '22' }]}>
+            <Trophy size={18} color={goal.pinColor} />
+          </View>
+          <Text style={[styles.finishText, { color: goal.pinColor }]}>{jt.finish}</Text>
         </View>
 
-        {/* Spine */}
-        <View style={styles.spine} />
-
-        {/* Nodes (top = most advanced, bottom = earliest) */}
+        {/* Nodes */}
         {displayedStages.map((stage, displayIdx) => {
           const realIdx = toRealIdx(displayIdx);
           const status = getStatus(realIdx);
@@ -229,135 +290,249 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
           return (
             <View key={stage.id} style={styles.nodeRow}>
-              {displayIdx > 0 && <View style={styles.connectorDash} />}
+              {/* Connector dash above each node (connects to banner above or previous node) */}
+              <View style={[styles.connectorDash, { backgroundColor: goal.pinColor + '30' }]} />
 
               <TouchableOpacity
                 onPress={() => handleNodePress(displayIdx)}
-                style={[
-                  styles.nodeButton,
-                  isRight ? styles.nodeButtonRight : styles.nodeButtonLeft,
-                ]}
-                activeOpacity={0.75}
+                style={[styles.nodeLayout, isRight ? styles.nodeLayoutRight : styles.nodeLayoutLeft]}
+                activeOpacity={0.8}
               >
-                {/* Label side */}
-                <View style={[isRight ? styles.nodeLabelRight : styles.nodeLabelLeft]}>
+                {/* Label */}
+                <View style={[styles.labelContainer, isRight ? styles.labelRight : styles.labelLeft]}>
                   {status === 'active' && (
                     <View style={[styles.nowBadge, { backgroundColor: goal.pinColor }]}>
                       <Text style={styles.nowBadgeText}>{jt.now}</Text>
                     </View>
                   )}
-                  <Text style={[
-                    styles.nodeLabel,
-                    status === 'completed' && styles.nodeLabelDone,
-                    status === 'active'    && styles.nodeLabelActive,
-                    status === 'locked'    && styles.nodeLabelLocked,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.nodeLabel,
+                      status === 'completed' && { color: '#00BFA6' },
+                      status === 'active'    && { color: '#FFFFFF', fontSize: 14 },
+                      status === 'locked'    && { color: '#3D3C6A' },
+                    ]}
+                    numberOfLines={2}
+                  >
                     {stage.label}
                   </Text>
                   <Text style={styles.nodeSub}>{stage.sublabel}</Text>
                 </View>
 
-                {/* Circle */}
-                <View style={[
-                  styles.nodeCircle,
-                  status === 'completed' && styles.nodeCompleted,
-                  status === 'active'    && { ...styles.nodeActive, backgroundColor: goal.pinColor, shadowColor: goal.pinColor },
-                  status === 'locked'    && styles.nodeLocked,
-                  selectedStageIdx === realIdx && drawerVisible && styles.nodeSelected,
-                ]}>
-                  {status === 'completed' && <Check size={18} color="#FFFFFF" />}
-                  {status === 'active'    && <Text style={styles.nodeEmoji}>{stage.emoji}</Text>}
-                  {status === 'locked'    && <Lock size={15} color="#4A4875" />}
+                {/* Connector line from label to node */}
+                <View style={[styles.connectorH, { backgroundColor: goal.pinColor + '30' }]} />
+
+                {/* Node circle */}
+                <View style={styles.nodeOrbitContainer}>
+                  {status === 'active' ? (
+                    <>
+                      {/* Outer pulse ring */}
+                      <Animated.View style={[
+                        styles.nodeOrbit,
+                        { borderColor: goal.pinColor + '55', transform: [{ scale: pulseAnim }] }
+                      ]} />
+                      {/* Node */}
+                      <View style={[styles.nodeCircle, { backgroundColor: goal.pinColor, borderColor: '#FFFFFF', shadowColor: goal.pinColor }]}>
+                        <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
+                      </View>
+                    </>
+                  ) : status === 'completed' ? (
+                    <>
+                      <View style={[styles.nodeCircle, styles.nodeCompleted]}>
+                        <Check size={20} color="#FFFFFF" />
+                      </View>
+                    </>
+                  ) : (
+                    <View style={[styles.nodeCircle, styles.nodeLocked]}>
+                      <Lock size={16} color="#4A4875" />
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
             </View>
           );
         })}
 
+        {/* Bottom connector from last node to start marker */}
+        <View style={[styles.connectorDash, { backgroundColor: goal.pinColor + '30' }]} />
+
         {/* Start marker */}
         <View style={styles.startMarker}>
-          <View style={styles.startDot} />
+          <View style={[styles.startDot, { borderColor: goal.pinColor + '55', backgroundColor: goal.pinColor + '22' }]} />
           <Text style={styles.startText}>{jt.start}</Text>
         </View>
       </ScrollView>
 
+      {/* ── Floating emojis ── */}
+      {floatingEmojis.map((p) => (
+        <Animated.Text
+          key={p.id}
+          pointerEvents="none"
+          style={[
+            styles.floatingEmoji,
+            {
+              left: p.x,
+              top: p.y,
+              transform: [{ translateY: p.animY }, { scale: p.animScale }],
+              opacity: p.animOpacity,
+            }
+          ]}
+        >
+          {p.emoji}
+        </Animated.Text>
+      ))}
+
       {/* ── Bottom Drawer ── */}
       {drawerVisible && drawerStage && (
-        <View style={dynStyles.drawer}>
-          <View style={styles.drawerTopRow}>
-            <View style={dynStyles.drawerHandle} />
-            <TouchableOpacity onPress={() => setDrawerVisible(false)} style={styles.drawerCloseBtn}>
-              <X size={16} color={closeIconColor} />
-            </TouchableOpacity>
-          </View>
+        <Animated.View style={[styles.drawer, { transform: [{ translateY: drawerTranslateY }] }]}>
+          {/* Handle */}
+          <View style={styles.drawerHandle} />
+
+          {/* Close */}
+          <TouchableOpacity style={styles.drawerClose} onPress={() => setDrawerVisible(false)}>
+            <X size={16} color="#5C5B94" />
+          </TouchableOpacity>
 
           {/* Stage header */}
-          <View style={[styles.drawerTitleRow, dynStyles.drawerBorderBottom]}>
-            <Text style={styles.drawerEmoji}>{drawerStage.emoji}</Text>
-            <View style={styles.drawerTitleBlock}>
+          <View style={styles.drawerHeader}>
+            <View style={[styles.drawerEmojiBox, { backgroundColor: goal.pinColor + '22' }]}>
+              <Text style={styles.drawerEmojiText}>{drawerStage.emoji}</Text>
+            </View>
+            <View style={styles.drawerHeaderText}>
               <View style={[
                 styles.drawerBadge,
-                drawerStatus === 'completed' && styles.drawerBadgeDone,
-                drawerStatus === 'locked'    && styles.drawerBadgeLocked,
+                drawerStatus === 'completed' && { backgroundColor: '#00BFA620' },
+                drawerStatus === 'active'    && { backgroundColor: goal.pinColor + '22' },
+                drawerStatus === 'locked'    && { backgroundColor: '#EF444420' },
               ]}>
                 <Text style={[
                   styles.drawerBadgeText,
-                  drawerStatus === 'completed' && styles.drawerBadgeTextDone,
-                  drawerStatus === 'locked'    && styles.drawerBadgeTextLocked,
+                  drawerStatus === 'completed' && { color: '#00BFA6' },
+                  drawerStatus === 'active'    && { color: goal.pinColor },
+                  drawerStatus === 'locked'    && { color: '#EF4444' },
                 ]}>
                   {drawerStatus === 'completed' ? jt.badgeDone
                    : drawerStatus === 'active'  ? jt.badgeActive
                    : jt.badgeLocked}
                 </Text>
               </View>
-              <Text style={dynStyles.drawerTitle}>{drawerStage.label}</Text>
+              <Text style={styles.drawerStageTitle}>{drawerStage.label}</Text>
             </View>
           </View>
 
+          {/* Progress bar */}
+          {drawerStatus !== 'locked' && (
+            <View style={styles.drawerProgressRow}>
+              <View style={styles.drawerProgressTrack}>
+                <View style={[styles.drawerProgressFill, {
+                  width: `${drawerProgress}%` as any,
+                  backgroundColor: goal.pinColor,
+                }]} />
+              </View>
+              <Text style={[styles.drawerProgressPct, { color: goal.pinColor }]}>{drawerProgress}%</Text>
+            </View>
+          )}
+
           {/* Locked */}
           {drawerStatus === 'locked' ? (
-            <View style={styles.drawerLocked}>
-              <View style={dynStyles.drawerLockIcon}>
-                <Lock size={22} color={colors.accent} />
+            <View style={styles.drawerLockedBody}>
+              <View style={[styles.drawerLockIcon, { backgroundColor: goal.pinColor + '15' }]}>
+                <Lock size={26} color={goal.pinColor} />
               </View>
-              <Text style={dynStyles.drawerLockText}>
-                {lockReasons[selectedStageIdx ?? 0]}
-              </Text>
+              <Text style={styles.drawerLockText}>{jt.lockMsg}</Text>
             </View>
-          ) : drawerTasks.length === 0 ? (
-            <View style={styles.drawerPreCompleted}>
-              <Text style={dynStyles.drawerPreText}>{jt.preDone}</Text>
+
+          ) : drawerStatus === 'completed' && !showCompletedTasks ? (
+            /* Celebration */
+            <View style={styles.celebrationBody}>
+              <Text style={{ fontSize: 42 }}>🏆</Text>
+              <Text style={styles.celebrationTitle}>{jt.stageDone}</Text>
+              {selectedStageIdx !== null && selectedStageIdx < goal.stages.length - 1 ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedStageIdx(selectedStageIdx + 1);
+                    setShowCompletedTasks(false);
+                  }}
+                  style={[styles.celebrationBtn, { backgroundColor: goal.pinColor }]}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.celebrationBtnText}>{jt.proceedNext}</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setDrawerVisible(false)}
+                  style={[styles.celebrationBtn, { backgroundColor: '#6C5CE7' }]}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.celebrationBtnText}>{jt.goalDone}</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={() => setShowCompletedTasks(true)} style={styles.reviewLink}>
+                <Text style={styles.reviewLinkText}>{jt.reviewTasks}</Text>
+              </TouchableOpacity>
             </View>
+
           ) : (
+            /* Task list */
             <View>
-              {drawerTasks.slice(0, 3).map((task) => (
+              <Text style={styles.tasksForLabel}>{jt.tasksFor}</Text>
+              {drawerTasks.slice(0, 3).map((task, idx) => (
                 <TouchableOpacity
                   key={task.id}
-                  onPress={() => toggleTask(task.id, task.completed)}
-                  style={[styles.drawerTask, dynStyles.drawerBorderRow, task.completed && styles.drawerTaskDone]}
-                  activeOpacity={0.7}
+                  onPress={() => toggleTask(task.id, task.completed, idx)}
+                  style={[
+                    styles.taskRow,
+                    { borderLeftColor: goal.pinColor },
+                    task.completed && styles.taskRowDone,
+                  ]}
+                  activeOpacity={0.75}
                 >
-                  <View style={[dynStyles.drawerCheck, task.completed && styles.drawerCheckDone]}>
-                    {task.completed && <Check size={10} color="white" />}
-                  </View>
-                  <Text style={[dynStyles.drawerTaskText, task.completed && styles.drawerTaskTextDone]}>
+                  <Animated.View style={[styles.taskCheckWrap, { transform: [{ scale: scaleAnims[idx] }] }]}>
+                    <View style={[
+                      styles.taskCheck,
+                      task.completed && { backgroundColor: goal.pinColor, borderColor: goal.pinColor },
+                    ]}>
+                      {task.completed && <Check size={11} color="#FFF" />}
+                    </View>
+                  </Animated.View>
+                  <Text style={[styles.taskText, task.completed && styles.taskTextDone]}>
                     {task.text}
                   </Text>
                 </TouchableOpacity>
               ))}
 
               {drawerTasks.length > 3 && (
-                <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.drawerMoreBtn}>
-                  <Text style={dynStyles.drawerMoreText}>{jt.moreTasks(drawerTasks.length - 3)}</Text>
+                <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.moreBtn}>
+                  <Text style={[styles.moreBtnText, { color: goal.pinColor }]}>
+                    {jt.moreTasks(drawerTasks.length - 3)}
+                  </Text>
+                  <ChevronRight size={14} color={goal.pinColor} />
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity onPress={() => setModalVisible(true)} style={dynStyles.drawerFullBtn}>
-                <Text style={dynStyles.drawerFullBtnText}>{jt.viewAll}</Text>
+              {/* CTA */}
+              <TouchableOpacity
+                onPress={() => setModalVisible(true)}
+                style={[styles.ctaBtn, { backgroundColor: goal.pinColor }]}
+                activeOpacity={0.85}
+              >
+                <Target size={16} color="#FFF" />
+                <Text style={styles.ctaBtnText}>{jt.viewAll}</Text>
               </TouchableOpacity>
+
+              {drawerStatus === 'completed' && showCompletedTasks && (
+                <TouchableOpacity
+                  onPress={() => setShowCompletedTasks(false)}
+                  style={styles.reviewLink}
+                >
+                  <Text style={styles.reviewLinkText}>
+                    {isRTL ? 'الرجوع لصفحة الإنجاز 🏆' : 'Back to Celebration Page 🏆'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
-        </View>
+        </Animated.View>
       )}
 
       {/* ── All Tasks Modal ── */}
@@ -368,34 +543,41 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={dynStyles.modalSheet}>
-            <View style={dynStyles.modalHandle} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X size={20} color={closeIconColor} />
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseBtn}>
+                <X size={18} color="#5C5B94" />
               </TouchableOpacity>
-              <Text style={dynStyles.modalTitle}>{goal.emoji} {goal.text}</Text>
+              <Text style={styles.modalTitle}>{goal.emoji} {goal.text}</Text>
             </View>
 
+            {/* Progress */}
             <View style={styles.modalProgressRow}>
-              <View style={dynStyles.modalProgressBar}>
-                <View style={[styles.modalProgressFill, { width: `${progressPercent}%` as any }]} />
+              <View style={styles.modalProgressTrack}>
+                <View style={[styles.modalProgressFill, {
+                  width: `${progressPercent}%` as any,
+                  backgroundColor: goal.pinColor,
+                }]} />
               </View>
-              <Text style={styles.modalProgressLabel}>{progressPercent}%</Text>
+              <Text style={[styles.modalProgressPct, { color: goal.pinColor }]}>{progressPercent}%</Text>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
-              {tasks.map((task) => (
+            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 12 }}>
+              {drawerTasks.map((task, idx) => (
                 <TouchableOpacity
                   key={task.id}
-                  onPress={() => toggleTask(task.id, task.completed)}
-                  style={[styles.mTaskRow, dynStyles.mBorderRow, task.completed && styles.mTaskRowDone]}
-                  activeOpacity={0.7}
+                  onPress={() => toggleTask(task.id, task.completed, idx)}
+                  style={[styles.mTaskRow, task.completed && styles.mTaskRowDone]}
+                  activeOpacity={0.75}
                 >
-                  <View style={[dynStyles.mCheckbox, task.completed && styles.mCheckboxDone]}>
-                    {task.completed && <Check size={11} color="white" />}
+                  <View style={[
+                    styles.mCheckbox,
+                    task.completed && { backgroundColor: goal.pinColor, borderColor: goal.pinColor },
+                  ]}>
+                    {task.completed && <Check size={12} color="#FFF" />}
                   </View>
-                  <Text style={[dynStyles.mTaskText, task.completed && styles.mTaskTextDone]}>
+                  <Text style={[styles.mTaskText, task.completed && styles.mTaskTextDone]}>
                     {task.text}
                   </Text>
                 </TouchableOpacity>
@@ -411,402 +593,569 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F0E2A',
+    backgroundColor: '#080816',
   },
 
-  /* Header */
+  /* ── Background gradient simulation ── */
+  bgGrad1: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0D0B2B',
+    opacity: 0.7,
+  },
+  bgGrad2: {
+    position: 'absolute',
+    top: -120,
+    left: -80,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#6C5CE7',
+    opacity: 0.06,
+  },
+  bgGrad3: {
+    position: 'absolute',
+    bottom: 200,
+    right: -60,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: '#00BFA6',
+    opacity: 0.04,
+  },
+
+  /* ── Header ── */
   header: {
-    height: Platform.OS === 'ios' ? 80 : 62,
-    backgroundColor: '#16153A',
+    height: Platform.OS === 'ios' ? 90 : 64,
+    paddingTop: Platform.OS === 'ios' ? 44 : 8,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 18 : 0,
-    gap: 10,
-    borderBottomWidth: 1,
-    borderColor: '#1E1D47',
+    gap: 12,
   },
   backBtn: {
     width: 38,
     height: 38,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.07)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   headerCenter: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    gap: 2,
   },
-  headerAccent: {
-    width: 4,
-    height: 36,
-    borderRadius: 2,
-    marginRight: 2,
-    flexShrink: 0,
-  },
-  headerTextBlock: {
-    flex: 1,
-    gap: 4,
-    alignItems: 'flex-end',
-  },
-  headerLabel: {
+  headerSub: {
     fontSize: 10,
     fontFamily: 'Cairo_400Regular',
     color: '#5C5B94',
-    textAlign: 'right',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
-  headerGoal: {
-    fontSize: 13,
+  headerTitle: {
+    fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     color: '#FFFFFF',
-    textAlign: 'right',
   },
-  headerBarTrack: {
-    width: '100%',
-    height: 4,
-    backgroundColor: '#1E1D47',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  headerBarFill: {
-    height: '100%',
-    backgroundColor: '#00BFA6',
-    borderRadius: 2,
-  },
-  headerRight: {
+  headerPct: {
     alignItems: 'center',
-    minWidth: 40,
   },
-  headerPercent: {
-    fontSize: 16,
+  headerPctNum: {
+    fontSize: 18,
     fontFamily: 'Cairo_700Bold',
-    color: '#00BFA6',
   },
-  headerTasks: {
-    fontSize: 10,
+
+  /* ── Goal Summary Card ── */
+  goalCard: {
+    marginHorizontal: 18,
+    marginBottom: 8,
+    borderRadius: 22,
+    backgroundColor: '#13122E',
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    shadowColor: '#6C5CE7',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  goalCardLeft: {
+    flex: 1,
+    gap: 4,
+  },
+  goalCardTitle: {
+    fontSize: 15,
+    fontFamily: 'Cairo_700Bold',
+    color: '#FFFFFF',
+    lineHeight: 22,
+  },
+  goalCardSub: {
+    fontSize: 11,
     fontFamily: 'Cairo_400Regular',
     color: '#5C5B94',
-    marginTop: 2,
+  },
+  goalCardStreak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  goalCardStreakText: {
+    fontSize: 11,
+    fontFamily: 'Cairo_700Bold',
+  },
+  goalCardRight: {
+    marginLeft: 16,
+  },
+  progressRingOuter: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressRingInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressRingNum: {
+    fontSize: 13,
+    fontFamily: 'Cairo_700Bold',
   },
 
-  /* Map scroll */
+  /* ── Map ── */
   mapScroll: { flex: 1 },
   mapContent: {
-    paddingTop: 30,
-    paddingBottom: 40,
+    paddingTop: 28,
     alignItems: 'center',
+    minHeight: '100%',
   },
 
-  /* Spine */
-  spine: {
-    position: 'absolute',
-    top: 80,
-    bottom: 80,
-    width: 3,
-    backgroundColor: '#1E1D47',
-    borderRadius: 2,
-    left: SPINE_X - 1.5,
-    zIndex: 0,
-  },
+
 
   /* Finish/Start */
   finishBanner: {
     alignItems: 'center',
-    marginBottom: 40,
-    zIndex: 2,
+    marginBottom: 16,
+    zIndex: 5,
+    gap: 6,
+    backgroundColor: '#080816',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 16,
   },
-  finishEmoji: { fontSize: 28, marginBottom: 4 },
+  finishIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   finishText: {
     fontSize: 11,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#5C5B94',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   startMarker: {
     alignItems: 'center',
-    marginTop: 40,
-    zIndex: 2,
+    marginTop: 16,
+    zIndex: 5,
+    gap: 6,
+    backgroundColor: '#080816',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 16,
   },
   startDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#2D2B52',
-    marginBottom: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#3D3C6A',
   },
   startText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Cairo_600SemiBold',
     color: '#4A4875',
+    letterSpacing: 0.6,
   },
 
   /* Nodes */
   nodeRow: {
     width: '100%',
     alignItems: 'center',
-    zIndex: 2,
-    marginVertical: 14,
+    zIndex: 3,
+    marginVertical: 6,
   },
   connectorDash: {
-    width: 3,
-    height: 50,
-    backgroundColor: '#1E1D47',
-    borderRadius: 2,
-    marginBottom: 4,
+    width: 2,
+    height: 44,
+    borderRadius: 1,
+    marginBottom: 6,
   },
-  nodeButton: {
+  nodeLayout: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 28,
-    gap: 14,
+    paddingHorizontal: 20,
+    gap: 0,
   },
-  nodeButtonLeft:  { flexDirection: 'row',         justifyContent: 'flex-start' },
-  nodeButtonRight: { flexDirection: 'row-reverse',  justifyContent: 'flex-start' },
-  nodeCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-    flexShrink: 0,
-  },
-  nodeCompleted: {
-    backgroundColor: '#00BFA6',
-    borderColor: '#00BFA6',
-    shadowColor: '#00BFA6',
-  },
-  nodeActive: {
-    backgroundColor: '#6C5CE7',
-    borderColor: '#FFFFFF',
-    shadowColor: '#6C5CE7',
-  },
-  nodeLocked: {
-    backgroundColor: '#16153A',
-    borderColor: '#2D2B52',
-    shadowColor: 'transparent',
-  },
-  nodeSelected: {
-    borderWidth: 3.5,
-    borderColor: '#FFFFFF',
-  },
-  nodeEmoji: { fontSize: 22 },
+  nodeLayoutRight: { flexDirection: 'row-reverse' },
+  nodeLayoutLeft:  { flexDirection: 'row' },
 
-  nodeLabelLeft: {
+  /* Label */
+  labelContainer: {
     flex: 1,
-    alignItems: 'flex-start',
+    gap: 2,
+    paddingHorizontal: 8,
   },
-  nodeLabelRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  nodeLabel: {
-    fontSize: 13,
-    fontFamily: 'Cairo_700Bold',
-  },
-  nodeLabelDone:   { color: '#00BFA6' },
-  nodeLabelActive: { color: '#FFFFFF', fontSize: 14 },
-  nodeLabelLocked: { color: '#3D3C6A' },
-  nodeSub: {
-    fontSize: 10,
-    fontFamily: 'Cairo_400Regular',
-    color: '#5C5B94',
-    marginTop: 2,
-  },
+  labelRight: { alignItems: 'flex-end' },
+  labelLeft:  { alignItems: 'flex-start' },
   nowBadge: {
-    backgroundColor: '#6C5CE7',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
-    marginBottom: 4,
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-end',
+    marginBottom: 3,
   },
   nowBadgeText: {
     fontSize: 9,
     fontFamily: 'Cairo_700Bold',
     color: '#FFFFFF',
   },
+  nodeLabel: {
+    fontSize: 12,
+    fontFamily: 'Cairo_700Bold',
+    color: '#5C5B94',
+  },
+  nodeSub: {
+    fontSize: 10,
+    fontFamily: 'Cairo_400Regular',
+    color: '#3D3C6A',
+    marginTop: 1,
+  },
 
-  /* Drawer */
+  /* Connector horizontal line */
+  connectorH: {
+    width: 20,
+    height: 1.5,
+    borderRadius: 1,
+  },
+
+  /* Node circles */
+  nodeOrbitContainer: {
+    width: 68,
+    height: 68,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  nodeOrbit: {
+    position: 'absolute',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
+  },
+  nodeCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+    flexShrink: 0,
+    zIndex: 2,
+  },
+  nodeCompleted: {
+    backgroundColor: '#00BFA6',
+    borderColor: '#00BFA6',
+    shadowColor: '#00BFA6',
+  },
+  nodeLocked: {
+    backgroundColor: '#131230',
+    borderColor: '#2D2B52',
+    shadowColor: 'transparent',
+  },
+  nodeEmoji: { fontSize: 22 },
+
+  /* ── Drawer ── */
   drawer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 20,
+    backgroundColor: '#13122E',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 22,
+    paddingTop: 14,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  drawerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 20,
+    borderTopWidth: 1,
+    borderColor: '#1E1D47',
   },
   drawerHandle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E2E8F0',
-  },
-  drawerCloseBtn: { padding: 4 },
-  drawerTitleRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 12,
+    backgroundColor: '#2D2B52',
+    alignSelf: 'center',
     marginBottom: 14,
-    borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
-    paddingBottom: 12,
   },
-  drawerEmoji: { fontSize: 28 },
-  drawerTitleBlock: {
+  drawerClose: {
+    position: 'absolute',
+    top: 14,
+    right: 20,
+    padding: 4,
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 14,
+  },
+  drawerEmojiBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  drawerEmojiText: { fontSize: 24 },
+  drawerHeaderText: {
     flex: 1,
-    alignItems: 'flex-end',
     gap: 4,
+    alignItems: 'flex-end',
   },
   drawerBadge: {
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 8,
     alignSelf: 'flex-end',
   },
-  drawerBadgeDone:   { backgroundColor: '#F0FDF4' },
-  drawerBadgeLocked: { backgroundColor: '#FEF2F2' },
-  drawerBadgeText:     { fontSize: 10, fontFamily: 'Cairo_700Bold', color: '#6C5CE7' },
-  drawerBadgeTextDone: { color: '#16A34A' },
-  drawerBadgeTextLocked: { color: '#EF4444' },
-  drawerTitle: {
+  drawerBadgeText: {
+    fontSize: 10,
+    fontFamily: 'Cairo_700Bold',
+  },
+  drawerStageTitle: {
     fontSize: 15,
     fontFamily: 'Cairo_700Bold',
-    color: '#1E293B',
+    color: '#EEEEFF',
+    textAlign: 'right',
   },
-  drawerLocked: {
+
+  /* Progress bar */
+  drawerProgressRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
     gap: 10,
+    marginBottom: 16,
+  },
+  drawerProgressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#1E1D47',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  drawerProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  drawerProgressPct: {
+    fontSize: 12,
+    fontFamily: 'Cairo_700Bold',
+    minWidth: 38,
+    textAlign: 'right',
+  },
+
+  /* Locked */
+  drawerLockedBody: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 12,
   },
   drawerLockIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#F3F0FF',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
   },
   drawerLockText: {
     fontSize: 13,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#64748B',
+    color: '#5C5B94',
     textAlign: 'center',
-    paddingHorizontal: 20,
     lineHeight: 22,
+    paddingHorizontal: 20,
   },
-  drawerPreCompleted: {
-    paddingVertical: 14,
+
+  /* Celebration */
+  celebrationBody: {
     alignItems: 'center',
+    paddingVertical: 10,
+    gap: 10,
   },
-  drawerPreText: {
-    fontSize: 13,
-    fontFamily: 'Cairo_600SemiBold',
+  celebrationTitle: {
+    fontSize: 15,
+    fontFamily: 'Cairo_700Bold',
     color: '#00BFA6',
     textAlign: 'center',
   },
-  drawerTask: {
-    flexDirection: 'row-reverse',
+  celebrationBtn: {
+    borderRadius: 16,
+    paddingVertical: 13,
+    paddingHorizontal: 32,
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderColor: '#F1F5F9',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
+    marginTop: 4,
   },
-  drawerTaskDone: { opacity: 0.4 },
-  drawerCheck: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+  celebrationBtnText: {
+    fontSize: 14,
+    fontFamily: 'Cairo_700Bold',
+    color: '#FFFFFF',
   },
-  drawerCheckDone: {
-    backgroundColor: '#00BFA6',
-    borderColor: '#00BFA6',
-  },
-  drawerTaskText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: 'Cairo_400Regular',
-    color: '#334155',
-    textAlign: 'right',
-  },
-  drawerTaskTextDone: {
-    textDecorationLine: 'line-through',
-    color: '#94A3B8',
-  },
-  drawerMoreBtn: {
+  reviewLink: {
     marginTop: 8,
     alignSelf: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
-  drawerMoreText: {
-    fontSize: 12,
+  reviewLinkText: {
+    fontSize: 11,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#6C5CE7',
-  },
-  drawerFullBtn: {
-    marginTop: 14,
-    backgroundColor: '#F3F0FF',
-    borderRadius: 14,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  drawerFullBtnText: {
-    fontSize: 13,
-    fontFamily: 'Cairo_700Bold',
-    color: '#6C5CE7',
+    color: '#5C5B94',
+    textDecorationLine: 'underline',
   },
 
-  /* Modal */
+  /* Tasks list in drawer */
+  tasksForLabel: {
+    fontSize: 10,
+    fontFamily: 'Cairo_600SemiBold',
+    color: '#5C5B94',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+    textAlign: 'right',
+  },
+  taskRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: '#0E0E24',
+    borderRadius: 14,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+  },
+  taskRowDone: { opacity: 0.45 },
+  taskCheckWrap: {},
+  taskCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#2D2B52',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#080816',
+  },
+  taskText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'Cairo_600SemiBold',
+    color: '#EEEEFF',
+    textAlign: 'right',
+  },
+  taskTextDone: {
+    textDecorationLine: 'line-through',
+    color: '#3D3C6A',
+  },
+
+  moreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginBottom: 10,
+  },
+  moreBtnText: {
+    fontSize: 12,
+    fontFamily: 'Cairo_600SemiBold',
+  },
+
+  /* CTA */
+  ctaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 18,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
+    marginTop: 4,
+  },
+  ctaBtnText: {
+    fontSize: 14,
+    fontFamily: 'Cairo_700Bold',
+    color: '#FFFFFF',
+  },
+
+  /* Floating emojis */
+  floatingEmoji: {
+    position: 'absolute',
+    fontSize: 26,
+    zIndex: 9999,
+  },
+
+  /* ── Modal ── */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#13122E',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: 40,
-    maxHeight: '78%',
+    padding: 22,
+    paddingBottom: Platform.OS === 'ios' ? 42 : 30,
+    maxHeight: '80%',
+    borderTopWidth: 1,
+    borderColor: '#1E1D47',
   },
   modalHandle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#2D2B52',
     alignSelf: 'center',
     marginBottom: 18,
   },
@@ -816,10 +1165,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
+  modalCloseBtn: {
+    padding: 4,
+  },
   modalTitle: {
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
-    color: '#1E293B',
+    color: '#EEEEFF',
     flex: 1,
     textAlign: 'right',
     paddingRight: 12,
@@ -830,57 +1182,51 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 18,
   },
-  modalProgressBar: {
+  modalProgressTrack: {
     flex: 1,
     height: 8,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#1E1D47',
     borderRadius: 4,
     overflow: 'hidden',
   },
   modalProgressFill: {
     height: '100%',
-    backgroundColor: '#6C5CE7',
     borderRadius: 4,
   },
-  modalProgressLabel: {
+  modalProgressPct: {
     fontSize: 12,
     fontFamily: 'Cairo_700Bold',
-    color: '#6C5CE7',
-    minWidth: 36,
+    minWidth: 40,
     textAlign: 'right',
   },
   mTaskRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 13,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#1E1D47',
   },
   mTaskRowDone: { opacity: 0.4 },
   mCheckbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderColor: '#2D2B52',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  mCheckboxDone: {
-    backgroundColor: '#00BFA6',
-    borderColor: '#00BFA6',
+    backgroundColor: '#0E0E24',
   },
   mTaskText: {
     flex: 1,
     fontSize: 13,
     fontFamily: 'Cairo_400Regular',
-    color: '#334155',
+    color: '#8B8CB0',
     textAlign: 'right',
   },
   mTaskTextDone: {
     textDecorationLine: 'line-through',
-    color: '#94A3B8',
+    color: '#3D3C6A',
   },
 });
