@@ -41,7 +41,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
     badgeActive:   isRTL ? 'نشط ⚡'                                  : 'Active ⚡',
     badgeLocked:   isRTL ? 'مقفل 🔒'                                : 'Locked 🔒',
     lockMsg:       isRTL ? 'أكمل مهام المرحلة الحالية أولاً لإلغاء القفل' : 'Complete current stage tasks to unlock',
-    preDone:       isRTL ? '✓ هذه المرحلة مكتملة تلقائياً كجزء من الأساسيات' : '✓ This stage is pre-completed as part of the basics',
+    preDone:       isRTL ? '✓ هذه المرحلة مكتملة' : '✓ This stage is completed',
     moreTasks:     (n: number) => isRTL ? `+ ${n} مهام أخرى` : `+ ${n} more tasks`,
     viewAll:       isRTL ? 'عرض خريطة المهام الكاملة'     : 'View all tasks',
     alertErr:      isRTL ? 'خطأ'                                       : 'Error',
@@ -104,31 +104,35 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   };
 
   // ── Stage status logic ─────────────────────────────────────────────────────
-  // stages[0] and [1] are always pre-completed (tutorial stages)
-  // stages[2..4] distribute real tasks and unlock sequentially
+  // Distribute all tasks across all stages (0..4) and unlock sequentially
   const N = tasks.length;
-  const c0 = Math.max(1, Math.floor(N / 3));
-  const c1 = Math.max(1, Math.floor(N / 3));
 
   const getTasksForStage = (stageIdx: number): Task[] => {
-    if (stageIdx === 0 || stageIdx === 1) return [];  // pre-completed, no real tasks
-    if (stageIdx === 2) return tasks.slice(0, c0);
-    if (stageIdx === 3) return tasks.slice(c0, c0 + c1);
-    return tasks.slice(c0 + c1);
+    const numStages = 5;
+    const base = Math.floor(N / numStages);
+    const extra = N % numStages;
+    
+    let startIdx = 0;
+    for (let i = 0; i < stageIdx; i++) {
+      startIdx += base + (i < extra ? 1 : 0);
+    }
+    const count = base + (stageIdx < extra ? 1 : 0);
+    return tasks.slice(startIdx, startIdx + count);
   };
 
   const getStatus = (stageIdx: number): NodeStatus => {
-    if (stageIdx === 0 || stageIdx === 1) return 'completed';
-
     const stageTasks = getTasksForStage(stageIdx);
     const allDone = stageTasks.length > 0 && stageTasks.every((t) => t.completed);
 
-    if (stageIdx === 2) return allDone ? 'completed' : 'active';
+    if (stageIdx === 0) {
+      return allDone ? 'completed' : 'active';
+    }
 
     // Unlock stage N when stage N-1 is completed
-    const prevTasks = getTasksForStage(stageIdx - 1);
-    const prevDone = prevTasks.every((t) => t.completed);
-    if (!prevDone) return 'locked';
+    const prevStatus = getStatus(stageIdx - 1);
+    if (prevStatus !== 'completed') {
+      return 'locked';
+    }
     return allDone ? 'completed' : 'active';
   };
 
@@ -166,7 +170,9 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const drawerTasks = selectedStageIdx !== null ? getTasksForStage(selectedStageIdx) : [];
 
   const lockReasons = [
-    '', '', '',
+    '',
+    jt.lockMsg,
+    jt.lockMsg,
     jt.lockMsg,
     jt.lockMsg,
   ];
