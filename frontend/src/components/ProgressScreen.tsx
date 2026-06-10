@@ -7,14 +7,13 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import Svg, { Circle, Path, Line, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Path, Line } from 'react-native-svg';
 import { TrendingUp, Target, CheckCircle, Zap } from 'lucide-react-native';
 import { GoalPin, Task } from '../types';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
 
 const { width } = Dimensions.get('window');
-const CARD_W = (width - 48 - 12) / 2;
 
 interface Props {
   goals: GoalPin[];
@@ -23,24 +22,36 @@ interface Props {
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
-    container:    { flex: 1, backgroundColor: colors.bg },
-    header: {
-      paddingHorizontal: 24,
-      paddingTop: Platform.OS === 'android' ? 16 : 10,
-      paddingBottom: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.borderLight,
-      backgroundColor: colors.bg,
+    container: { flex: 1, backgroundColor: colors.bg },
+    safeTop: { height: Platform.OS === 'ios' ? 54 : 30 },
+    
+    /* ── Background blobs ── */
+    bgPurple: {
+      position: 'absolute',
+      top: -80, right: -60,
+      width: 280, height: 280, borderRadius: 140,
+      backgroundColor: colors.accent, opacity: 0.07,
     },
-    headerTop: {
+    bgTeal: {
+      position: 'absolute',
+      bottom: 160, left: -80,
+      width: 240, height: 240, borderRadius: 120,
+      backgroundColor: colors.accentAlt, opacity: 0.05,
+    },
+
+    /* ── Top bar ── */
+    topBar: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 2,
+      paddingHorizontal: 20,
+      marginBottom: 20,
+      zIndex: 10,
     },
-    headerSubtitle: {
+    greetBlock: { gap: 2 },
+    greetDate: {
       fontSize: 11,
-      fontFamily: 'Cairo_400Regular',
+      fontFamily: 'Cairo_600SemiBold',
       color: colors.textMuted,
     },
     headerTitle: {
@@ -49,73 +60,73 @@ function makeStyles(colors: Colors) {
       color: colors.textPrimary,
     },
     headerBadge: {
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 10,
-      backgroundColor: colors.accentAlt + '20',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+      backgroundColor: colors.surfaceElevated,
+      borderWidth: 1,
+      borderColor: colors.borderLight,
     },
     headerBadgeText: {
       fontSize: 11,
       fontFamily: 'Cairo_700Bold',
-      color: colors.accentAlt,
-    },
-    scroll: { flex: 1 },
-    scrollContent: {
-      padding: 20,
-      paddingBottom: 90,
-      gap: 16,
+      color: colors.textPrimary,
     },
 
-    // ── Stat row ──
+    /* ── Stat row ── */
     statRow: {
       flexDirection: 'row',
       gap: 12,
+      paddingHorizontal: 20,
+      marginBottom: 20,
     },
     statCard: {
       flex: 1,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.surfaceElevated,
       borderRadius: 20,
       padding: 16,
       alignItems: 'center',
       gap: 6,
       borderWidth: 1,
       borderColor: colors.borderLight,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    statIconCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 2,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+      elevation: 3,
     },
     statValue: {
       fontSize: 22,
       fontFamily: 'Cairo_700Bold',
       color: colors.textPrimary,
+      marginTop: 4,
     },
     statLabel: {
-      fontSize: 10,
+      fontSize: 11,
       fontFamily: 'Cairo_600SemiBold',
       color: colors.textMuted,
       textAlign: 'center',
     },
 
-    // ── Metric cards ──
+    /* ── Metric cards (Horizontal) ── */
+    chartsScroll: {
+      flexGrow: 0,
+      marginBottom: 20,
+    },
+    chartsContent: {
+      paddingHorizontal: 20,
+      gap: 16,
+      paddingBottom: 10,
+    },
     card: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.surfaceElevated,
       borderRadius: 22,
       padding: 20,
       borderWidth: 1,
       borderColor: colors.borderLight,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
+      shadowOpacity: 0.1,
       shadowRadius: 10,
       elevation: 2,
     },
@@ -142,7 +153,7 @@ function makeStyles(colors: Colors) {
       color: colors.accent,
     },
 
-    // Ring chart
+    /* Ring chart */
     ringWrapper: {
       alignItems: 'center',
       justifyContent: 'center',
@@ -185,7 +196,7 @@ function makeStyles(colors: Colors) {
       color: colors.textSecondary,
     },
 
-    // Line chart
+    /* Line chart */
     lineLabelsRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -198,11 +209,37 @@ function makeStyles(colors: Colors) {
       color: colors.textMuted,
     },
 
-    // Goals list
+    /* ── Goals list ── */
+    goalsSection: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 30,
+      borderTopRightRadius: 30,
+      borderTopWidth: 1,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: colors.borderLight,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 10,
+      elevation: 5,
+    },
+    goalsHeader: {
+      paddingHorizontal: 24,
+      paddingVertical: 18,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.borderLight,
+    },
+    goalsHeaderTitle: {
+      fontSize: 15,
+      fontFamily: 'Cairo_700Bold',
+      color: colors.textPrimary,
+    },
     goalRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 12,
+      paddingVertical: 14,
       borderBottomWidth: 1,
       borderBottomColor: colors.borderLight,
       gap: 12,
@@ -210,7 +247,7 @@ function makeStyles(colors: Colors) {
     goalRowLast: {
       borderBottomWidth: 0,
     },
-    goalEmoji: { fontSize: 22, width: 28, textAlign: 'center' },
+    goalEmoji: { fontSize: 24, width: 32, textAlign: 'center' },
     goalInfo:  { flex: 1, gap: 6 },
     goalName: {
       fontSize: 13,
@@ -218,7 +255,7 @@ function makeStyles(colors: Colors) {
       color: colors.textPrimary,
     },
     goalBarTrack: {
-      height: 5,
+      height: 6,
       backgroundColor: colors.bg,
       borderRadius: 3,
       overflow: 'hidden',
@@ -284,7 +321,7 @@ export function ProgressScreen({ goals, tasks }: Props) {
   const weekData = [30, 45, 20, 60, 75, 50, overallPct].map(v => Math.min(v, 100));
   const maxVal   = Math.max(...weekData, 1);
   const chartH   = 70;
-  const chartW   = width - 80;
+  const chartW   = (width * 0.85) - 40; // width of card minus padding
   const points   = weekData.map((v, i) => {
     const x = (i / (weekData.length - 1)) * chartW;
     const y = chartH - (v / maxVal) * chartH;
@@ -304,78 +341,76 @@ export function ProgressScreen({ goals, tasks }: Props) {
 
   return (
     <View style={styles.container}>
+      {/* ── Background glow blobs ── */}
+      <View style={styles.bgPurple} />
+      <View style={styles.bgTeal} />
 
-      {/* ── Header ── */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={[styles.headerBadge]}>
-            <Text style={styles.headerBadgeText}>
-              {totalGoals} {isRTL ? 'هدف نشط' : 'Active Goals'}
-            </Text>
-          </View>
+      <View style={styles.safeTop} />
+
+      {/* ── Top bar ── */}
+      <View style={styles.topBar}>
+        <View style={styles.greetBlock}>
+          <Text style={styles.greetDate}>{today}</Text>
           <Text style={styles.headerTitle}>
             {isRTL ? 'تقدمي' : 'My Progress'}
           </Text>
         </View>
-        <Text style={[styles.headerSubtitle, { textAlign: isRTL ? 'right' : 'left' }]}>
-          {today}
-        </Text>
+        <View style={styles.headerBadge}>
+          <Text style={styles.headerBadgeText}>
+            {totalGoals} {isRTL ? 'هدف نشط' : 'Active Goals'}
+          </Text>
+        </View>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-
-        {/* ── Stat row ── */}
-        <View style={styles.statRow}>
-          <View style={styles.statCard}>
-            <View style={[styles.statIconCircle, { backgroundColor: colors.accent + '18' }]}>
-              <Target size={20} color={colors.accent} />
-            </View>
-            <Text style={styles.statValue}>{totalGoals}</Text>
-            <Text style={styles.statLabel}>{isRTL ? 'أهداف' : 'Goals'}</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={[styles.statIconCircle, { backgroundColor: colors.accentAlt + '18' }]}>
-              <CheckCircle size={20} color={colors.accentAlt} />
-            </View>
-            <Text style={[styles.statValue, { color: colors.accentAlt }]}>{completedTasks}</Text>
-            <Text style={styles.statLabel}>{isRTL ? 'مهام منجزة' : 'Tasks Done'}</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={[styles.statIconCircle, { backgroundColor: '#F59E0B18' }]}>
-              <Zap size={20} color="#F59E0B" />
-            </View>
-            <Text style={[styles.statValue, { color: '#F59E0B' }]}>{overallPct}%</Text>
-            <Text style={styles.statLabel}>{isRTL ? 'إجمالي' : 'Overall'}</Text>
-          </View>
+      {/* ── Stat row ── */}
+      <View style={styles.statRow}>
+        <View style={styles.statCard}>
+          <Target size={20} color={colors.accent} />
+          <Text style={styles.statValue}>{totalGoals}</Text>
+          <Text style={styles.statLabel}>{isRTL ? 'أهداف' : 'Goals'}</Text>
         </View>
 
-        {/* ── Ring chart ── */}
-        <View style={styles.card}>
+        <View style={styles.statCard}>
+          <CheckCircle size={20} color={colors.accentAlt} />
+          <Text style={[styles.statValue, { color: colors.accentAlt }]}>{completedTasks}</Text>
+          <Text style={styles.statLabel}>{isRTL ? 'مهام منجزة' : 'Tasks Done'}</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <Zap size={20} color="#F59E0B" />
+          <Text style={[styles.statValue, { color: '#F59E0B' }]}>{overallPct}%</Text>
+          <Text style={styles.statLabel}>{isRTL ? 'إجمالي' : 'Overall'}</Text>
+        </View>
+      </View>
+
+      {/* ── Charts (Horizontal Swipe) ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chartsScroll}
+        contentContainerStyle={styles.chartsContent}
+        decelerationRate="fast"
+        snapToInterval={(width * 0.85) + 16}
+      >
+        {/* Card 1: Ring chart */}
+        <View style={[styles.card, { width: width * 0.85 }]}>
           <View style={styles.cardHeader}>
             <View style={[styles.cardBadge]}>
               <Text style={styles.cardBadgeText}>{overallPct}%</Text>
             </View>
             <Text style={styles.cardTitle}>
-              {isRTL ? 'إجمالي إتمام المهام' : 'Overall Task Completion'}
+              {isRTL ? 'إجمالي إتمام المهام' : 'Overall Completion'}
             </Text>
           </View>
 
           <View style={styles.ringWrapper}>
             <Svg width={150} height={150} viewBox="0 0 110 110">
-              {/* Track */}
               <Circle
                 cx="55" cy="55" r={RADIUS}
-                stroke={colors.borderLight}
+                stroke={colors.border}
                 strokeWidth="10"
                 fill="transparent"
               />
-              {/* Fill */}
               <Circle
                 cx="55" cy="55" r={RADIUS}
                 stroke={colors.accentAlt}
@@ -409,8 +444,8 @@ export function ProgressScreen({ goals, tasks }: Props) {
           </View>
         </View>
 
-        {/* ── Weekly trend ── */}
-        <View style={styles.card}>
+        {/* Card 2: Weekly trend */}
+        <View style={[styles.card, { width: width * 0.85 }]}>
           <View style={styles.cardHeader}>
             <TrendingUp size={16} color={colors.accent} />
             <Text style={styles.cardTitle}>
@@ -419,7 +454,6 @@ export function ProgressScreen({ goals, tasks }: Props) {
           </View>
 
           <Svg width={chartW} height={chartH + 10} viewBox={`0 0 ${chartW} ${chartH + 10}`}>
-            {/* Grid lines */}
             {[0, 0.33, 0.66, 1].map((frac, i) => (
               <Line
                 key={i}
@@ -429,7 +463,6 @@ export function ProgressScreen({ goals, tasks }: Props) {
                 strokeWidth="1"
               />
             ))}
-            {/* Area fill — thin accent line */}
             <Path
               d={pathD}
               fill="none"
@@ -438,13 +471,12 @@ export function ProgressScreen({ goals, tasks }: Props) {
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            {/* Node dots */}
             {points.map((p, i) => (
               <Circle
                 key={i}
                 cx={p.x} cy={p.y}
                 r="4"
-                fill={i === points.length - 1 ? colors.accentAlt : colors.surface}
+                fill={i === points.length - 1 ? colors.accentAlt : colors.surfaceElevated}
                 stroke={i === points.length - 1 ? colors.accentAlt : colors.accent}
                 strokeWidth="2"
               />
@@ -462,18 +494,20 @@ export function ProgressScreen({ goals, tasks }: Props) {
             ))}
           </View>
         </View>
+      </ScrollView>
 
-        {/* ── Goals breakdown ── */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.cardBadge]}>
-              <Text style={styles.cardBadgeText}>{totalGoals}</Text>
-            </View>
-            <Text style={styles.cardTitle}>
-              {isRTL ? 'تقدم الأهداف' : 'Goals Progress'}
-            </Text>
-          </View>
+      {/* ── Goals breakdown (Constrained ScrollView) ── */}
+      <View style={styles.goalsSection}>
+        <View style={styles.goalsHeader}>
+          <Text style={styles.goalsHeaderTitle}>
+            {isRTL ? 'تفاصيل الأهداف' : 'Goals Breakdown'}
+          </Text>
+        </View>
 
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
+        >
           {goalStats.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>🌱</Text>
@@ -503,9 +537,8 @@ export function ProgressScreen({ goals, tasks }: Props) {
               </View>
             ))
           )}
-        </View>
-
-      </ScrollView>
+        </ScrollView>
+      </View>
     </View>
   );
 }
