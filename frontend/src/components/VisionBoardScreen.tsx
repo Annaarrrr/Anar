@@ -16,6 +16,7 @@ import { ActiveTab, GoalPin } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
+import { Mascot } from './Mascot';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - 40 - 12) / 2;
@@ -164,11 +165,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                 </Text>
                 <View style={styles.bubbleTail} />
               </View>
-              <View style={styles.mascotCircle}>
-                <View style={styles.mascotFace}>
-                  <View style={styles.mascotEyes} />
-                </View>
-              </View>
+              <Mascot size={58} />
             </View>
           </View>
         ) : (
@@ -296,11 +293,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                 </Text>
                 <View style={styles.bubbleTail} />
               </View>
-              <View style={styles.mascotCircle}>
-                <View style={styles.mascotFace}>
-                  <View style={styles.mascotEyes} />
-                </View>
-              </View>
+              <Mascot size={58} />
             </View>
           </>
         )}
@@ -758,38 +751,7 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       borderBottomColor: 'transparent',
       borderLeftColor: bubbleTailClr,
     },
-    mascotCircle: {
-      width: 58,
-      height: 58,
-      borderRadius: 29,
-      backgroundColor: '#6C5CE7',
-      borderWidth: 3,
-      borderColor: theme === 'light' ? '#FFFFFF' : '#3D2A6E',
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 4,
-    },
-    mascotFace: {
-      width: 34,
-      height: 22,
-      borderRadius: 11,
-      backgroundColor: theme === 'light' ? '#FFFFFF' : '#2C1A0E',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    mascotEyes: {
-      width: 18,
-      height: 6,
-      borderRadius: 3,
-      borderWidth: 2.5,
-      borderColor: '#00BFA6',
-      borderBottomWidth: 0,
-      transform: [{ scaleY: -1 }],
-    },
+
 
     /* Task bar */
     taskBar: {

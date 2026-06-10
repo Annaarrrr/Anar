@@ -18,6 +18,7 @@ import { ArrowRight, Mic, Send, Sparkles } from 'lucide-react-native';
 import { ActiveTab, Message } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
+import { Mascot } from './Mascot';
 
 const { width } = Dimensions.get('window');
 
@@ -218,11 +219,7 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
           {/* AI Avatar with glow */}
           <View style={styles.avatarWrap}>
             <Animated.View style={[styles.avatarGlow, { opacity: avatarGlow }]} />
-            <View style={styles.avatarCircle}>
-              <View style={styles.robotFace}>
-                <View style={styles.robotEyes} />
-              </View>
-            </View>
+            <Mascot size={46} />
           </View>
         </View>
 
@@ -243,10 +240,8 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
             >
               {/* AI avatar dot */}
               {msg.role === 'ai' && (
-                <View style={styles.bubbleAvatar}>
-                  <View style={styles.miniRobotFace}>
-                    <View style={styles.miniRobotEyes} />
-                  </View>
+                <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
+                  <Mascot size={32} />
                 </View>
               )}
 
@@ -262,7 +257,12 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
 
                 {/* Quick-reply chips on first message */}
                 {msg.id === 1 && (
-                  <View style={styles.chipsRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={{ marginTop: 12, marginHorizontal: -16 }}
+                    contentContainerStyle={[styles.chipsContent, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+                  >
                     <TouchableOpacity
                       onPress={() => handleChipSelect(isRTL ? 'تنظيم الوقت' : 'time')}
                       style={styles.chip}
@@ -281,7 +281,7 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
                     >
                       <Text style={styles.chipText}>{t.chip_study}</Text>
                     </TouchableOpacity>
-                  </View>
+                  </ScrollView>
                 )}
               </View>
             </View>
@@ -290,10 +290,8 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
           {/* ── Suggested Goal Card ── */}
           {suggestedGoal && (
             <View style={styles.msgWrapper}>
-              <View style={styles.bubbleAvatar}>
-                <View style={styles.miniRobotFace}>
-                  <View style={styles.miniRobotEyes} />
-                </View>
+              <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
+                <Mascot size={32} />
               </View>
               <View style={styles.goalCard}>
                 {/* Card header */}
@@ -369,10 +367,8 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
           {/* ── Typing indicator ── */}
           {isTyping && (
             <View style={styles.msgWrapper}>
-              <View style={styles.bubbleAvatar}>
-                <View style={styles.miniRobotFace}>
-                  <View style={styles.miniRobotEyes} />
-                </View>
+              <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
+                <Mascot size={32} />
               </View>
               <View style={[styles.aiBubble, { paddingVertical: 14, paddingHorizontal: 18 }]}>
                 <View style={styles.typingRow}>
@@ -562,8 +558,8 @@ function makeStyles(colors: any) {
     },
 
     /* Chips */
-    chipsRow: {
-      flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 6, marginTop: 12,
+    chipsContent: {
+      gap: 6, paddingHorizontal: 16,
     },
     chip: {
       backgroundColor: colors.surfaceElevated,

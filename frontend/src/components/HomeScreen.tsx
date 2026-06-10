@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import { ActiveTab, Goal, Task } from '../types';
 import { useAppSettings } from '../context/AppContext';
+import { Mascot } from './Mascot';
 
 interface Props {
   onNavigate:     (s: ActiveTab) => void;
@@ -76,12 +77,7 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
 
       {/* ── Mascot hint banner ── */}
       <View style={styles.mascotRow}>
-        <View style={styles.mascotOrb}>
-          <View style={styles.mascotFace}>
-            <View style={styles.mascotEyes} />
-          </View>
-          <View style={styles.mascotBase} />
-        </View>
+        <Mascot size={46} />
         <View style={styles.speechBubble}>
           <Text style={styles.speechText}>{t.home_mascot_msg}</Text>
         </View>
@@ -93,12 +89,7 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
         {!activeGoal ? (
           /* ── Empty state ── */
           <View style={styles.emptyCard}>
-            <View style={styles.largeMascotWrap}>
-              <View style={styles.largeMascotFace}>
-                <View style={styles.largeMascotEyes} />
-              </View>
-              <View style={styles.largeMascotBase} />
-            </View>
+            <Mascot size={80} />
             <Text style={styles.emptyTitle}>
               {isRTL ? 'ابدأ رحلتك الآن 🚀' : 'Start Your Journey 🚀'}
             </Text>

@@ -122,7 +122,7 @@ export const strings: Record<Language, StringSet> = {
     home_stat_time:        'الوقت',
     home_active_pill:      'نشط',
     home_cta_msg:          'ابدأ التحدث مع المرشد الذكي',
-    home_cta_btn:          'ابدأ التحدث مع المرشد الذكي',
+    home_cta_btn:          'تحدث مع المرشد',
     home_mascot_msg:       'رائع! لديك أهداف نشطة لتنجزها اليوم. دعنا نضيئها معاً! ⚡',
 
     chat_title:            'المرشد الذكي',
@@ -203,7 +203,7 @@ export const strings: Record<Language, StringSet> = {
     home_stat_time:        'Time',
     home_active_pill:      'Active',
     home_cta_msg:          'Start chatting with your AI Guide',
-    home_cta_btn:          'Start chatting with your AI Guide',
+    home_cta_btn:          'Chat with AI Guide',
     home_mascot_msg:       "Great! You have active goals to complete today. Let's light them up! ⚡",
 
     chat_title:            'AI Guide',

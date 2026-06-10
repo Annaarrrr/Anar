@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
+import { Mascot } from './Mascot';
 
 const { width } = Dimensions.get('window');
 
@@ -63,194 +64,7 @@ function makeStyles(colors: Colors) {
       alignItems: 'center',
       zIndex: 10,
     },
-    mascotContainer: {
-      width: 260,
-      height: 260,
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'relative',
-    },
-    bulbBody: {
-      width: 150,
-      height: 150,
-      borderRadius: 75,
-      backgroundColor: colors.accent,
-      borderWidth: 5,
-      borderColor: colors.bg,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: colors.accent,
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.25,
-      shadowRadius: 15,
-      elevation: 8,
-      zIndex: 2,
-    },
-    bulbBodyMini: {
-      width: 110,
-      height: 110,
-      borderRadius: 55,
-      marginTop: -40,
-    },
-    bulbFace: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 24,
-      width: '100%',
-      height: '100%',
-    },
-    bulbFaceReady: {
-      flexDirection: 'column',
-      justifyContent: 'center',
-      gap: 8,
-    },
-    eye: {
-      width: 16,
-      height: 40,
-      borderRadius: 8,
-      backgroundColor: colors.accentAlt,
-    },
-    eyeHappy: {
-      height: 10,
-      borderRadius: 5,
-      borderWidth: 3,
-      borderColor: colors.accentAlt,
-      backgroundColor: 'transparent',
-      borderBottomWidth: 0,
-      transform: [{ scaleY: -1 }],
-    },
-    bulbBase: {
-      width: 70,
-      height: 25,
-      backgroundColor: colors.textMuted,
-      borderBottomLeftRadius: 12,
-      borderBottomRightRadius: 12,
-      borderWidth: 3,
-      borderColor: colors.bg,
-      marginTop: -3,
-      zIndex: 1,
-    },
-    bulbBaseMini: {
-      width: 50,
-      height: 18,
-      backgroundColor: colors.textMuted,
-      borderBottomLeftRadius: 8,
-      borderBottomRightRadius: 8,
-      borderWidth: 2,
-      borderColor: colors.bg,
-      marginTop: -2,
-      zIndex: 1,
-    },
-    bulbTip: {
-      width: 8,
-      height: 20,
-      backgroundColor: colors.accent,
-      borderRadius: 4,
-      position: 'absolute',
-      top: 35,
-      zIndex: 0,
-    },
-    bulbTipMini: {
-      width: 6,
-      height: 14,
-      backgroundColor: colors.accent,
-      borderRadius: 3,
-      position: 'absolute',
-      top: 58,
-      zIndex: 0,
-    },
-    stairsWrapper: {
-      width: 220,
-      height: 110,
-      position: 'absolute',
-      bottom: 0,
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      zIndex: 0,
-    },
-    stairStep1: {
-      width: 200,
-      height: 30,
-      backgroundColor: colors.surfaceElevated,
-      borderTopLeftRadius: 10,
-      borderTopRightRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-    },
-    stairStep2: {
-      width: 150,
-      height: 30,
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 10,
-      borderTopRightRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-    },
-    stairStep3: {
-      width: 100,
-      height: 30,
-      backgroundColor: colors.border,
-      borderTopLeftRadius: 10,
-      borderTopRightRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-    },
-    starIcon: {
-      fontSize: 48,
-      position: 'absolute',
-      top: 25,
-      right: 35,
-    },
-    questionMark: {
-      fontSize: 64,
-      fontFamily: 'Cairo_700Bold',
-      color: colors.accentAlt,
-      position: 'absolute',
-      top: 15,
-      left: 35,
-    },
-    glassesContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 10,
-    },
-    glassesCircle: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      borderWidth: 3,
-      borderColor: colors.bg,
-      backgroundColor: 'transparent',
-    },
-    glassesBridge: {
-      width: 12,
-      height: 3,
-      backgroundColor: colors.bg,
-    },
-    eyeReadyContainer: {
-      flexDirection: 'row',
-      gap: 36,
-      position: 'absolute',
-      top: 58,
-    },
-    eyeReady: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-      backgroundColor: colors.accentAlt,
-    },
-    smile: {
-      width: 20,
-      height: 10,
-      borderWidth: 3,
-      borderColor: colors.accentAlt,
-      borderRadius: 10,
-      borderTopWidth: 0,
-      backgroundColor: 'transparent',
-      marginTop: -8,
-    },
+
     contentSection: {
       flex: 0.8,
       alignItems: 'center',
@@ -353,68 +167,7 @@ export function OnboardingScreen({ onFinish }: Props) {
 
   const currentSlide = slides[step];
 
-  // Helper to render the bulb robot mascot with styled views
-  const renderMascot = (type: string) => {
-    switch (type) {
-      case 'welcome':
-        return (
-          <View style={styles.mascotContainer}>
-            <View style={styles.bulbBody}>
-              <View style={styles.bulbFace}>
-                <View style={styles.eye} />
-                <View style={styles.eye} />
-              </View>
-            </View>
-            <View style={styles.bulbBase} />
-            <View style={styles.bulbTip} />
-          </View>
-        );
-      case 'stairs':
-        return (
-          <View style={styles.mascotContainer}>
-            <View style={[styles.bulbBody, styles.bulbBodyMini]}>
-              <View style={styles.bulbFace}>
-                <View style={[styles.eye, styles.eyeHappy]} />
-                <View style={[styles.eye, styles.eyeHappy]} />
-              </View>
-            </View>
-            <View style={styles.bulbBaseMini} />
-            <View style={styles.bulbTipMini} />
-            {/* Styled staircase mockup */}
-            <View style={styles.stairsWrapper}>
-              <View style={styles.stairStep3} />
-              <View style={styles.stairStep2} />
-              <View style={styles.stairStep1} />
-            </View>
-            {/* Star */}
-            <Text style={styles.starIcon}>⭐</Text>
-          </View>
-        );
-      case 'ready':
-      default:
-        return (
-          <View style={styles.mascotContainer}>
-            <Text style={styles.questionMark}>؟</Text>
-            <View style={styles.bulbBody}>
-              <View style={[styles.bulbFace, styles.bulbFaceReady]}>
-                <View style={styles.glassesContainer}>
-                  <View style={styles.glassesCircle} />
-                  <View style={styles.glassesBridge} />
-                  <View style={styles.glassesCircle} />
-                </View>
-                <View style={styles.eyeReadyContainer}>
-                  <View style={styles.eyeReady} />
-                  <View style={styles.eyeReady} />
-                </View>
-                <View style={styles.smile} />
-              </View>
-            </View>
-            <View style={styles.bulbBase} />
-            <View style={styles.bulbTip} />
-          </View>
-        );
-    }
-  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -439,7 +192,10 @@ export function OnboardingScreen({ onFinish }: Props) {
 
       {/* Center Mascot Image */}
       <View style={styles.centerSection}>
-        {renderMascot(currentSlide.mascotType)}
+        <Mascot 
+          size={currentSlide.mascotType === 'welcome' ? 180 : 260} 
+          variant={currentSlide.mascotType as any} 
+        />
       </View>
 
       {/* Copy / Typography */}
