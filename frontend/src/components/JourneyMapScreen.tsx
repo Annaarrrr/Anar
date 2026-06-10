@@ -31,6 +31,7 @@ type NodeStatus = 'completed' | 'active' | 'locked';
 
 export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const { colors, theme, language } = useAppSettings();
+  const styles = React.useMemo(() => makeStyles(colors, theme), [colors, theme]);
   const isRTL = language === 'ar';
 
   const jt = {
@@ -218,15 +219,14 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* ── Gradient Background Layers ── */}
-      <View style={styles.bgGrad1} />
+      {/* ── Background glow blobs ── */}
       <View style={styles.bgGrad2} />
       <View style={styles.bgGrad3} />
 
       {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
-          <ArrowRight size={18} color="#FFFFFF" />
+          <ArrowRight size={18} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerSub}>{jt.headerLabel}</Text>
@@ -590,41 +590,32 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any, theme: string) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#080816',
+    backgroundColor: colors.bg,
   },
 
-  /* ── Background gradient simulation ── */
-  bgGrad1: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#0D0B2B',
-    opacity: 0.7,
-  },
+  /* ── Background glow blobs (Unified across app) ── */
   bgGrad2: {
     position: 'absolute',
-    top: -120,
-    left: -80,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: '#6C5CE7',
-    opacity: 0.06,
+    top: -80,
+    right: -60,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: colors.accent,
+    opacity: 0.07,
   },
   bgGrad3: {
     position: 'absolute',
-    bottom: 200,
-    right: -60,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: '#00BFA6',
-    opacity: 0.04,
+    bottom: 160,
+    left: -80,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: colors.accentAlt,
+    opacity: 0.05,
   },
 
   /* ── Header ── */
@@ -640,11 +631,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: colors.surfaceElevated,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: colors.border,
   },
   headerCenter: {
     flex: 1,
@@ -653,13 +644,13 @@ const styles = StyleSheet.create({
   headerSub: {
     fontSize: 10,
     fontFamily: 'Cairo_400Regular',
-    color: '#5C5B94',
+    color: colors.textMuted,
     letterSpacing: 0.8,
   },
   headerTitle: {
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   headerPct: {
     alignItems: 'center',
@@ -667,6 +658,7 @@ const styles = StyleSheet.create({
   headerPctNum: {
     fontSize: 18,
     fontFamily: 'Cairo_700Bold',
+    color: colors.textPrimary,
   },
 
   /* ── Goal Summary Card ── */
@@ -674,12 +666,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 18,
     marginBottom: 8,
     borderRadius: 22,
-    backgroundColor: '#13122E',
+    backgroundColor: colors.surface,
     borderWidth: 1,
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 18,
-    shadowColor: '#6C5CE7',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 16,
@@ -692,13 +685,13 @@ const styles = StyleSheet.create({
   goalCardTitle: {
     fontSize: 15,
     fontFamily: 'Cairo_700Bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     lineHeight: 22,
   },
   goalCardSub: {
     fontSize: 11,
     fontFamily: 'Cairo_400Regular',
-    color: '#5C5B94',
+    color: colors.textMuted,
   },
   goalCardStreak: {
     flexDirection: 'row',
@@ -709,6 +702,7 @@ const styles = StyleSheet.create({
   goalCardStreakText: {
     fontSize: 11,
     fontFamily: 'Cairo_700Bold',
+    color: colors.textPrimary,
   },
   goalCardRight: {
     marginLeft: 16,
@@ -742,15 +736,13 @@ const styles = StyleSheet.create({
     minHeight: '100%',
   },
 
-
-
   /* Finish/Start */
   finishBanner: {
     alignItems: 'center',
     marginBottom: 16,
     zIndex: 5,
     gap: 6,
-    backgroundColor: '#080816',
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 16,
@@ -766,13 +758,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Cairo_600SemiBold',
     letterSpacing: 0.8,
+    color: colors.textPrimary,
   },
   startMarker: {
     alignItems: 'center',
     marginTop: 16,
     zIndex: 5,
     gap: 6,
-    backgroundColor: '#080816',
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 16,
@@ -786,7 +779,7 @@ const styles = StyleSheet.create({
   startText: {
     fontSize: 10,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#4A4875',
+    color: colors.textMuted,
     letterSpacing: 0.6,
   },
 
@@ -836,12 +829,12 @@ const styles = StyleSheet.create({
   nodeLabel: {
     fontSize: 12,
     fontFamily: 'Cairo_700Bold',
-    color: '#5C5B94',
+    color: colors.textPrimary,
   },
   nodeSub: {
     fontSize: 10,
     fontFamily: 'Cairo_400Regular',
-    color: '#3D3C6A',
+    color: colors.textSecondary,
     marginTop: 1,
   },
 
@@ -899,7 +892,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#13122E',
+    backgroundColor: colors.surfaceElevated,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 22,
@@ -911,13 +904,13 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 20,
     borderTopWidth: 1,
-    borderColor: '#1E1D47',
+    borderColor: colors.borderLight,
   },
   drawerHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#2D2B52',
+    backgroundColor: colors.borderLight,
     alignSelf: 'center',
     marginBottom: 14,
   },
@@ -960,7 +953,7 @@ const styles = StyleSheet.create({
   drawerStageTitle: {
     fontSize: 15,
     fontFamily: 'Cairo_700Bold',
-    color: '#EEEEFF',
+    color: colors.textPrimary,
     textAlign: 'right',
   },
 
@@ -974,7 +967,7 @@ const styles = StyleSheet.create({
   drawerProgressTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: '#1E1D47',
+    backgroundColor: colors.border,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -1005,7 +998,7 @@ const styles = StyleSheet.create({
   drawerLockText: {
     fontSize: 13,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#5C5B94',
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: 20,
@@ -1048,7 +1041,7 @@ const styles = StyleSheet.create({
   reviewLinkText: {
     fontSize: 11,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#5C5B94',
+    color: colors.textSecondary,
     textDecorationLine: 'underline',
   },
 
@@ -1056,7 +1049,7 @@ const styles = StyleSheet.create({
   tasksForLabel: {
     fontSize: 10,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#5C5B94',
+    color: colors.textMuted,
     letterSpacing: 0.8,
     marginBottom: 10,
     textAlign: 'right',
@@ -1067,7 +1060,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 11,
     paddingHorizontal: 14,
-    backgroundColor: '#0E0E24',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     marginBottom: 8,
     borderLeftWidth: 3,
@@ -1079,21 +1072,21 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#2D2B52',
+    borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#080816',
+    backgroundColor: colors.surfaceElevated,
   },
   taskText: {
     flex: 1,
     fontSize: 13,
     fontFamily: 'Cairo_600SemiBold',
-    color: '#EEEEFF',
+    color: colors.textPrimary,
     textAlign: 'right',
   },
   taskTextDone: {
     textDecorationLine: 'line-through',
-    color: '#3D3C6A',
+    color: colors.textMuted,
   },
 
   moreBtn: {
@@ -1142,20 +1135,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: '#13122E',
+    backgroundColor: colors.surfaceElevated,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 22,
     paddingBottom: Platform.OS === 'ios' ? 42 : 30,
     maxHeight: '80%',
     borderTopWidth: 1,
-    borderColor: '#1E1D47',
+    borderColor: colors.borderLight,
   },
   modalHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#2D2B52',
+    backgroundColor: colors.borderLight,
     alignSelf: 'center',
     marginBottom: 18,
   },
@@ -1171,7 +1164,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
-    color: '#EEEEFF',
+    color: colors.textPrimary,
     flex: 1,
     textAlign: 'right',
     paddingRight: 12,
@@ -1185,7 +1178,7 @@ const styles = StyleSheet.create({
   modalProgressTrack: {
     flex: 1,
     height: 8,
-    backgroundColor: '#1E1D47',
+    backgroundColor: colors.border,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -1205,7 +1198,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderColor: '#1E1D47',
+    borderColor: colors.border,
   },
   mTaskRowDone: { opacity: 0.4 },
   mCheckbox: {
@@ -1213,20 +1206,20 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#2D2B52',
+    borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0E0E24',
+    backgroundColor: colors.surface,
   },
   mTaskText: {
     flex: 1,
     fontSize: 13,
     fontFamily: 'Cairo_400Regular',
-    color: '#8B8CB0',
+    color: colors.textSecondary,
     textAlign: 'right',
   },
   mTaskTextDone: {
     textDecorationLine: 'line-through',
-    color: '#3D3C6A',
+    color: colors.textMuted,
   },
 });
