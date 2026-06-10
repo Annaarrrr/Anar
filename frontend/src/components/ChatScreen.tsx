@@ -148,12 +148,12 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
 
   const handleChipSelect = (chipText: string) => {
     let text = '';
-    if (chipText === 'دراستي') {
-      text = 'أريد أن أدرس وأحسّن مستواي الأكاديمي';
-    } else if (chipText === 'تطوير مهارة') {
-      text = 'أريد أن أتعلم البرمجة، لكني لا أعرف من أين أبدأ وأشعر بالضياع قليلاً.';
+    if (chipText === 'دراستي' || chipText === 'study') {
+      text = isRTL ? 'أريد أن أدرس وأحسّن مستواي الأكاديمي' : 'I want to study and improve my academic level';
+    } else if (chipText === 'تطوير مهارة' || chipText === 'skill') {
+      text = isRTL ? 'أريد أن أتعلم البرمجة، لكني لا أعرف من أين أبدأ وأشعر بالضياع قليلاً.' : "I want to learn programming, but I don't know where to start and feel a bit lost.";
     } else {
-      text = 'أريد تنظيم وقتي وإدارة مهامي اليومية بشكل أفضل';
+      text = isRTL ? 'أريد تنظيم وقتي وإدارة مهامي اليومية بشكل أفضل' : 'I want to organize my time and manage my daily tasks better';
     }
     handleSendMessage(text);
   };
@@ -168,15 +168,17 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
       const successMsg: Message = {
         id: Date.now() + 2,
         role: 'ai',
-        text: `تم تثبيت هدفك "${suggestedGoal}" على لوحة الرؤية 📌 وتم إنشاء خريطة رحلة مخصصة لك! اضغط على البطاقة في اللوحة لعرض مساركك.`,
-        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+        text: isRTL 
+          ? `تم تثبيت هدفك "${suggestedGoal}" على لوحة الرؤية 📌 وتم إنشاء خريطة رحلة مخصصة لك! اضغط على البطاقة في اللوحة لعرض مسارك.`
+          : `Your goal "${suggestedGoal}" has been pinned to the Vision Board 📌 and a custom journey map has been created! Tap the card to view your path.`,
+        time: new Date().toLocaleTimeString(isRTL ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, successMsg]);
       setSuggestedGoal(null);
 
       setTimeout(() => onNavigate('vision'), 1400);
     } catch (err) {
-      Alert.alert('خطأ', 'فشل اعتماد الهدف، يرجى المحاولة مرة أخرى.');
+      Alert.alert(isRTL ? 'خطأ' : 'Error', isRTL ? 'فشل اعتماد الهدف، يرجى المحاولة مرة أخرى.' : 'Failed to approve goal, please try again.');
     } finally {
       setCreating(false);
     }
@@ -318,8 +320,8 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
 
                 <Text style={styles.goalPrompt}>
                   {isEditingGoal
-                    ? 'عدل نص الهدف المكتوب أعلاه ثم احفظه'
-                    : 'سيتم تثبيته كبطاقة في لوحة الرؤية وإنشاء خريطة رحلة مخصصة لك 📌'}
+                    ? (isRTL ? 'عدل نص الهدف المكتوب أعلاه ثم احفظه' : 'Edit the goal text above and save it')
+                    : (isRTL ? 'سيتم تثبيته كبطاقة في لوحة الرؤية وإنشاء خريطة رحلة مخصصة لك 📌' : 'It will be pinned to your vision board and a custom journey map will be created for you 📌')}
                 </Text>
 
                 {/* Action buttons */}
@@ -354,7 +356,7 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
                       >
                         {creating
                           ? <ActivityIndicator color="#050B18" size="small" />
-                          : <Text style={styles.goalBtnPrimaryText}>نعم، اعتمد الهدف</Text>
+                          : <Text style={styles.goalBtnPrimaryText}>{isRTL ? 'نعم، اعتمد الهدف' : 'Yes, approve goal'}</Text>
                         }
                       </TouchableOpacity>
                     </>

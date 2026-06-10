@@ -72,7 +72,6 @@ function AppInner() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        const onboardingDone = await AsyncStorage.getItem('onboarding_done');
         const storedToken    = await api.getToken();
         if (storedToken) {
           setToken(storedToken);
@@ -81,8 +80,6 @@ function AppInner() {
           await fetchGoals(savedActiveId);
           setScreen('main');
           setActiveTab('home');
-        } else if (onboardingDone === 'true') {
-          setScreen('auth');
         } else {
           setScreen('onboarding');
         }
@@ -107,7 +104,6 @@ function AppInner() {
   }, [selectedGoal, settingsOpen]);
 
   const handleFinishOnboarding = async () => {
-    try { await AsyncStorage.setItem('onboarding_done', 'true'); } catch {}
     setScreen('auth');
   };
 
@@ -133,7 +129,7 @@ function AppInner() {
     setActiveGoal(null);
     setTasks([]);
     setSelectedGoal(null);
-    setScreen('auth');
+    setScreen('onboarding');
   };
 
   const handleGoalPress = (goal: GoalPin) => {

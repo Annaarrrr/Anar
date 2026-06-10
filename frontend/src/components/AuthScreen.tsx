@@ -26,6 +26,19 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       flex: 1,
       backgroundColor: colors.bg,
     },
+    /* ── Background blobs ── */
+    bgPurple: {
+      position: 'absolute',
+      top: -80, right: -60,
+      width: 280, height: 280, borderRadius: 140,
+      backgroundColor: colors.accent, opacity: 0.07,
+    },
+    bgTeal: {
+      position: 'absolute',
+      bottom: 160, left: -80,
+      width: 240, height: 240, borderRadius: 120,
+      backgroundColor: colors.accentAlt, opacity: 0.05,
+    },
     container: {
       flex: 1,
       backgroundColor: colors.bg,
@@ -36,14 +49,14 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       padding: 24,
     },
     card: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.surfaceElevated,
       borderRadius: 32,
       padding: 30,
       borderWidth: 1,
       borderColor: colors.borderLight,
-      shadowColor: '#6C5CE7',
+      shadowColor: colors.accent,
       shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: theme === 'light' ? 0.1 : 0.25,
+      shadowOpacity: 0.15,
       shadowRadius: 20,
       elevation: 8,
     },
@@ -72,15 +85,15 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme === 'light' ? '#161622' : '#2A2A3E',
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.border,
       borderRadius: 14,
       height: 52,
       gap: 10,
-      borderWidth: theme === 'dark' ? 1 : 0,
-      borderColor: colors.border,
     },
     appleBtnText: {
-      color: '#FFFFFF',
+      color: colors.textPrimary,
       fontFamily: 'Cairo_700Bold',
       fontSize: 14,
     },
@@ -270,6 +283,9 @@ export function AuthScreen({ onAuthSuccess }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.bgPurple} />
+      <View style={styles.bgTeal} />
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}

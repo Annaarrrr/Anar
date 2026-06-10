@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { useAppSettings } from '../context/AppContext';
+import { Colors } from '../theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -14,25 +16,328 @@ interface Props {
   onFinish: () => void;
 }
 
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      justifyContent: 'space-between',
+      paddingVertical: 10,
+    },
+    /* ── Background blobs ── */
+    bgPurple: {
+      position: 'absolute',
+      top: -80, right: -60,
+      width: 280, height: 280, borderRadius: 140,
+      backgroundColor: colors.accent, opacity: 0.07,
+    },
+    bgTeal: {
+      position: 'absolute',
+      bottom: 160, left: -80,
+      width: 240, height: 240, borderRadius: 120,
+      backgroundColor: colors.accentAlt, opacity: 0.05,
+    },
+    topBar: {
+      height: 50,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 24,
+      zIndex: 10,
+    },
+    skipBtn: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      backgroundColor: colors.surfaceElevated,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.borderLight,
+    },
+    skipText: {
+      fontSize: 13,
+      fontFamily: 'Cairo_600SemiBold',
+      color: colors.textSecondary,
+    },
+    centerSection: {
+      flex: 1.2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 10,
+    },
+    mascotContainer: {
+      width: 260,
+      height: 260,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+    },
+    bulbBody: {
+      width: 150,
+      height: 150,
+      borderRadius: 75,
+      backgroundColor: colors.accent,
+      borderWidth: 5,
+      borderColor: colors.bg,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.25,
+      shadowRadius: 15,
+      elevation: 8,
+      zIndex: 2,
+    },
+    bulbBodyMini: {
+      width: 110,
+      height: 110,
+      borderRadius: 55,
+      marginTop: -40,
+    },
+    bulbFace: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 24,
+      width: '100%',
+      height: '100%',
+    },
+    bulbFaceReady: {
+      flexDirection: 'column',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    eye: {
+      width: 16,
+      height: 40,
+      borderRadius: 8,
+      backgroundColor: colors.accentAlt,
+    },
+    eyeHappy: {
+      height: 10,
+      borderRadius: 5,
+      borderWidth: 3,
+      borderColor: colors.accentAlt,
+      backgroundColor: 'transparent',
+      borderBottomWidth: 0,
+      transform: [{ scaleY: -1 }],
+    },
+    bulbBase: {
+      width: 70,
+      height: 25,
+      backgroundColor: colors.textMuted,
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12,
+      borderWidth: 3,
+      borderColor: colors.bg,
+      marginTop: -3,
+      zIndex: 1,
+    },
+    bulbBaseMini: {
+      width: 50,
+      height: 18,
+      backgroundColor: colors.textMuted,
+      borderBottomLeftRadius: 8,
+      borderBottomRightRadius: 8,
+      borderWidth: 2,
+      borderColor: colors.bg,
+      marginTop: -2,
+      zIndex: 1,
+    },
+    bulbTip: {
+      width: 8,
+      height: 20,
+      backgroundColor: colors.accent,
+      borderRadius: 4,
+      position: 'absolute',
+      top: 35,
+      zIndex: 0,
+    },
+    bulbTipMini: {
+      width: 6,
+      height: 14,
+      backgroundColor: colors.accent,
+      borderRadius: 3,
+      position: 'absolute',
+      top: 58,
+      zIndex: 0,
+    },
+    stairsWrapper: {
+      width: 220,
+      height: 110,
+      position: 'absolute',
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      zIndex: 0,
+    },
+    stairStep1: {
+      width: 200,
+      height: 30,
+      backgroundColor: colors.surfaceElevated,
+      borderTopLeftRadius: 10,
+      borderTopRightRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.borderLight,
+    },
+    stairStep2: {
+      width: 150,
+      height: 30,
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 10,
+      borderTopRightRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.borderLight,
+    },
+    stairStep3: {
+      width: 100,
+      height: 30,
+      backgroundColor: colors.border,
+      borderTopLeftRadius: 10,
+      borderTopRightRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.borderLight,
+    },
+    starIcon: {
+      fontSize: 48,
+      position: 'absolute',
+      top: 25,
+      right: 35,
+    },
+    questionMark: {
+      fontSize: 64,
+      fontFamily: 'Cairo_700Bold',
+      color: colors.accentAlt,
+      position: 'absolute',
+      top: 15,
+      left: 35,
+    },
+    glassesContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 10,
+    },
+    glassesCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      borderWidth: 3,
+      borderColor: colors.bg,
+      backgroundColor: 'transparent',
+    },
+    glassesBridge: {
+      width: 12,
+      height: 3,
+      backgroundColor: colors.bg,
+    },
+    eyeReadyContainer: {
+      flexDirection: 'row',
+      gap: 36,
+      position: 'absolute',
+      top: 58,
+    },
+    eyeReady: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: colors.accentAlt,
+    },
+    smile: {
+      width: 20,
+      height: 10,
+      borderWidth: 3,
+      borderColor: colors.accentAlt,
+      borderRadius: 10,
+      borderTopWidth: 0,
+      backgroundColor: 'transparent',
+      marginTop: -8,
+    },
+    contentSection: {
+      flex: 0.8,
+      alignItems: 'center',
+      paddingHorizontal: 32,
+      justifyContent: 'center',
+      zIndex: 10,
+    },
+    title: {
+      fontSize: 22,
+      fontFamily: 'Cairo_700Bold',
+      color: colors.textPrimary,
+      textAlign: 'center',
+      lineHeight: 34,
+    },
+    description: {
+      fontSize: 14,
+      fontFamily: 'Cairo_400Regular',
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 12,
+      lineHeight: 22,
+    },
+    bottomSection: {
+      paddingBottom: 40,
+      alignItems: 'center',
+      gap: 24,
+      zIndex: 10,
+    },
+    paginator: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 8,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.borderLight,
+    },
+    activeDot: {
+      width: 24,
+      backgroundColor: colors.accentAlt,
+    },
+    nextBtn: {
+      backgroundColor: colors.accentAlt,
+      borderRadius: 14,
+      height: 52,
+      width: width - 48,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.accentAlt,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 10,
+      elevation: 6,
+    },
+    nextBtnText: {
+      color: '#FFFFFF',
+      fontSize: 15,
+      fontFamily: 'Cairo_700Bold',
+    },
+  });
+}
+
 export function OnboardingScreen({ onFinish }: Props) {
+  const { colors, language } = useAppSettings();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [step, setStep] = useState(0);
+  const isRTL = language === 'ar';
 
   const slides = [
     {
-      title: 'أهلاً بك في أنار',
-      description: 'حيث تتحول الأفكار إلى خطة',
+      title: isRTL ? 'أهلاً بك في أنار' : 'Welcome to Anar',
+      description: isRTL ? 'حيث تتحول الأفكار إلى خطة' : 'Where ideas become plans',
       mascotType: 'welcome',
       skipSide: 'left',
     },
     {
-      title: 'خطوة صغيرة كل يوم تصنع الفرق',
-      description: 'تتبع إنجازاتك اليومية واحتفل بنجاحاتك مع أنار في كل خطوة',
+      title: isRTL ? 'خطوة صغيرة كل يوم تصنع الفرق' : 'Small steps make a difference',
+      description: isRTL ? 'تتبع إنجازاتك اليومية واحتفل بنجاحاتك مع أنار في كل خطوة' : 'Track your daily progress and celebrate your successes.',
       mascotType: 'stairs',
       skipSide: 'right',
     },
     {
-      title: 'هل أنت مستعد لاكتشاف قدراتك؟',
-      description: 'أنار هنا ليرشدك في كل خطوة',
+      title: isRTL ? 'هل أنت مستعد لاكتشاف قدراتك؟' : 'Ready to discover your potential?',
+      description: isRTL ? 'أنار هنا ليرشدك في كل خطوة' : 'Anar is here to guide you every step of the way.',
       mascotType: 'ready',
       skipSide: 'none',
     },
@@ -113,17 +418,21 @@ export function OnboardingScreen({ onFinish }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Background glow blobs */}
+      <View style={styles.bgPurple} />
+      <View style={styles.bgTeal} />
+
       {/* Top Bar for Skip */}
       <View style={styles.topBar}>
         {currentSlide.skipSide === 'left' && (
-          <TouchableOpacity onPress={onFinish} style={styles.skipBtn}>
-            <Text style={styles.skipText}>تخطي</Text>
+          <TouchableOpacity onPress={onFinish} style={styles.skipBtn} activeOpacity={0.7}>
+            <Text style={styles.skipText}>{isRTL ? 'تخطي' : 'Skip'}</Text>
           </TouchableOpacity>
         )}
         <View style={{ flex: 1 }} />
         {currentSlide.skipSide === 'right' && (
-          <TouchableOpacity onPress={onFinish} style={styles.skipBtn}>
-            <Text style={styles.skipText}>تخطي</Text>
+          <TouchableOpacity onPress={onFinish} style={styles.skipBtn} activeOpacity={0.7}>
+            <Text style={styles.skipText}>{isRTL ? 'تخطي' : 'Skip'}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -141,291 +450,22 @@ export function OnboardingScreen({ onFinish }: Props) {
 
       {/* Bottom controls */}
       <View style={styles.bottomSection}>
-        {/* Paginator dots (RTL ordering) */}
-        <View style={styles.paginator}>
-          <View style={[styles.dot, step === 2 && styles.activeDot]} />
+        {/* Paginator dots (Dynamic direction) */}
+        <View style={[styles.paginator, !isRTL && { flexDirection: 'row' }]}>
+          <View style={[styles.dot, step === (isRTL ? 2 : 0) && styles.activeDot]} />
           <View style={[styles.dot, step === 1 && styles.activeDot]} />
-          <View style={[styles.dot, step === 0 && styles.activeDot]} />
+          <View style={[styles.dot, step === (isRTL ? 0 : 2) && styles.activeDot]} />
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity onPress={handleNext} style={styles.nextBtn}>
+        <TouchableOpacity onPress={handleNext} style={styles.nextBtn} activeOpacity={0.8}>
           <Text style={styles.nextBtnText}>
-            {step === 2 ? 'ابدأ الآن' : 'التالي ←'}
+            {step === 2 
+              ? (isRTL ? 'ابدأ الآن' : 'Get Started') 
+              : (isRTL ? 'التالي ←' : 'Next →')}
           </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F3F4FD',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-  },
-  topBar: {
-    height: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  skipBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  skipText: {
-    fontSize: 14,
-    fontFamily: 'Cairo_600SemiBold',
-    color: '#6C5CE7',
-  },
-  centerSection: {
-    flex: 1.2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mascotContainer: {
-    width: 260,
-    height: 260,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  bulbBody: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#6C5CE7',
-    borderWidth: 5,
-    borderColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#6C5CE7',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
-    elevation: 8,
-    zIndex: 2,
-  },
-  bulbBodyMini: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    marginTop: -40,
-  },
-  bulbFace: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 24,
-    width: '100%',
-    height: '100%',
-  },
-  bulbFaceReady: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  eye: {
-    width: 16,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#00BFA6',
-  },
-  eyeHappy: {
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 3,
-    borderColor: '#00BFA6',
-    backgroundColor: 'transparent',
-    borderBottomWidth: 0,
-    transform: [{ scaleY: -1 }],
-  },
-  bulbBase: {
-    width: 70,
-    height: 25,
-    backgroundColor: '#A2A5DF',
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    marginTop: -3,
-    zIndex: 1,
-  },
-  bulbBaseMini: {
-    width: 50,
-    height: 18,
-    backgroundColor: '#A2A5DF',
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    marginTop: -2,
-    zIndex: 1,
-  },
-  bulbTip: {
-    width: 8,
-    height: 20,
-    backgroundColor: '#6C5CE7',
-    borderRadius: 4,
-    position: 'absolute',
-    top: 35,
-    zIndex: 0,
-  },
-  bulbTipMini: {
-    width: 6,
-    height: 14,
-    backgroundColor: '#6C5CE7',
-    borderRadius: 3,
-    position: 'absolute',
-    top: 58,
-    zIndex: 0,
-  },
-  stairsWrapper: {
-    width: 220,
-    height: 110,
-    position: 'absolute',
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    zIndex: 0,
-  },
-  stairStep1: {
-    width: 200,
-    height: 30,
-    backgroundColor: '#E6E9F0',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  stairStep2: {
-    width: 150,
-    height: 30,
-    backgroundColor: '#DCDFEA',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  stairStep3: {
-    width: 100,
-    height: 30,
-    backgroundColor: '#CED2E0',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  starIcon: {
-    fontSize: 48,
-    position: 'absolute',
-    top: 25,
-    right: 35,
-  },
-  questionMark: {
-    fontSize: 64,
-    fontWeight: 'bold',
-    color: '#00BFA6',
-    position: 'absolute',
-    top: 15,
-    left: 35,
-  },
-  glassesContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  glassesCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    backgroundColor: 'transparent',
-  },
-  glassesBridge: {
-    width: 12,
-    height: 3,
-    backgroundColor: '#FFFFFF',
-  },
-  eyeReadyContainer: {
-    flexDirection: 'row',
-    gap: 36,
-    position: 'absolute',
-    top: 58,
-  },
-  eyeReady: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#00BFA6',
-  },
-  smile: {
-    width: 20,
-    height: 10,
-    borderWidth: 3,
-    borderColor: '#00BFA6',
-    borderRadius: 10,
-    borderTopWidth: 0,
-    backgroundColor: 'transparent',
-    marginTop: -8,
-  },
-  contentSection: {
-    flex: 0.8,
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 22,
-    fontFamily: 'Cairo_700Bold',
-    color: '#1E293B',
-    textAlign: 'center',
-    lineHeight: 34,
-  },
-  description: {
-    fontSize: 14,
-    fontFamily: 'Cairo_400Regular',
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 22,
-  },
-  bottomSection: {
-    paddingBottom: 40,
-    alignItems: 'center',
-    gap: 24,
-  },
-  paginator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#D1D5DB',
-  },
-  activeDot: {
-    width: 24,
-    backgroundColor: '#00BFA6',
-  },
-  nextBtn: {
-    backgroundColor: '#00BFA6',
-    borderRadius: 14,
-    height: 52,
-    width: width - 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#00BFA6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  nextBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Cairo_700Bold',
-  },
-});
