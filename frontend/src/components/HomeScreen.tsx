@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
+  Alert,
 } from 'react-native';
 import { Bell, ChevronLeft, Plus, ArrowLeft, ArrowRight, MessageSquare } from 'lucide-react-native';
 import { ActiveTab, Goal, Task } from '../types';
@@ -491,8 +492,16 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
 
         {/* Profile Row */}
         <View style={styles.profileRow}>
-          {/* Left: spacer to keep profile row balanced */}
-          <View style={{ width: 44 }} />
+          {/* Left: Bell notification */}
+          <TouchableOpacity
+            onPress={() => Alert.alert(
+              language === 'ar' ? 'إشعارات' : 'Notifications',
+              language === 'ar' ? 'لا يوجد إشعارات جديدة' : 'No new notifications'
+            )}
+            style={styles.bellBtn}
+          >
+            <Bell size={18} color={colors.textPrimary} />
+          </TouchableOpacity>
 
           {/* Right: Greeting + Avatar (avatar tap → settings) */}
           <View style={styles.profileInfo}>

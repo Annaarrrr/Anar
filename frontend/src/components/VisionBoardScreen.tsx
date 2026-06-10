@@ -47,14 +47,14 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
 
   const handleCompleteTask = async () => {
     if (!focusGoal || !firstIncompleteTask) {
-      Alert.alert('ðŸŽ‰', t.vision_task_done);
+      Alert.alert('🎉', t.vision_task_done);
       return;
     }
     try {
       await api.toggleTask(firstIncompleteTask.id, true);
       await refreshGoals();
     } catch {
-      Alert.alert(t.error, isRTL ? 'ÙØ´Ù„ ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù…Ù‡Ù…Ø©' : 'Failed to update task');
+      Alert.alert(t.error, isRTL ? 'فشل تحديث المهمة' : 'Failed to update task');
     }
   };
 
@@ -67,21 +67,21 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
       const updated = fresh.find((g) => g.id === goalId) ?? null;
       setTaskModalGoal(updated);
     } catch {
-      Alert.alert(t.error, isRTL ? 'ÙØ´Ù„ ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù…Ù‡Ù…Ø©' : 'Failed to update task');
+      Alert.alert(t.error, isRTL ? 'فشل تحديث المهمة' : 'Failed to update task');
     }
   };
 
   return (
     <View style={styles.container}>
 
-      {/* â”€â”€ Header (no redundant + button) â”€â”€ */}
+      {/* ── Header (no redundant + button) ── */}
       <View style={styles.header}>
         <View style={{ width: 44 }} />
         <Text style={styles.headerTitle}>{t.vision_title}</Text>
         <TouchableOpacity
           onPress={() => Alert.alert(
-            isRTL ? 'Ù…Ø´Ø§Ø±ÙƒØ©' : 'Share',
-            isRTL ? 'ØªÙ… Ù†Ø³Ø® Ø±Ø§Ø¨Ø· Ù„ÙˆØ­ØªÙƒ Ø§Ù„Ø¨ØµØ±ÙŠØ©' : 'Link to your vision board copied'
+            isRTL ? 'مشاركة' : 'Share',
+            isRTL ? 'تم نسخ رابط لوحتك البصرية' : 'Link to your vision board copied'
           )}
           style={styles.headerBtn}
         >
@@ -94,12 +94,12 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
         showsVerticalScrollIndicator={false}
       >
         {goals.length === 0 ? (
-          /* â”€â”€ Empty Board State â”€â”€ */
+          /* ── Empty Board State ── */
           <View style={styles.emptyBoard}>
             {/* Single "starter" pinned note */}
             <View style={[styles.emptyCard, { transform: [{ rotate: '-2deg' }] }]}>
               <View style={[styles.pinDot, { backgroundColor: '#6C5CE7', top: -8, alignSelf: 'center' }]} />
-              <Text style={styles.emptyCardEmoji}>ðŸ’¬</Text>
+              <Text style={styles.emptyCardEmoji}>💬</Text>
               <Text style={styles.emptyCardTitle}>{t.vision_empty_title}</Text>
               <Text style={styles.emptyCardText}>{t.vision_empty_text}</Text>
               <TouchableOpacity onPress={() => onNavigate('chat')} style={styles.emptyCardBtn}>
@@ -112,7 +112,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
             <View style={styles.mascotRow}>
               <View style={styles.mascotBubble}>
                 <Text style={styles.mascotText}>
-                  {isRTL ? 'ÙƒÙ„ Ø±Ø­Ù„Ø© ØªØ¨Ø¯Ø£ Ø¨Ø®Ø·ÙˆØ© Ø£ÙˆÙ„Ù‰â€¦ Ø§Ø¨Ø¯Ø£ Ø§Ù„Ø¢Ù†! âœ¨' : 'Every journey starts with a first stepâ€¦ Start now! âœ¨'}
+                  {isRTL ? 'كل رحلة تبدأ بخطوة أولى... ابدأ الآن! ✨' : 'Every journey starts with a first step... Start now! ✨'}
                 </Text>
                 <View style={styles.bubbleTail} />
               </View>
@@ -124,7 +124,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
             </View>
           </View>
         ) : (
-          /* â”€â”€ Goals Board â”€â”€ */
+          /* ── Goals Board ── */
           <>
             {/* Progress summary card */}
             {focusGoal && (
@@ -144,12 +144,12 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                   <View style={[styles.progressFill, { width: `${progressPercent}%` as any }]} />
                 </View>
                 <Text style={styles.progressGoalText} numberOfLines={1}>
-                  ðŸŽ¯ {focusGoal.text}
+                  🎯 {focusGoal.text}
                 </Text>
               </View>
             )}
 
-            {/* Goal pins â€” render in explicit rows of 2 */}
+            {/* Goal pins — render in explicit rows of 2 */}
             <View style={styles.pinsSection}>
               {(() => {
                 // Build the item list: all goals + the add-pin at the end
@@ -254,7 +254,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
         )}
       </ScrollView>
 
-      {/* â”€â”€ Today's Task Bar (above tab bar) â”€â”€ */}
+      {/* ── Today's Task Bar (above tab bar) ── */}
       {focusGoal && (
         <View style={styles.taskBar}>
           <TouchableOpacity onPress={handleCompleteTask} style={styles.taskCheckBtn}>
@@ -263,7 +263,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
 
           <View style={styles.taskBarCenter}>
             <Text style={styles.taskBarLabel}>
-              {t.vision_today_task} Â· {focusGoal.emoji} {focusGoal.text.substring(0, 18)}â€¦
+              {t.vision_today_task} · {focusGoal.emoji} {focusGoal.text.substring(0, 18)}...
             </Text>
             <Text style={styles.taskBarText} numberOfLines={1}>
               {firstIncompleteTask ? firstIncompleteTask.text : t.vision_task_done}
@@ -276,7 +276,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
         </View>
       )}
 
-      {/* â”€â”€ Tasks Quick-View Modal (long press on a pin) â”€â”€ */}
+      {/* ── Tasks Quick-View Modal (long press on a pin) ── */}
       <Modal
         animationType="slide"
         transparent
@@ -332,7 +332,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                   onPress={() => { setTaskModalGoal(null); onGoalPress(taskModalGoal); }}
                   style={styles.modalJourneyBtn}
                 >
-                  <Text style={styles.modalJourneyBtnText}>{t.journey_view_all} â†</Text>
+                  <Text style={styles.modalJourneyBtnText}>{t.journey_view_all} {isRTL ? '←' : '→'}</Text>
                 </TouchableOpacity>
 
                 {/* Set as Active Goal button */}
@@ -345,7 +345,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                     style={styles.setActiveBtn}
                   >
                     <Text style={styles.setActiveBtnText}>
-                      {isRTL ? 'â­ ØªØ¹ÙŠÙŠÙ† ÙƒÙ‡Ø¯Ù Ù†Ø´Ø·' : 'â­ Set as Active Goal'}
+                      {isRTL ? '⭐ تعيين كهدف نشط' : '⭐ Set as Active Goal'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -358,7 +358,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
   );
 }
 
-// â”€â”€ Theme-aware styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Theme-aware styles ────────────────────────────────────────────────────────
 function makeStyles(colors: Colors, theme: 'light' | 'dark') {
   // Cork-specific surface: warm cream in light, dark walnut in dark
   const corkCard     = theme === 'light' ? '#FFFDE7' : '#2C1A0E';
