@@ -131,10 +131,8 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
 
   // Pulsing glow on avatar
   const avatarGlow = useRef(new Animated.Value(0.6)).current;
-  // Typing dot animations
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
+  // Typing scribble animation
+  const scribbleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!active) {
@@ -153,22 +151,24 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
 
   useEffect(() => {
     if (!isTyping) return;
-    const animateDots = () => {
-      const makeDot = (dot: Animated.Value, delay: number) =>
-        Animated.loop(
-          Animated.sequence([
-            Animated.delay(delay),
-            Animated.timing(dot, { toValue: -6, duration: 300, useNativeDriver: true }),
-            Animated.timing(dot, { toValue: 0,  duration: 300, useNativeDriver: true }),
-            Animated.delay(600),
-          ])
-        );
-      makeDot(dot1, 0).start();
-      makeDot(dot2, 150).start();
-      makeDot(dot3, 300).start();
-    };
-    animateDots();
-    return () => { dot1.stopAnimation(); dot2.stopAnimation(); dot3.stopAnimation(); };
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scribbleAnim, {
+          toValue: 1,
+          duration: 360,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scribbleAnim, {
+          toValue: 0,
+          duration: 360,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
   }, [isTyping]);
 
   const handleSendMessage = React.useCallback((textToSend?: string) => {
@@ -426,11 +426,25 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
                   <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
                     <Mascot size={32} animated={false} />
                   </View>
-                  <View style={[styles.aiBubble, { paddingVertical: 14, paddingHorizontal: 18 }]}>
-                    <View style={styles.typingRow}>
-                      <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot1 }] }]} />
-                      <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot2 }] }]} />
-                      <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot3 }] }]} />
+                  <View style={[styles.aiBubble, { paddingVertical: 10, paddingHorizontal: 18, minWidth: 100, height: 46, justifyContent: 'center' }]}>
+                    <View style={{ width: 64, height: 26, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+                      <View style={{
+                        position: 'absolute',
+                        bottom: 4,
+                        width: 48,
+                        height: 2,
+                        backgroundColor: colors.textMuted,
+                        borderRadius: 1,
+                        opacity: 0.3,
+                      }} />
+                      <Animated.View style={{
+                        transform: [
+                          { translateX: scribbleAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 20] }) },
+                          { rotate: scribbleAnim.interpolate({ inputRange: [0, 1], outputRange: ['-15deg', '15deg'] }) }
+                        ]
+                      }}>
+                        <Text style={{ fontSize: 16 }}>✏️</Text>
+                      </Animated.View>
                     </View>
                   </View>
                 </View>
