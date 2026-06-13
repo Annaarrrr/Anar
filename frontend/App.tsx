@@ -10,6 +10,7 @@ import {
   BackHandler,
   Modal,
   Animated,
+  Easing,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold } from '@expo-google-fonts/cairo';
@@ -54,6 +55,33 @@ const TabBarItem = React.memo(({
   onPress,
   styles,
 }: TabBarItemProps) => {
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (active) {
+      bounceAnim.setValue(0);
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -6, // hop up 6px
+          duration: 90,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 110,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  }, [active]);
+
+  const scale = bounceAnim.interpolate({
+    inputRange: [-6, 0],
+    outputRange: [1.08, 1],
+  });
+
   return (
     <TouchableOpacity
       onPress={() => onPress(tabKey)}
@@ -83,11 +111,13 @@ const TabBarItem = React.memo(({
         }
       ]}
     >
-      <Icon size={22} color={active ? colors.accent : colors.textMuted} />
-      <Text style={[styles.tabLabel, { color: active ? colors.accent : colors.textMuted,
-        fontFamily: active ? 'Cairo_700Bold' : 'Cairo_400Regular' }]}>
-        {label}
-      </Text>
+      <Animated.View style={{ alignItems: 'center', justifyContent: 'center', transform: [{ translateY: bounceAnim }, { scale }] }}>
+        <Icon size={22} color={active ? colors.accent : colors.textMuted} />
+        <Text style={[styles.tabLabel, { color: active ? colors.accent : colors.textMuted,
+          fontFamily: active ? 'Cairo_700Bold' : 'Cairo_400Regular' }]}>
+          {label}
+        </Text>
+      </Animated.View>
       {active && <View style={[styles.activeDot, { backgroundColor: colors.accent }]} />}
     </TouchableOpacity>
   );
@@ -120,15 +150,15 @@ function AppInner() {
 
   useEffect(() => {
     pageAnim.setValue(0);
-    Animated.spring(pageAnim, {
+    Animated.timing(pageAnim, {
       toValue: 1,
-      tension: 180,
-      friction: 12,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }, [renderedTab]);
 
-  const slideDistance = 45;
+  const slideDistance = 30;
   const isRightToLeft = currentTabIndex >= prevTabIndex;
 
   const translateX = pageAnim.interpolate({
@@ -138,7 +168,7 @@ function AppInner() {
 
   const rotate = pageAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [isRightToLeft ? '2.5deg' : '-2.5deg', '0deg'],
+    outputRange: [isRightToLeft ? '1.2deg' : '-1.2deg', '0deg'],
   });
 
   const opacity = pageAnim.interpolate({
