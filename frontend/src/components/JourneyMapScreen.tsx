@@ -79,6 +79,25 @@ const StageNodeRow = React.memo(({
   onMeasureLayout,
   styles,
 }: StageNodeRowProps) => {
+  const shakeAnim = React.useRef(new Animated.Value(0)).current;
+
+  const handlePress = () => {
+    if (status === 'locked') {
+      shakeAnim.setValue(0);
+      Animated.sequence([
+        Animated.timing(shakeAnim, { toValue: -6, duration: 40, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 6, duration: 40, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -4, duration: 40, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 4, duration: 40, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 40, useNativeDriver: true }),
+      ]).start(() => {
+        onNodePress(displayIdx);
+      });
+    } else {
+      onNodePress(displayIdx);
+    }
+  };
+
   return (
     <View
       style={styles.nodeRow}
@@ -92,92 +111,94 @@ const StageNodeRow = React.memo(({
       <View style={{ height: 44 }} />
 
       <TouchableOpacity
-        onPress={() => onNodePress(displayIdx)}
+        onPress={handlePress}
         style={styles.nodeLayout}
         activeOpacity={0.8}
       >
-        {/* Column 1: Left Side */}
-        <View style={styles.nodeSideColumn}>
-          {!labelOnRight && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-              <View style={[styles.labelContainer, { alignItems: 'flex-end' }]}>
-                {status === 'active' && (
-                  <View style={[styles.nowBadge, { backgroundColor: pinColor }]}>
-                    <Text style={styles.nowBadgeText}>{jt.now}</Text>
-                  </View>
-                )}
-                <Text
-                  style={[
-                    styles.nodeLabel,
-                    status === 'completed' && { color: colors.accentAlt },
-                    status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
-                    status === 'locked'    && { color: colors.textMuted },
-                    { textAlign: 'right' }
-                  ]}
-                  numberOfLines={2}
-                >
-                  {stage.label}
-                </Text>
-                <Text style={[styles.nodeSub, { textAlign: 'right' }]}>{stage.sublabel}</Text>
-              </View>
-              <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
-            </View>
-          )}
-        </View>
-
-        {/* Column 2: Center Node */}
-        <View style={styles.nodeCenterColumn}>
-          <View style={styles.nodeOrbitContainer}>
-            {status === 'active' ? (
-              <>
-                <Animated.View style={[
-                  styles.nodeOrbit,
-                  { borderColor: pinColor + '55', transform: [{ scale: pulseAnim }] }
-                ]} />
-                <View style={[styles.nodeCircle, { backgroundColor: pinColor, borderColor: colors.border, shadowColor: colors.border }]}>
-                  <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
+        <Animated.View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', transform: [{ translateX: shakeAnim }] }}>
+          {/* Column 1: Left Side */}
+          <View style={styles.nodeSideColumn}>
+            {!labelOnRight && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+                <View style={[styles.labelContainer, { alignItems: 'flex-end' }]}>
+                  {status === 'active' && (
+                    <View style={[styles.nowBadge, { backgroundColor: pinColor }]}>
+                      <Text style={styles.nowBadgeText}>{jt.now}</Text>
+                    </View>
+                  )}
+                  <Text
+                    style={[
+                      styles.nodeLabel,
+                      status === 'completed' && { color: colors.accentAlt },
+                      status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
+                      status === 'locked'    && { color: colors.textMuted },
+                      { textAlign: 'right' }
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {stage.label}
+                  </Text>
+                  <Text style={[styles.nodeSub, { textAlign: 'right' }]}>{stage.sublabel}</Text>
                 </View>
-              </>
-            ) : status === 'completed' ? (
-              <View style={[styles.nodeCircle, styles.nodeCompleted]}>
-                <CheckIcon size={20} color="#FFFFFF" />
-              </View>
-            ) : (
-              <View style={[styles.nodeCircle, styles.nodeLocked]}>
-                <LockIcon size={16} color={colors.textMuted} />
+                <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
               </View>
             )}
           </View>
-        </View>
 
-        {/* Column 3: Right Side */}
-        <View style={styles.nodeSideColumn}>
-          {labelOnRight && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
-              <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
-              <View style={[styles.labelContainer, { alignItems: 'flex-start' }]}>
-                {status === 'active' && (
-                  <View style={[styles.nowBadge, { backgroundColor: pinColor }]}>
-                    <Text style={styles.nowBadgeText}>{jt.now}</Text>
+          {/* Column 2: Center Node */}
+          <View style={styles.nodeCenterColumn}>
+            <View style={styles.nodeOrbitContainer}>
+              {status === 'active' ? (
+                <>
+                  <Animated.View style={[
+                    styles.nodeOrbit,
+                    { borderColor: pinColor + '55', transform: [{ scale: pulseAnim }] }
+                  ]} />
+                  <View style={[styles.nodeCircle, { backgroundColor: pinColor, borderColor: colors.border, shadowColor: colors.border }]}>
+                    <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
                   </View>
-                )}
-                <Text
-                  style={[
-                    styles.nodeLabel,
-                    status === 'completed' && { color: colors.accentAlt },
-                    status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
-                    status === 'locked'    && { color: colors.textMuted },
-                    { textAlign: 'left' }
-                  ]}
-                  numberOfLines={2}
-                >
-                  {stage.label}
-                </Text>
-                <Text style={[styles.nodeSub, { textAlign: 'left' }]}>{stage.sublabel}</Text>
-              </View>
+                </>
+              ) : status === 'completed' ? (
+                <View style={[styles.nodeCircle, styles.nodeCompleted]}>
+                  <CheckIcon size={20} color="#FFFFFF" />
+                </View>
+              ) : (
+                <View style={[styles.nodeCircle, styles.nodeLocked]}>
+                  <LockIcon size={16} color={colors.textMuted} />
+                </View>
+              )}
             </View>
-          )}
-        </View>
+          </View>
+
+          {/* Column 3: Right Side */}
+          <View style={styles.nodeSideColumn}>
+            {labelOnRight && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
+                <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
+                <View style={[styles.labelContainer, { alignItems: 'flex-start' }]}>
+                  {status === 'active' && (
+                    <View style={[styles.nowBadge, { backgroundColor: pinColor }]}>
+                      <Text style={styles.nowBadgeText}>{jt.now}</Text>
+                    </View>
+                  )}
+                  <Text
+                    style={[
+                      styles.nodeLabel,
+                      status === 'completed' && { color: colors.accentAlt },
+                      status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
+                      status === 'locked'    && { color: colors.textMuted },
+                      { textAlign: 'left' }
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {stage.label}
+                  </Text>
+                  <Text style={[styles.nodeSub, { textAlign: 'left' }]}>{stage.sublabel}</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </Animated.View>
       </TouchableOpacity>
     </View>
   );
@@ -255,18 +276,30 @@ const JourneyModalTaskRow = React.memo(({
   onPress,
   styles,
 }: JourneyModalTaskRowProps) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    scaleAnim.setValue(1);
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 1.3, duration: 100, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1.0, friction: 4, tension: 40, useNativeDriver: true }),
+    ]).start();
+  }, [task.completed]);
+
   return (
     <TouchableOpacity
       onPress={() => onPress(task.id, task.completed, idx)}
       style={[styles.mTaskRow, task.completed && styles.mTaskRowDone]}
       activeOpacity={0.75}
     >
-      <View style={[
-        styles.mCheckbox,
-        task.completed && { backgroundColor: pinColor, borderColor: colors.border },
-      ]}>
-        {task.completed && <CheckIcon size={10} color="#FFF" />}
-      </View>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <View style={[
+          styles.mCheckbox,
+          task.completed && { backgroundColor: pinColor, borderColor: colors.border },
+        ]}>
+          {task.completed && <CheckIcon size={10} color="#FFF" />}
+        </View>
+      </Animated.View>
       <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
         <Text style={[styles.mTaskText, task.completed && { color: colors.textMuted }]}>
           {task.text}
