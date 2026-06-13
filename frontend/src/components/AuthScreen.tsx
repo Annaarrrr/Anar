@@ -11,7 +11,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { MailIcon, LockIcon, GlobeIcon } from './common/CustomIcons';
+import { MailIcon, LockIcon, GlobeIcon, GoogleLogo, AppleLogo } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -265,15 +265,15 @@ export function AuthScreen({ onAuthSuccess }: Props) {
             <View style={styles.socialContainer}>
               <SketchButton onPress={handleAppleLogin} variant="secondary">
                 <View style={styles.socialBtnContent}>
+                  <AppleLogo size={22} color={colors.textPrimary} />
                   <Text style={styles.appleBtnText}>{s.apple}</Text>
-                  <Text style={styles.appleIcon}>🍏</Text>
                 </View>
               </SketchButton>
 
               <SketchButton onPress={handleGoogleLogin} variant="secondary">
                 <View style={styles.socialBtnContent}>
+                  <GoogleLogo size={22} />
                   <Text style={styles.googleBtnText}>{s.google}</Text>
-                  <GlobeIcon size={18} color="#EA4335" />
                 </View>
               </SketchButton>
             </View>
