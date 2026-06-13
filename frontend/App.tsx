@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   ActivityIndicator,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   BackHandler,
   Modal,
+  Animated,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold } from '@expo-google-fonts/cairo';
@@ -112,6 +113,39 @@ function AppInner() {
   const [screen, setScreen]               = useState<AppScreen>('onboarding');
   const [activeTab, setActiveTab]         = useState<ActiveTab>('home');
   const [renderedTab, setRenderedTab]     = useState<ActiveTab>('home');
+
+  const [prevTabIndex, setPrevTabIndex]   = useState(0);
+  const [currentTabIndex, setCurrentTabIndex] = useState(0);
+  const pageAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    pageAnim.setValue(0);
+    Animated.spring(pageAnim, {
+      toValue: 1,
+      tension: 180,
+      friction: 12,
+      useNativeDriver: true,
+    }).start();
+  }, [renderedTab]);
+
+  const slideDistance = 45;
+  const isRightToLeft = currentTabIndex >= prevTabIndex;
+
+  const translateX = pageAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [isRightToLeft ? slideDistance : -slideDistance, 0],
+  });
+
+  const rotate = pageAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [isRightToLeft ? '2.5deg' : '-2.5deg', '0deg'],
+  });
+
+  const opacity = pageAnim.interpolate({
+    inputRange: [0, 0.3, 1],
+    outputRange: [0, 0.6, 1],
+  });
+
   const [token, setToken]                 = useState<string | null>(null);
   const [goals, setGoals]                 = useState<GoalPin[]>([]);
   const [activeGoal, setActiveGoal]       = useState<Goal | null>(null);
@@ -185,6 +219,8 @@ function AppInner() {
     const savedActiveId = await AsyncStorage.getItem('anar_active_goal');
     setActiveGoalId(savedActiveId);
     await fetchGoals(savedActiveId);
+    setPrevTabIndex(0);
+    setCurrentTabIndex(0);
     setScreen('main');
     setActiveTab('home');
     setRenderedTab('home');
@@ -203,6 +239,8 @@ function AppInner() {
     setActiveGoal(null);
     setTasks([]);
     setSelectedGoal(null);
+    setPrevTabIndex(0);
+    setCurrentTabIndex(0);
     setScreen('onboarding');
     setActiveTab('home');
     setRenderedTab('home');
@@ -213,9 +251,13 @@ function AppInner() {
   }, []);
 
   const handleTabPress = useCallback((key: ActiveTab) => {
+    const nextIdx = tabs.findIndex(t => t.key === key);
+    const currIdx = tabs.findIndex(t => t.key === activeTab);
+    setPrevTabIndex(currIdx);
+    setCurrentTabIndex(nextIdx);
     setActiveTab(key);
     setRenderedTab(key);
-  }, []);
+  }, [activeTab, tabs]);
 
   const handleOpenSettings = useCallback(() => {
     setSettingsOpen(true);
@@ -292,7 +334,7 @@ function AppInner() {
             />
           ) : (
             <View style={{ flex: 1, position: 'relative' }}>
-              <View style={{ flex: 1 }}>
+              <Animated.View style={{ flex: 1, opacity, transform: [{ translateX }, { rotate }] }}>
                 <View style={{ flex: 1, display: renderedTab === 'home' ? 'flex' : 'none' }}>
                   <HomeScreen
                     active={renderedTab === 'home'}
@@ -328,7 +370,7 @@ function AppInner() {
                     tasks={tasks}
                   />
                 </View>
-              </View>
+              </Animated.View>
 
               <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.border }]} pointerEvents="box-none">
                 {tabs.map(({ key, label, Icon }) => (

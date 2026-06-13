@@ -5,6 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Pressable,
+  Animated,
 } from 'react-native';
 import { CustomAlert as Alert } from './common/Alert';
 import {
@@ -46,6 +48,8 @@ interface HomeStatCardProps {
   styles: any;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 const HomeStatCard = React.memo(({
   rotate,
   washiColor,
@@ -56,15 +60,56 @@ const HomeStatCard = React.memo(({
   label,
   styles,
 }: HomeStatCardProps) => {
+  const wiggleAnim = React.useRef(new Animated.Value(0)).current;
+  const directionRef = React.useRef(1);
+
+  const handlePressIn = () => {
+    directionRef.current = Math.random() > 0.5 ? 1 : -1;
+    Animated.spring(wiggleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(wiggleAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const rotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [rotate, `${parseFloat(rotate) + directionRef.current * 3}deg`],
+  });
+
+  const scale = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.95],
+  });
+
   return (
-    <View style={[styles.statCard, { transform: [{ rotate }] }]}>
+    <AnimatedPressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[
+        styles.statCard,
+        {
+          transform: [{ rotate: rotateVal }, { scale }],
+        }
+      ]}
+    >
       <WashiTape style={{ top: -8, ...(washiColor ? { backgroundColor: washiColor } : {}) }} />
       <View style={[styles.statIconBox, { backgroundColor: iconBg }]}>
         {icon}
       </View>
       <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </AnimatedPressable>
   );
 });
 HomeStatCard.displayName = 'HomeStatCard';
@@ -104,6 +149,39 @@ function HomeScreenInner({
       });
     }
   }, [active, activeGoal, tasks]);
+
+  // New goal wiggles
+  const newGoalWiggle = React.useRef(new Animated.Value(0)).current;
+  const newGoalDir = React.useRef(1);
+
+  const handleNewGoalPressIn = () => {
+    newGoalDir.current = Math.random() > 0.5 ? 1 : -1;
+    Animated.spring(newGoalWiggle, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const handleNewGoalPressOut = () => {
+    Animated.spring(newGoalWiggle, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const newGoalRotate = newGoalWiggle.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', `${newGoalDir.current * 1.5}deg`],
+  });
+
+  const newGoalScale = newGoalWiggle.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.98],
+  });
 
   const {
     activeGoal: displayActiveGoal,
@@ -278,23 +356,26 @@ function HomeScreenInner({
             </View>
 
             {/* ── New goal CTA ── */}
-            <TouchableOpacity
+            <Pressable
               onPress={() => onNavigate('chat')}
-              style={styles.newGoalCard}
-              activeOpacity={0.8}
+              onPressIn={handleNewGoalPressIn}
+              onPressOut={handleNewGoalPressOut}
+              style={{ width: '100%' }}
             >
-              <View>
-                <Text style={[styles.newGoalTitle, { textAlign: isRTL ? 'right' : 'left' }]}>
-                  {t.home_new_goal}
-                </Text>
-                <Text style={[styles.newGoalHint, { textAlign: isRTL ? 'right' : 'left' }]}>
-                  {isRTL ? 'حدد هدفاً جديداً ←' : 'Set a new one →'}
-                </Text>
-              </View>
-              <View style={styles.newGoalArrow}>
-                <PlusIcon size={18} color="#FFFFFF" />
-              </View>
-            </TouchableOpacity>
+              <Animated.View style={[styles.newGoalCard, { transform: [{ rotate: newGoalRotate }, { scale: newGoalScale }] }]}>
+                <View>
+                  <Text style={[styles.newGoalTitle, { textAlign: isRTL ? 'right' : 'left' }]}>
+                    {t.home_new_goal}
+                  </Text>
+                  <Text style={[styles.newGoalHint, { textAlign: isRTL ? 'right' : 'left' }]}>
+                    {isRTL ? 'حدد هدفاً جديداً ←' : 'Set a new one →'}
+                  </Text>
+                </View>
+                <View style={styles.newGoalArrow}>
+                  <PlusIcon size={18} color="#FFFFFF" />
+                </View>
+              </Animated.View>
+            </Pressable>
           </>
         )}
       </View>

@@ -9,6 +9,8 @@ import {
   Modal,
   Platform,
   TextInput,
+  Pressable,
+  Animated,
 } from 'react-native';
 import { CustomAlert as Alert } from './common/Alert';
 import { ShareIcon, PlusIcon, CheckIcon, XIcon, ChatIcon, PencilIcon, TrashIcon } from './common/CustomIcons';
@@ -61,39 +63,77 @@ const GoalPinCard = React.memo(({
   const goalTotal = goal.tasks.length;
   const goalPct = goalTotal > 0 ? Math.round((goalCompleted / goalTotal) * 100) : 0;
 
+  const wiggleAnim = React.useRef(new Animated.Value(0)).current;
+  const directionRef = React.useRef(1);
+
+  const handlePressIn = () => {
+    directionRef.current = Math.random() > 0.5 ? 1 : -1;
+    Animated.spring(wiggleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(wiggleAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const rotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [`${goal.rotation}deg`, `${goal.rotation + directionRef.current * 3}deg`],
+  });
+
+  const scale = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.95],
+  });
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={() => onGoalPress(goal)}
-      style={[
-        styles.goalPin,
-        {
-          backgroundColor: theme === 'dark' ? '#2C1A0E' : goal.color,
-          transform: [{ rotate: `${goal.rotation}deg` }],
-          ...(theme === 'dark' ? { borderLeftWidth: 3, borderLeftColor: goal.pinColor } : {}),
-        },
-        isActive && { borderWidth: 2.5, borderColor: '#00BFA6' },
-      ]}
-      activeOpacity={0.85}
       onLongPress={() => onLongPress(goal)}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={{ width: CARD_W }}
     >
-      <Pushpin style={{ top: -15, alignSelf: 'center' }} />
-      {isActive && (
-        <View style={styles.activeBadge}>
-          <Text style={styles.activeBadgeText}>
-            {isRTL ? '⭐ نشط' : '⭐ Active'}
-          </Text>
+      <Animated.View
+        style={[
+          styles.goalPin,
+          {
+            backgroundColor: theme === 'dark' ? '#2C1A0E' : goal.color,
+            transform: [{ rotate: rotateVal }, { scale }],
+            ...(theme === 'dark' ? { borderLeftWidth: 3, borderLeftColor: goal.pinColor } : {}),
+            width: '100%',
+          },
+          isActive && { borderWidth: 2.5, borderColor: '#00BFA6' },
+        ]}
+      >
+        <Pushpin style={{ top: -15, alignSelf: 'center' }} />
+        {isActive && (
+          <View style={styles.activeBadge}>
+            <Text style={styles.activeBadgeText}>
+              {isRTL ? '⭐ نشط' : '⭐ Active'}
+            </Text>
+          </View>
+        )}
+        <Text style={styles.goalPinEmoji}>{goal.emoji}</Text>
+        <Text style={styles.goalPinText} numberOfLines={2}>{goal.text}</Text>
+        <View style={styles.goalPinBar}>
+          <View style={[styles.goalPinBarFill, { width: `${goalPct}%` as any, backgroundColor: goal.pinColor }]} />
         </View>
-      )}
-      <Text style={styles.goalPinEmoji}>{goal.emoji}</Text>
-      <Text style={styles.goalPinText} numberOfLines={2}>{goal.text}</Text>
-      <View style={styles.goalPinBar}>
-        <View style={[styles.goalPinBarFill, { width: `${goalPct}%` as any, backgroundColor: goal.pinColor }]} />
-      </View>
-      <View style={styles.goalPinFooter}>
-        <Text style={styles.goalPinHint}>{t.vision_tap_journey}</Text>
-        <Text style={styles.goalPinCount}>{goalCompleted}/{goalTotal}</Text>
-      </View>
-    </TouchableOpacity>
+        <View style={styles.goalPinFooter}>
+          <Text style={styles.goalPinHint}>{t.vision_tap_journey}</Text>
+          <Text style={styles.goalPinCount}>{goalCompleted}/{goalTotal}</Text>
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 });
 GoalPinCard.displayName = 'GoalPinCard';
@@ -106,16 +146,60 @@ interface AddPinCardProps {
 }
 
 const AddPinCard = React.memo(({ onPress, colors, t, styles }: AddPinCardProps) => {
+  const wiggleAnim = React.useRef(new Animated.Value(0)).current;
+  const directionRef = React.useRef(1);
+
+  const handlePressIn = () => {
+    directionRef.current = Math.random() > 0.5 ? 1 : -1;
+    Animated.spring(wiggleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(wiggleAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const rotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['1.5deg', `${1.5 + directionRef.current * 3}deg`],
+  });
+
+  const scale = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.95],
+  });
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
-      style={[styles.goalPin, styles.addPin, { transform: [{ rotate: '1.5deg' }] }]}
-      activeOpacity={0.8}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={{ width: CARD_W }}
     >
-      <Pushpin style={{ top: -15, alignSelf: 'center' }} />
-      <PlusIcon size={28} color={colors.textPrimary} />
-      <Text style={styles.addPinText}>{t.vision_new_goal}</Text>
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.goalPin,
+          styles.addPin,
+          {
+            transform: [{ rotate: rotateVal }, { scale }],
+            width: '100%',
+          }
+        ]}
+      >
+        <Pushpin style={{ top: -15, alignSelf: 'center' }} />
+        <PlusIcon size={28} color={colors.textPrimary} />
+        <Text style={styles.addPinText}>{t.vision_new_goal}</Text>
+      </Animated.View>
+    </Pressable>
   );
 });
 AddPinCard.displayName = 'AddPinCard';
