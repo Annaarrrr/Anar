@@ -30,11 +30,19 @@ interface Props {
   onNavigate:     (s: ActiveTab) => void;
   activeGoal:     Goal | null;
   tasks:          Task[];
-  onLogout:       () => void;
+  onLogout:       () => void | Promise<void>;
   onOpenSettings: () => void;
+  active?:        boolean;
 }
 
-export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSettings }: Props) {
+function HomeScreenInner({
+  onNavigate,
+  activeGoal,
+  tasks,
+  onLogout,
+  onOpenSettings,
+  active = false,
+}: Props) {
   const { colors, t, language } = useAppSettings();
   const isRTL = language === 'ar';
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
@@ -46,9 +54,9 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
   // Time-aware greeting
   const hour = new Date().getHours();
   const greeting =
-    hour < 12 ? (isRTL ? '☀️ صباح الخير' : '☀️ Good Morning') :
-    hour < 18 ? (isRTL ? '🌤 مساء الخير'  : '🌤 Good Afternoon') :
-                (isRTL ? '🌙 مساء النور'  : '🌙 Good Evening');
+    hour < 12 ? (isRTL ? '☀️ صباح الخير' : 'Good Morning ☀️') :
+    hour < 18 ? (isRTL ? '🌤 مساء الخير'  : 'Good Afternoon 🌤') :
+                (isRTL ? '🌙 مساء النور'  : 'Good Evening 🌙');
 
   const dayStr = new Date().toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
@@ -85,7 +93,7 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
 
       {/* ── Mascot hint banner ── */}
       <View style={styles.mascotRow}>
-        <Mascot size={46} />
+        <Mascot size={46} animated={active} />
         <View style={styles.speechBubble}>
           <Text style={styles.speechText}>{t.home_mascot_msg}</Text>
         </View>
@@ -97,7 +105,7 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
         {!activeGoal ? (
           /* ── Empty state ── */
           <View style={styles.emptyCard}>
-            <Mascot size={80} />
+            <Mascot size={80} animated={active} />
             <Text style={styles.emptyTitle}>
               {isRTL ? 'ابدأ رحلتك الآن 🚀' : 'Start Your Journey 🚀'}
             </Text>
@@ -415,3 +423,5 @@ function makeStyles(colors: any) {
     },
   });
 }
+
+export const HomeScreen = React.memo(HomeScreenInner);
