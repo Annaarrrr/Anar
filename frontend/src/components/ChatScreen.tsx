@@ -26,9 +26,10 @@ const { width } = Dimensions.get('window');
 interface Props {
   onNavigate: (s: ActiveTab) => void;
   refreshGoal: () => Promise<void>;
+  active?: boolean;
 }
 
-export function ChatScreen({ onNavigate, refreshGoal }: Props) {
+function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
   const { colors, t, language } = useAppSettings();
   const isRTL = language === 'ar';
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
@@ -62,13 +63,19 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
   const dot3 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
+    if (!active) {
+      avatarGlow.setValue(0.6);
+      return;
+    }
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(avatarGlow, { toValue: 1,   duration: 1600, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
         Animated.timing(avatarGlow, { toValue: 0.5, duration: 1600, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
       ])
-    ).start();
-  }, []);
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [active]);
 
   useEffect(() => {
     if (!isTyping) return;
@@ -629,3 +636,5 @@ function makeStyles(colors: any) {
     },
   });
 }
+
+export const ChatScreen = React.memo(ChatScreenInner);
