@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { MailIcon, LockIcon, GlobeIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
-import { NotebookBackground } from './common/NotebookBackground';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
@@ -26,20 +25,7 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
   return StyleSheet.create({
     safeArea: {
       flex: 1,
-      backgroundColor: colors.bg,
-    },
-    /* ── Background blobs ── */
-    bgPurple: {
-      position: 'absolute',
-      top: -80, right: -60,
-      width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.12,
-    },
-    bgTeal: {
-      position: 'absolute',
-      bottom: 160, left: -80,
-      width: 240, height: 240, borderRadius: 120,
-      backgroundColor: colors.accentAlt, opacity: 0.08,
+      backgroundColor: 'transparent',
     },
     container: {
       flex: 1,
@@ -260,10 +246,6 @@ export function AuthScreen({ onAuthSuccess }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <NotebookBackground />
-      <View style={styles.bgPurple} />
-      <View style={styles.bgTeal} />
-      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}

@@ -19,8 +19,9 @@ import {
   CheckIcon,
 } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
-import { NotebookBackground } from './common/NotebookBackground';
 import { WashiTape, Pushpin } from './common/PinOrnaments';
+import { HighlighterBadge } from './common/HighlighterBadge';
+import { CornerFold } from './common/CornerFold';
 import { ActiveTab, Goal, Task } from '../types';
 import { useAppSettings } from '../context/AppContext';
 import { Mascot } from './Mascot';
@@ -49,19 +50,12 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
     hour < 18 ? (isRTL ? '🌤 مساء الخير'  : '🌤 Good Afternoon') :
                 (isRTL ? '🌙 مساء النور'  : '🌙 Good Evening');
 
-  const dayStr = new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
+  const dayStr = new Date().toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
   });
 
   return (
     <View style={styles.container}>
-      {/* Notebook Background */}
-      <NotebookBackground />
-
-      {/* ── Background glow blobs ── */}
-      <View style={styles.bgPurple} />
-      <View style={styles.bgTeal} />
-
       {/* ── Safe area ── */}
       <View style={styles.safeTop} />
 
@@ -79,8 +73,8 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
         </TouchableOpacity>
 
         <View style={styles.greetBlock}>
-          <Text style={styles.greetDate}>{dayStr}</Text>
-          <Text style={styles.greetText}>{greeting}</Text>
+          <Text style={styles.greetDate} numberOfLines={1}>{dayStr}</Text>
+          <Text style={styles.greetText} numberOfLines={1}>{greeting}</Text>
         </View>
 
         <TouchableOpacity onPress={onOpenSettings} style={styles.avatarBtn} activeOpacity={0.7}>
@@ -157,12 +151,14 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
             {/* ── Hero goal card (flex: 1 → takes remaining space) ── */}
             <View style={styles.heroCard}>
               <Pushpin style={{ top: -14 }} />
+              <CornerFold size={20} />
               {/* Badge */}
               <View style={styles.heroBadgeRow}>
-                <View style={styles.heroBadge}>
-                  <ZapIcon size={10} color={colors.accent} />
-                  <Text style={styles.heroBadgeText}>{t.home_goal_active}</Text>
-                </View>
+                <HighlighterBadge
+                  text={t.home_goal_active}
+                  textColor={colors.accent}
+                  highlightColor={colors.accentAlt + '20'}
+                />
               </View>
 
               {/* Goal text */}
@@ -239,24 +235,10 @@ function makeStyles(colors: any) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.bg,
+      backgroundColor: 'transparent',
     },
     safeTop:    { height: Platform.OS === 'ios' ? 54 : 20 },
     safeBottom: { height: 86 },  // clears the tab bar
-
-    /* ── Background blobs ── */
-    bgPurple: {
-      position: 'absolute',
-      top: -80, right: -60,
-      width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.12,
-    },
-    bgTeal: {
-      position: 'absolute',
-      bottom: 160, left: -80,
-      width: 240, height: 240, borderRadius: 120,
-      backgroundColor: colors.accentAlt, opacity: 0.08,
-    },
 
     /* ── Top bar ── */
     topBar: {
@@ -276,9 +258,24 @@ function makeStyles(colors: any) {
       shadowOpacity: 1, shadowRadius: 0,
       elevation: 2,
     },
-    greetBlock: { alignItems: 'center', flex: 1 },
-    greetDate:  { fontSize: 10, fontFamily: 'Cairo_600SemiBold', color: colors.textMuted, letterSpacing: 0.4 },
-    greetText:  { fontSize: 16, fontFamily: 'Cairo_700Bold', color: colors.textPrimary },
+    greetBlock: { alignItems: 'center', flex: 1, justifyContent: 'center' },
+    greetDate:  {
+      fontSize: 10,
+      fontFamily: 'Cairo_600SemiBold',
+      color: colors.textMuted,
+      letterSpacing: 0.4,
+      textAlign: 'center',
+      width: '100%',
+      lineHeight: 14,
+    },
+    greetText:  {
+      fontSize: 16,
+      fontFamily: 'Cairo_700Bold',
+      color: colors.textPrimary,
+      textAlign: 'center',
+      width: '100%',
+      lineHeight: 22,
+    },
     avatarBtn: {
       width: 42, height: 42, borderRadius: 21,
       backgroundColor: colors.accent,

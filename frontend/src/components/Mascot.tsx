@@ -6,6 +6,7 @@ import { Colors } from '../theme/colors';
 interface Props {
   size?: number; // Base body width is 150
   variant?: 'welcome' | 'stairs' | 'ready';
+  animated?: boolean;
 }
 
 function makeStyles(colors: Colors) {
@@ -225,17 +226,21 @@ function makeStyles(colors: Colors) {
   });
 }
 
-export function Mascot({ size = 150, variant = 'welcome' }: Props) {
+export function Mascot({ size = 150, variant = 'welcome', animated = true }: Props) {
   const { colors } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const disableGlow = size < 100 || !animated;
 
   // Animation Refs
   const levitateAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!animated) return;
+
     // 1. levitation loop (gentle float)
-    Animated.loop(
+    const levitateLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(levitateAnim, {
           toValue: 1,
@@ -248,24 +253,36 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    levitateLoop.start();
 
     // 2. radiating glow loop
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
+    let pulseLoop: any;
+    if (!disableGlow) {
+      pulseLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 0,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseLoop.start();
+    }
+
+    return () => {
+      levitateLoop.stop();
+      if (pulseLoop) {
+        pulseLoop.stop();
+      }
+    };
+  }, [animated, disableGlow]);
 
   const baseWidth = variant === 'welcome' ? 150 : 260;
   const scale = size / baseWidth;
@@ -292,16 +309,18 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
         return (
           <View style={[styles.mascotWrapper, { width: 260, height: 260 }]}>
             {/* Glowing Ring */}
-            <Animated.View
-              style={[
-                styles.glowRing,
-                styles.glowRingMini,
-                {
-                  transform: [{ scale: glowScale }],
-                  opacity: glowOpacity,
-                },
-              ]}
-            />
+            {!disableGlow && (
+              <Animated.View
+                style={[
+                  styles.glowRing,
+                  styles.glowRingMini,
+                  {
+                    transform: [{ scale: glowScale }],
+                    opacity: glowOpacity,
+                  },
+                ]}
+              />
+            )}
 
             <View style={[styles.bulbBody, styles.bulbBodyMini]}>
               <View style={styles.bulbFace}>
@@ -329,15 +348,17 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
         return (
           <View style={[styles.mascotWrapper, { width: 260, height: 260 }]}>
             {/* Glowing Ring */}
-            <Animated.View
-              style={[
-                styles.glowRing,
-                {
-                  transform: [{ scale: glowScale }],
-                  opacity: glowOpacity,
-                },
-              ]}
-            />
+            {!disableGlow && (
+              <Animated.View
+                style={[
+                  styles.glowRing,
+                  {
+                    transform: [{ scale: glowScale }],
+                    opacity: glowOpacity,
+                  },
+                ]}
+              />
+            )}
 
             <Text style={styles.questionMark}>؟</Text>
             <View style={styles.bulbBody}>
@@ -366,15 +387,17 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
         return (
           <View style={[styles.mascotWrapper, { width: 150, height: 180 }]}>
             {/* Glowing Ring */}
-            <Animated.View
-              style={[
-                styles.glowRing,
-                {
-                  transform: [{ scale: glowScale }],
-                  opacity: glowOpacity,
-                },
-              ]}
-            />
+            {!disableGlow && (
+              <Animated.View
+                style={[
+                  styles.glowRing,
+                  {
+                    transform: [{ scale: glowScale }],
+                    opacity: glowOpacity,
+                  },
+                ]}
+              />
+            )}
 
             <View style={styles.bulbBody}>
               <View style={styles.bulbFace}>

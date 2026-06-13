@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import { ArrowLeftIcon, ArrowRightIcon, MicIcon, SendIcon, SparklesIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
-import { NotebookBackground } from './common/NotebookBackground';
 import { ActiveTab, Message } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -194,13 +193,6 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
 
   return (
     <View style={styles.container}>
-      <NotebookBackground />
-
-      {/* ── Background ── */}
-      <View style={styles.bgBase} />
-      <View style={styles.bgBlue1} />
-      <View style={styles.bgBlue2} />
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -377,7 +369,7 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
                             <ActivityIndicator color="white" />
                           ) : (
                             <Text style={[styles.primaryBtnText, { fontSize: 12 }]}>
-                              {isRTL ? 'نعم، اعتمد الهدف' : 'Yes, approve goal'}
+                              {t.chat_accept_goal}
                             </Text>
                           )}
                         </SketchButton>
@@ -448,26 +440,7 @@ function makeStyles(colors: any) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.bg,
-    },
-
-    /* ── Background ── */
-    bgBase: {
-      position: 'absolute',
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: colors.bg,
-    },
-    bgBlue1: {
-      position: 'absolute',
-      top: -60, left: -60,
-      width: 260, height: 260, borderRadius: 130,
-      backgroundColor: colors.accentAlt, opacity: 0.08,
-    },
-    bgBlue2: {
-      position: 'absolute',
-      bottom: 120, right: -80,
-      width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.08,
+      backgroundColor: 'transparent',
     },
 
     /* ── Header ── */
@@ -597,7 +570,7 @@ function makeStyles(colors: any) {
     },
     goalText: {
       fontSize: 14, fontFamily: 'Cairo_700Bold', color: colors.textPrimary,
-      textAlign: 'center', lineHeight: 22,
+      textAlign: 'center', lineHeight: 24,
     },
     goalInput: {
       fontSize: 14, fontFamily: 'Cairo_700Bold', color: colors.textPrimary,
@@ -606,7 +579,7 @@ function makeStyles(colors: any) {
     },
     goalPrompt: {
       fontSize: 11, fontFamily: 'Cairo_600SemiBold', color: colors.textMuted,
-      textAlign: 'center', marginBottom: 14, lineHeight: 18,
+      textAlign: 'center', marginBottom: 14, lineHeight: 21,
     },
     goalBtnsRow: {
       flexDirection: 'row', gap: 8,

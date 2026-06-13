@@ -14,6 +14,7 @@ import {
 import { ShareIcon, PlusIcon, CheckIcon, XIcon, ChatIcon, PencilIcon, TrashIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
 import { Pushpin } from './common/PinOrnaments';
+import { AnimatedStrikethrough } from './common/AnimatedStrikethrough';
 import { ActiveTab, GoalPin } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -405,9 +406,12 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                       <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
                         {task.completed && <CheckIcon size={11} color="white" />}
                       </View>
-                      <Text style={[styles.taskText, task.completed && styles.taskTextDone]}>
-                        {task.text}
-                      </Text>
+                      <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
+                        <Text style={[styles.taskText, task.completed && { color: colors.textMuted }]}>
+                          {task.text}
+                        </Text>
+                        <AnimatedStrikethrough visible={task.completed} />
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -456,13 +460,13 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
 
     /* Header */
     header: {
-      height: Platform.OS === 'ios' ? 76 : 60,
+      height: Platform.OS === 'ios' ? 96 : 60,
       backgroundColor: colors.corkHeader,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 20,
-      paddingTop: Platform.OS === 'ios' ? 20 : 0,
+      paddingTop: Platform.OS === 'ios' ? 42 : 0,
       borderBottomWidth: 3,
       borderColor: theme === 'light' ? '#6B340F' : '#1A0A03',
       shadowColor: '#000',
@@ -933,7 +937,6 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       textAlign: 'right',
     },
     taskTextDone: {
-      textDecorationLine: 'line-through',
       color: colors.textMuted,
     },
     modalJourneyBtn: {

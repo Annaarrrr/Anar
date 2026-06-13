@@ -24,8 +24,9 @@ import {
   TargetIcon,
 } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
-import { NotebookBackground } from './common/NotebookBackground';
 import { TornEdge } from './common/TornEdge';
+import { AnimatedStrikethrough } from './common/AnimatedStrikethrough';
+import { HighlighterBadge } from './common/HighlighterBadge';
 import { GoalPin, Task } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -232,11 +233,6 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
   return (
     <View style={styles.container}>
-      <NotebookBackground />
-      {/* ── Background glow blobs ── */}
-      <View style={styles.bgGrad2} />
-      <View style={styles.bgGrad3} />
-
       {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
@@ -424,23 +420,23 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
               <Text style={styles.drawerEmojiText}>{drawerStage.emoji}</Text>
             </View>
             <View style={styles.drawerHeaderText}>
-              <View style={[
-                styles.drawerBadge,
-                drawerStatus === 'completed' && { backgroundColor: colors.accentAlt + '20', borderColor: colors.accentAlt },
-                drawerStatus === 'active'    && { backgroundColor: goal.pinColor + '22', borderColor: goal.pinColor },
-                drawerStatus === 'locked'    && { backgroundColor: '#EF444420', borderColor: '#EF4444' },
-              ]}>
-                <Text style={[
-                  styles.drawerBadgeText,
-                  drawerStatus === 'completed' && { color: colors.accentAlt },
-                  drawerStatus === 'active'    && { color: goal.pinColor },
-                  drawerStatus === 'locked'    && { color: '#EF4444' },
-                ]}>
-                  {drawerStatus === 'completed' ? jt.badgeDone
+              <HighlighterBadge
+                text={
+                  drawerStatus === 'completed' ? jt.badgeDone
                    : drawerStatus === 'active'  ? jt.badgeActive
-                   : jt.badgeLocked}
-                </Text>
-              </View>
+                   : jt.badgeLocked
+                }
+                textColor={
+                  drawerStatus === 'completed' ? colors.accentAlt
+                   : drawerStatus === 'active'  ? goal.pinColor
+                   : '#EF4444'
+                }
+                highlightColor={
+                  drawerStatus === 'completed' ? colors.accentAlt + '20'
+                   : drawerStatus === 'active'  ? goal.pinColor + '22'
+                   : '#EF444420'
+                }
+              />
               <Text style={styles.drawerStageTitle}>{drawerStage.label}</Text>
             </View>
           </View>
@@ -518,9 +514,12 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                       {task.completed && <CheckIcon size={10} color="#FFF" />}
                     </View>
                   </Animated.View>
-                  <Text style={[styles.taskText, task.completed && styles.taskTextDone]}>
-                    {task.text}
-                  </Text>
+                  <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
+                    <Text style={[styles.taskText, task.completed && { color: colors.textMuted }]}>
+                      {task.text}
+                    </Text>
+                    <AnimatedStrikethrough visible={task.completed} />
+                  </View>
                 </TouchableOpacity>
               ))}
 
@@ -600,9 +599,12 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                   ]}>
                     {task.completed && <CheckIcon size={10} color="#FFF" />}
                   </View>
-                  <Text style={[styles.mTaskText, task.completed && styles.mTaskTextDone]}>
-                    {task.text}
-                  </Text>
+                  <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
+                    <Text style={[styles.mTaskText, task.completed && { color: colors.textMuted }]}>
+                      {task.text}
+                    </Text>
+                    <AnimatedStrikethrough visible={task.completed} />
+                  </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -616,28 +618,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 const makeStyles = (colors: any, theme: string) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
-  },
-
-  bgGrad2: {
-    position: 'absolute',
-    top: -80,
-    right: -60,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: colors.accent,
-    opacity: 0.07,
-  },
-  bgGrad3: {
-    position: 'absolute',
-    bottom: 160,
-    left: -80,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: colors.accentAlt,
-    opacity: 0.05,
+    backgroundColor: 'transparent',
   },
 
   header: {
@@ -1152,7 +1133,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     textAlign: 'right',
   },
   taskTextDone: {
-    textDecorationLine: 'line-through',
     color: colors.textMuted,
   },
 
@@ -1301,7 +1281,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     textAlign: 'right',
   },
   mTaskTextDone: {
-    textDecorationLine: 'line-through',
     color: colors.textMuted,
   },
 });

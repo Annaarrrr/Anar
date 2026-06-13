@@ -22,22 +22,8 @@ interface Props {
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.bg },
+    container: { flex: 1, backgroundColor: 'transparent' },
     safeTop: { height: Platform.OS === 'ios' ? 54 : 30 },
-    
-    /* ── Background blobs ── */
-    bgPurple: {
-      position: 'absolute',
-      top: -80, right: -60,
-      width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.07,
-    },
-    bgTeal: {
-      position: 'absolute',
-      bottom: 160, left: -80,
-      width: 240, height: 240, borderRadius: 120,
-      backgroundColor: colors.accentAlt, opacity: 0.05,
-    },
 
     /* ── Top bar ── */
     topBar: {
@@ -296,7 +282,7 @@ function makeStyles(colors: Colors) {
   });
 }
 
-import { NotebookBackground } from './common/NotebookBackground';
+import { HighlighterBadge } from './common/HighlighterBadge';
 
 export function ProgressScreen({ goals, tasks }: Props) {
   const { colors, t, language } = useAppSettings();
@@ -350,18 +336,12 @@ export function ProgressScreen({ goals, tasks }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Notebook ruled/chalkboard background */}
-      <NotebookBackground />
-
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
-        {/* ── Background glow blobs ── */}
-        <View style={styles.bgPurple} />
-        <View style={styles.bgTeal} />
 
         <View style={styles.safeTop} />
 
@@ -373,11 +353,11 @@ export function ProgressScreen({ goals, tasks }: Props) {
               {isRTL ? 'تقدمي' : 'My Progress'}
             </Text>
           </View>
-          <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeText}>
-              {totalGoals} {isRTL ? 'هدف نشط' : 'Active Goals'}
-            </Text>
-          </View>
+          <HighlighterBadge
+            text={`${totalGoals} ${isRTL ? 'هدف نشط' : 'Active Goals'}`}
+            textColor={colors.textPrimary}
+            highlightColor={colors.accent + '20'}
+          />
         </View>
 
         {/* ── Stat row ── */}
@@ -413,9 +393,11 @@ export function ProgressScreen({ goals, tasks }: Props) {
           {/* Card 1: Ring chart */}
           <View style={[styles.card, { width: width * 0.85 }]}>
             <View style={styles.cardHeader}>
-              <View style={[styles.cardBadge]}>
-                <Text style={styles.cardBadgeText}>{overallPct}%</Text>
-              </View>
+              <HighlighterBadge
+                text={`${overallPct}%`}
+                textColor={colors.accentAlt}
+                highlightColor={colors.accentAlt + '20'}
+              />
               <Text style={styles.cardTitle}>
                 {isRTL ? 'إجمالي إتمام المهام' : 'Overall Completion'}
               </Text>

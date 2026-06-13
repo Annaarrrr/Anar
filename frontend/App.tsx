@@ -31,6 +31,7 @@ import { SettingsScreen }    from './src/components/SettingsScreen';
 
 // Custom Hand-Drawn Icons
 import { HomeIcon, ChatIcon, VisionIcon, ProgressIcon } from './src/components/common/CustomIcons';
+import { NotebookBackground } from './src/components/common/NotebookBackground';
 
 // ─── Inner App (needs context to be mounted first) ────────────────────────────
 function AppInner() {
@@ -40,6 +41,7 @@ function AppInner() {
 
   const [screen, setScreen]               = useState<AppScreen>('onboarding');
   const [activeTab, setActiveTab]         = useState<ActiveTab>('home');
+  const [renderedTab, setRenderedTab]     = useState<ActiveTab>('home');
   const [token, setToken]                 = useState<string | null>(null);
   const [goals, setGoals]                 = useState<GoalPin[]>([]);
   const [activeGoal, setActiveGoal]       = useState<Goal | null>(null);
@@ -80,6 +82,7 @@ function AppInner() {
           await fetchGoals(savedActiveId);
           setScreen('main');
           setActiveTab('home');
+          setRenderedTab('home');
         } else {
           setScreen('onboarding');
         }
@@ -114,6 +117,7 @@ function AppInner() {
     await fetchGoals(savedActiveId);
     setScreen('main');
     setActiveTab('home');
+    setRenderedTab('home');
   };
 
   const handleSetActiveGoal = async (id: string) => {
@@ -130,11 +134,20 @@ function AppInner() {
     setTasks([]);
     setSelectedGoal(null);
     setScreen('onboarding');
+    setActiveTab('home');
+    setRenderedTab('home');
   };
 
   const handleGoalPress = (goal: GoalPin) => {
     const fresh = goals.find((g) => g.id === goal.id) ?? goal;
     setSelectedGoal(fresh);
+  };
+
+  const handleTabPress = (key: ActiveTab) => {
+    setActiveTab(key);
+    requestAnimationFrame(() => {
+      setRenderedTab(key);
+    });
   };
 
   if (!fontsLoaded || !appReady) {
@@ -159,12 +172,12 @@ function AppInner() {
     : screen === 'onboarding' ? 'light'
     : colors.statusBar;
 
-  const renderActiveTabScreen = () => {
-    switch (activeTab) {
+  const renderActiveTabScreen = (tab: ActiveTab) => {
+    switch (tab) {
       case 'home':
         return (
           <HomeScreen
-            onNavigate={setActiveTab}
+            onNavigate={handleTabPress}
             activeGoal={activeGoal}
             tasks={tasks}
             onLogout={handleLogout}
@@ -172,11 +185,11 @@ function AppInner() {
           />
         );
       case 'chat':
-        return <ChatScreen onNavigate={setActiveTab} refreshGoal={fetchGoals} />;
+        return <ChatScreen onNavigate={handleTabPress} refreshGoal={fetchGoals} />;
       case 'vision':
         return (
           <VisionBoardScreen
-            onNavigate={setActiveTab}
+            onNavigate={handleTabPress}
             goals={goals}
             activeGoalId={activeGoalId}
             onGoalPress={handleGoalPress}
@@ -189,7 +202,7 @@ function AppInner() {
       default:
         return (
           <HomeScreen
-            onNavigate={setActiveTab}
+            onNavigate={handleTabPress}
             activeGoal={activeGoal}
             tasks={tasks}
             onLogout={handleLogout}
@@ -199,9 +212,19 @@ function AppInner() {
     }
   };
 
+  const showNotebookBg = !(screen === 'main' && activeTab === 'vision');
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: safeAreaBg }]}>
+    <View style={[styles.container, { backgroundColor: safeAreaBg }]}>
       <StatusBar style={statusBarStyle} />
+
+      {showNotebookBg && (
+        <>
+          <NotebookBackground />
+          <View style={[styles.bgPurple, { backgroundColor: colors.accent }]} />
+          <View style={[styles.bgTeal, { backgroundColor: colors.accentAlt }]} />
+        </>
+      )}
 
       {screen === 'onboarding' && <OnboardingScreen onFinish={handleFinishOnboarding} />}
       {screen === 'auth'       && <AuthScreen onAuthSuccess={handleAuthSuccess} />}
@@ -223,11 +246,11 @@ function AppInner() {
             /* ── Normal tab navigation ── */
             <View style={{ flex: 1, position: 'relative' }}>
               <View style={{ flex: 1 }}>
-                {renderActiveTabScreen()}
+                {renderActiveTabScreen(renderedTab)}
               </View>
 
               {/* ── Tab Bar ── */}
-              <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.border }]}>
+              <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.border }]} pointerEvents="box-none">
                 {(
                   [
                     { key: 'home',     label: t.nav_home,     Icon: HomeIcon      },
@@ -238,7 +261,35 @@ function AppInner() {
                 ).map(({ key, label, Icon }) => {
                   const active = activeTab === key;
                   return (
-                    <TouchableOpacity key={key} onPress={() => setActiveTab(key)} style={styles.tabItem}>
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => handleTabPress(key)}
+                      delayPressIn={0}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.tabItem,
+                        active ? {
+                          backgroundColor: colors.surfaceElevated,
+                          borderLeftWidth: 2.5,
+                          borderRightWidth: 2.5,
+                          borderTopWidth: 2.5,
+                          borderBottomWidth: 0,
+                          borderColor: colors.border,
+                          borderTopLeftRadius: 14,
+                          borderTopRightRadius: 14,
+                          height: Platform.OS === 'ios' ? 92 : 74,
+                          paddingTop: 10,
+                          shadowColor: colors.border,
+                          shadowOffset: { width: 2, height: -2 },
+                          shadowOpacity: 0.12,
+                          shadowRadius: 2,
+                          elevation: 6,
+                          zIndex: 10,
+                        } : {
+                          height: Platform.OS === 'ios' ? 82 : 64,
+                        }
+                      ]}
+                    >
                       <Icon size={22} color={active ? colors.accent : colors.textMuted} />
                       <Text style={[styles.tabLabel, { color: active ? colors.accent : colors.textMuted,
                         fontFamily: active ? 'Cairo_700Bold' : 'Cairo_400Regular' }]}>
@@ -276,7 +327,7 @@ function AppInner() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -294,6 +345,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Platform.OS === 'android' ? 30 : 0,
   },
+  bgPurple: {
+    position: 'absolute',
+    top: -80, right: -60,
+    width: 280, height: 280, borderRadius: 140,
+    opacity: 0.12,
+  },
+  bgTeal: {
+    position: 'absolute',
+    bottom: 160, left: -80,
+    width: 240, height: 240, borderRadius: 120,
+    opacity: 0.08,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -304,12 +367,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 70,
+    height: Platform.OS === 'ios' ? 82 : 64,
     borderTopWidth: 3,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-around',
-    paddingBottom: 8,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.05,
@@ -319,7 +381,7 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
     flex: 1,
   },
   tabLabel: {

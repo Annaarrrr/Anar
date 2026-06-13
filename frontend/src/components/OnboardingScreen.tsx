@@ -12,7 +12,6 @@ import { Colors } from '../theme/colors';
 import { Mascot } from './Mascot';
 
 import { SketchButton } from './common/SketchButton';
-import { NotebookBackground } from './common/NotebookBackground';
 
 const { width } = Dimensions.get('window');
 
@@ -24,22 +23,9 @@ function makeStyles(colors: Colors) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.bg,
+      backgroundColor: 'transparent',
       justifyContent: 'space-between',
       paddingVertical: 10,
-    },
-    /* ── Background blobs ── */
-    bgPurple: {
-      position: 'absolute',
-      top: -80, right: -60,
-      width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.12,
-    },
-    bgTeal: {
-      position: 'absolute',
-      bottom: 160, left: -80,
-      width: 240, height: 240, borderRadius: 120,
-      backgroundColor: colors.accentAlt, opacity: 0.08,
     },
     topBar: {
       height: 50,
@@ -166,11 +152,6 @@ export function OnboardingScreen({ onFinish }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <NotebookBackground />
-      {/* Background glow blobs */}
-      <View style={styles.bgPurple} />
-      <View style={styles.bgTeal} />
-
       {/* Top Bar for Skip */}
       <View style={styles.topBar}>
         {currentSlide.skipSide === 'left' && (
