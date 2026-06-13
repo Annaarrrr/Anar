@@ -19,6 +19,7 @@ import {
   CheckIcon,
 } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
+import { NotebookBackground } from './common/NotebookBackground';
 import { ActiveTab, Goal, Task } from '../types';
 import { useAppSettings } from '../context/AppContext';
 import { Mascot } from './Mascot';
@@ -53,6 +54,9 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
 
   return (
     <View style={styles.container}>
+      {/* Notebook Background */}
+      <NotebookBackground />
+
       {/* ── Background glow blobs ── */}
       <View style={styles.bgPurple} />
       <View style={styles.bgTeal} />

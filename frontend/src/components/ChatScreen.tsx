@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { ArrowLeftIcon, ArrowRightIcon, MicIcon, SendIcon, SparklesIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
+import { NotebookBackground } from './common/NotebookBackground';
 import { ActiveTab, Message } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -193,6 +194,8 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
 
   return (
     <View style={styles.container}>
+      <NotebookBackground />
+
       {/* ── Background ── */}
       <View style={styles.bgBase} />
       <View style={styles.bgBlue1} />

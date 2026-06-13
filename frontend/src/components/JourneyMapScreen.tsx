@@ -24,6 +24,7 @@ import {
   TargetIcon,
 } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
+import { NotebookBackground } from './common/NotebookBackground';
 import { GoalPin, Task } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -230,6 +231,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
   return (
     <View style={styles.container}>
+      <NotebookBackground />
       {/* ── Background glow blobs ── */}
       <View style={styles.bgGrad2} />
       <View style={styles.bgGrad3} />

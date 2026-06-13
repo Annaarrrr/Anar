@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { XIcon, MoonIcon, SunIcon, GlobeIcon, LogOutIcon, CheckIcon } from './common/CustomIcons';
+import { NotebookBackground } from './common/NotebookBackground';
 import { useAppSettings } from '../context/AppContext';
 import { Language, Theme } from '../types';
 
@@ -66,6 +67,7 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
 
   return (
     <View style={[ss.container, { backgroundColor: colors.bg }]}>
+      <NotebookBackground />
 
       {/* Handle + Header */}
       <View style={[ss.header, { borderBottomColor: colors.border }]}>

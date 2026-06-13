@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 70,
-    borderTopWidth: 1.5,
+    borderTopWidth: 3,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',

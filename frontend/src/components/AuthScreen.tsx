@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { MailIcon, LockIcon, GlobeIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
+import { NotebookBackground } from './common/NotebookBackground';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
@@ -259,6 +260,7 @@ export function AuthScreen({ onAuthSuccess }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <NotebookBackground />
       <View style={styles.bgPurple} />
       <View style={styles.bgTeal} />
       

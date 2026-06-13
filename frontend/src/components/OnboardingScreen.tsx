@@ -12,6 +12,7 @@ import { Colors } from '../theme/colors';
 import { Mascot } from './Mascot';
 
 import { SketchButton } from './common/SketchButton';
+import { NotebookBackground } from './common/NotebookBackground';
 
 const { width } = Dimensions.get('window');
 
@@ -165,6 +166,7 @@ export function OnboardingScreen({ onFinish }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <NotebookBackground />
       {/* Background glow blobs */}
       <View style={styles.bgPurple} />
       <View style={styles.bgTeal} />
