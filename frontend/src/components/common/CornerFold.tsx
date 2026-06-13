@@ -10,7 +10,7 @@ interface Props {
   style?: any;
 }
 
-export function CornerFold({ size = 16, color, backgroundColor, style }: Props) {
+export const CornerFold = React.memo(function CornerFold({ size = 16, color, backgroundColor, style }: Props) {
   const { colors, theme } = useAppSettings();
   const cardColor = color || colors.surface;
   
@@ -39,7 +39,7 @@ export function CornerFold({ size = 16, color, backgroundColor, style }: Props) 
       </Svg>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

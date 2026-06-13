@@ -12,7 +12,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export function HighlighterBadge({ text, textColor, highlightColor, style, textStyle, children }: Props) {
+export const HighlighterBadge = React.memo(function HighlighterBadge({ text, textColor, highlightColor, style, textStyle, children }: Props) {
   const { colors, theme } = useAppSettings();
   const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -109,4 +109,4 @@ export function HighlighterBadge({ text, textColor, highlightColor, style, textS
       )}
     </View>
   );
-}
+});

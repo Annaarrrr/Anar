@@ -177,7 +177,7 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
   });
 }
 
-export function AuthScreen({ onAuthSuccess }: Props) {
+function AuthScreenInner({ onAuthSuccess }: Props) {
   const { colors, theme, language } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors, theme), [colors, theme]);
   const isRTL = language === 'ar';
@@ -351,3 +351,5 @@ export function AuthScreen({ onAuthSuccess }: Props) {
     </SafeAreaView>
   );
 }
+
+export const AuthScreen = React.memo(AuthScreenInner);

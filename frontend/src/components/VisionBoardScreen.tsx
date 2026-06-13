@@ -34,6 +34,92 @@ interface Props {
   active?: boolean;
 }
 
+interface GoalPinCardProps {
+  goal: GoalPin;
+  isActive: boolean;
+  theme: 'light' | 'dark';
+  isRTL: boolean;
+  colors: any;
+  t: any;
+  onGoalPress: (goal: GoalPin) => void;
+  onLongPress: (goal: GoalPin) => void;
+  styles: any;
+}
+
+const GoalPinCard = React.memo(({
+  goal,
+  isActive,
+  theme,
+  isRTL,
+  colors,
+  t,
+  onGoalPress,
+  onLongPress,
+  styles,
+}: GoalPinCardProps) => {
+  const goalCompleted = goal.tasks.filter((t) => t.completed).length;
+  const goalTotal = goal.tasks.length;
+  const goalPct = goalTotal > 0 ? Math.round((goalCompleted / goalTotal) * 100) : 0;
+
+  return (
+    <TouchableOpacity
+      onPress={() => onGoalPress(goal)}
+      style={[
+        styles.goalPin,
+        {
+          backgroundColor: theme === 'dark' ? '#2C1A0E' : goal.color,
+          transform: [{ rotate: `${goal.rotation}deg` }],
+          ...(theme === 'dark' ? { borderLeftWidth: 3, borderLeftColor: goal.pinColor } : {}),
+        },
+        isActive && { borderWidth: 2.5, borderColor: '#00BFA6' },
+      ]}
+      activeOpacity={0.85}
+      onLongPress={() => onLongPress(goal)}
+    >
+      <Pushpin style={{ top: -15, alignSelf: 'center' }} />
+      {isActive && (
+        <View style={styles.activeBadge}>
+          <Text style={styles.activeBadgeText}>
+            {isRTL ? '⭐ نشط' : '⭐ Active'}
+          </Text>
+        </View>
+      )}
+      <Text style={styles.goalPinEmoji}>{goal.emoji}</Text>
+      <Text style={styles.goalPinText} numberOfLines={2}>{goal.text}</Text>
+      <View style={styles.goalPinBar}>
+        <View style={[styles.goalPinBarFill, { width: `${goalPct}%` as any, backgroundColor: goal.pinColor }]} />
+      </View>
+      <View style={styles.goalPinFooter}>
+        <Text style={styles.goalPinHint}>{t.vision_tap_journey}</Text>
+        <Text style={styles.goalPinCount}>{goalCompleted}/{goalTotal}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+});
+GoalPinCard.displayName = 'GoalPinCard';
+
+interface AddPinCardProps {
+  onPress: () => void;
+  colors: any;
+  t: any;
+  styles: any;
+}
+
+const AddPinCard = React.memo(({ onPress, colors, t, styles }: AddPinCardProps) => {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.goalPin, styles.addPin, { transform: [{ rotate: '1.5deg' }] }]}
+      activeOpacity={0.8}
+    >
+      <Pushpin style={{ top: -15, alignSelf: 'center' }} />
+      <PlusIcon size={28} color={colors.textPrimary} />
+      <Text style={styles.addPinText}>{t.vision_new_goal}</Text>
+    </TouchableOpacity>
+  );
+});
+AddPinCard.displayName = 'AddPinCard';
+
 function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, onSetActiveGoal, refreshGoals, active = false }: Props) {
   const { t, language, colors, theme } = useAppSettings();
   const isRTL = language === 'ar';
@@ -42,6 +128,12 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
   const [taskModalGoal, setTaskModalGoal] = useState<GoalPin | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editGoalText, setEditGoalText] = useState('');
+
+  const handleGoalLongPress = React.useCallback((goal: GoalPin) => {
+    setTaskModalGoal(goal);
+    setIsEditing(false);
+    setEditGoalText(goal.text);
+  }, []);
 
   const handleEditSave = async () => {
     if (!taskModalGoal) return;
@@ -222,64 +314,30 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
                     {row.map((item, colIdx) => {
                       if (item.type === 'add') {
                         return (
-                          <TouchableOpacity
+                          <AddPinCard
                             key="add"
                             onPress={() => onNavigate('chat')}
-                            style={[styles.goalPin, styles.addPin, { transform: [{ rotate: '1.5deg' }] }]}
-                            activeOpacity={0.8}
-                          >
-                            <Pushpin style={{ top: -15, alignSelf: 'center' }} />
-                            <PlusIcon size={28} color={colors.textPrimary} />
-                            <Text style={styles.addPinText}>{t.vision_new_goal}</Text>
-                          </TouchableOpacity>
+                            colors={colors}
+                            t={t}
+                            styles={styles}
+                          />
                         );
                       }
                       const goal = item.goal;
-                      const goalCompleted = goal.tasks.filter((t) => t.completed).length;
-                      const goalTotal = goal.tasks.length;
-                      const goalPct = goalTotal > 0 ? Math.round((goalCompleted / goalTotal) * 100) : 0;
                       const isActive = goal.id === (activeGoalId ?? focusGoal?.id);
                       return (
-                        <TouchableOpacity
+                        <GoalPinCard
                           key={goal.id}
-                          onPress={() => onGoalPress(goal)}
-                          style={[
-                            styles.goalPin,
-                            {
-                              // In dark mode the pastel goal.color is blinding — use dark walnut base
-                              backgroundColor: theme === 'dark' ? '#2C1A0E' : goal.color,
-                              transform: [{ rotate: `${goal.rotation}deg` }],
-                              // Subtle left accent border using goal's pin color for identity
-                              ...(theme === 'dark' ? { borderLeftWidth: 3, borderLeftColor: goal.pinColor } : {}),
-                            },
-                            isActive && { borderWidth: 2.5, borderColor: '#00BFA6' },
-                          ]}
-                          activeOpacity={0.85}
-                          onLongPress={() => {
-                            setTaskModalGoal(goal);
-                            setIsEditing(false);
-                            setEditGoalText(goal.text);
-                          }}
-                        >
-                          <Pushpin style={{ top: -15, alignSelf: 'center' }} />
-                          {/* Active goal star badge */}
-                          {isActive && (
-                            <View style={styles.activeBadge}>
-                              <Text style={styles.activeBadgeText}>
-                                {isRTL ? '⭐ نشط' : '⭐ Active'}
-                              </Text>
-                            </View>
-                          )}
-                          <Text style={styles.goalPinEmoji}>{goal.emoji}</Text>
-                          <Text style={styles.goalPinText} numberOfLines={2}>{goal.text}</Text>
-                          <View style={styles.goalPinBar}>
-                            <View style={[styles.goalPinBarFill, { width: `${goalPct}%` as any, backgroundColor: goal.pinColor }]} />
-                          </View>
-                          <View style={styles.goalPinFooter}>
-                            <Text style={styles.goalPinHint}>{t.vision_tap_journey}</Text>
-                            <Text style={styles.goalPinCount}>{goalCompleted}/{goalTotal}</Text>
-                          </View>
-                        </TouchableOpacity>
+                          goal={goal}
+                          isActive={isActive}
+                          theme={theme}
+                          isRTL={isRTL}
+                          colors={colors}
+                          t={t}
+                          onGoalPress={onGoalPress}
+                          onLongPress={handleGoalLongPress}
+                          styles={styles}
+                        />
                       );
                     })}
                     {/* Fill empty slot in last row with a spacer */}

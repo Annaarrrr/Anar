@@ -21,7 +21,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export function SketchButton({
+export const SketchButton = React.memo(function SketchButton({
   onPress,
   children,
   title,
@@ -143,7 +143,7 @@ export function SketchButton({
       </Animated.View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

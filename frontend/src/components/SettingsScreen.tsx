@@ -18,7 +18,49 @@ interface Props {
   onLogout: () => void;
 }
 
-export function SettingsScreen({ onClose, onLogout }: Props) {
+const OptionBtn = React.memo(({
+  label, selected, onPress, icon,
+}: { label: string; selected: boolean; onPress: () => void; icon?: React.ReactNode }) => {
+  const { colors, theme } = useAppSettings();
+  const selectedBg = theme === 'dark' ? '#332515' : '#FFEAD2';
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[
+        ss.optionBtn,
+        {
+          backgroundColor: selected ? selectedBg : colors.bg,
+          borderColor: colors.border,
+          shadowColor: colors.border,
+        },
+      ]}
+      activeOpacity={0.75}
+    >
+      {icon && <View style={ss.optionIcon}>{icon}</View>}
+      <Text style={[ss.optionLabel, { color: colors.textPrimary, backgroundColor: 'transparent' }]}>
+        {label}
+      </Text>
+      {selected && (
+        <View style={[ss.checkDot, { backgroundColor: colors.accent, borderColor: colors.border }]}>
+          <CheckIcon size={10} color="#FFFFFF" />
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+});
+OptionBtn.displayName = 'OptionBtn';
+
+const SectionTitle = React.memo(({ children }: { children: string }) => {
+  const { colors, isRTL } = useAppSettings();
+  return (
+    <Text style={[ss.sectionTitle, { color: colors.textMuted, textAlign: isRTL ? 'right' : 'left', backgroundColor: 'transparent' }]}>
+      {children}
+    </Text>
+  );
+});
+SectionTitle.displayName = 'SectionTitle';
+
+function SettingsScreenInner({ onClose, onLogout }: Props) {
   const { t, colors, language, theme, setLanguage, setTheme, isRTL } = useAppSettings();
 
   const handleLogout = () => {
@@ -32,41 +74,7 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
     );
   };
 
-  const OptionBtn = ({
-    label, selected, onPress, icon,
-  }: { label: string; selected: boolean; onPress: () => void; icon?: React.ReactNode }) => {
-    const selectedBg = theme === 'dark' ? '#332515' : '#FFEAD2';
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        style={[
-          ss.optionBtn,
-          {
-            backgroundColor: selected ? selectedBg : colors.bg,
-            borderColor: colors.border,
-            shadowColor: colors.border,
-          },
-        ]}
-        activeOpacity={0.75}
-      >
-        {icon && <View style={ss.optionIcon}>{icon}</View>}
-        <Text style={[ss.optionLabel, { color: colors.textPrimary, backgroundColor: 'transparent' }]}>
-          {label}
-        </Text>
-        {selected && (
-          <View style={[ss.checkDot, { backgroundColor: colors.accent, borderColor: colors.border }]}>
-            <CheckIcon size={10} color="#FFFFFF" />
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
 
-  const SectionTitle = ({ children }: { children: string }) => (
-    <Text style={[ss.sectionTitle, { color: colors.textMuted, textAlign: isRTL ? 'right' : 'left', backgroundColor: 'transparent' }]}>
-      {children}
-    </Text>
-  );
 
   return (
     <View style={[ss.container, { backgroundColor: colors.bg }]}>
@@ -159,6 +167,8 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
     </View>
   );
 }
+
+export const SettingsScreen = React.memo(SettingsScreenInner);
 
 const ss = StyleSheet.create({
   container: {

@@ -113,7 +113,7 @@ function makeStyles(colors: Colors) {
   });
 }
 
-export function OnboardingScreen({ onFinish }: Props) {
+function OnboardingScreenInner({ onFinish }: Props) {
   const { colors, language } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [step, setStep] = useState(0);
@@ -206,3 +206,5 @@ export function OnboardingScreen({ onFinish }: Props) {
     </SafeAreaView>
   );
 }
+
+export const OnboardingScreen = React.memo(OnboardingScreenInner);

@@ -11,7 +11,7 @@ interface Props {
   style?: any;
 }
 
-export function AnimatedStrikethrough({ visible, color, style }: Props) {
+export const AnimatedStrikethrough = React.memo(function AnimatedStrikethrough({ visible, color, style }: Props) {
   const { colors, language } = useAppSettings();
   const isRTL = language === 'ar';
   const strokeColor = color || colors.accent;
@@ -80,4 +80,4 @@ export function AnimatedStrikethrough({ visible, color, style }: Props) {
       </Svg>
     </View>
   );
-}
+});

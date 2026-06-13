@@ -226,7 +226,7 @@ function makeStyles(colors: Colors) {
   });
 }
 
-export function Mascot({ size = 150, variant = 'welcome', animated = true }: Props) {
+export const Mascot = React.memo(function Mascot({ size = 150, variant = 'welcome', animated = true }: Props) {
   const { colors } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -433,4 +433,4 @@ export function Mascot({ size = 150, variant = 'welcome', animated = true }: Pro
       </Animated.View>
     </View>
   );
-}
+});
