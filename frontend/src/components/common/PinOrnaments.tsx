@@ -1,18 +1,34 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppSettings } from '../../context/AppContext';
 
-export const WashiTape = React.memo(function WashiTape({ style }: { style?: any }) {
+interface WashiTapeProps {
+  style?: any;
+  pressAnim?: Animated.Value;
+}
+
+export const WashiTape = React.memo(function WashiTape({ style, pressAnim }: WashiTapeProps) {
   const { colors, theme } = useAppSettings();
 
+  const scaleX = pressAnim
+    ? pressAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] })
+    : 1;
+  const scaleY = pressAnim
+    ? pressAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.94] })
+    : 1;
+  const rotate = pressAnim
+    ? pressAnim.interpolate({ inputRange: [0, 1], outputRange: ['-3deg', '-4.5deg'] })
+    : '-3deg';
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.washiTape,
         {
           backgroundColor: theme === 'dark' ? 'rgba(160, 147, 255, 0.25)' : 'rgba(255, 159, 67, 0.35)', // glowing violet / amber tape
           borderColor: colors.border,
+          transform: [{ rotate }, { scaleX }, { scaleY }],
         },
         style,
       ]}

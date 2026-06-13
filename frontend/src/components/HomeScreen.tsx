@@ -103,7 +103,10 @@ const HomeStatCard = React.memo(({
         }
       ]}
     >
-      <WashiTape style={{ top: -8, ...(washiColor ? { backgroundColor: washiColor } : {}) }} />
+      <WashiTape
+        pressAnim={wiggleAnim}
+        style={{ top: -8, ...(washiColor ? { backgroundColor: washiColor } : {}) }}
+      />
       <View style={[styles.statIconBox, { backgroundColor: iconBg }]}>
         {icon}
       </View>
