@@ -3,6 +3,8 @@ import { View, Animated, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppSettings } from '../../context/AppContext';
 
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+
 interface Props {
   visible: boolean;
   color?: string;
@@ -61,8 +63,6 @@ export function AnimatedStrikethrough({ visible, color, style }: Props) {
     inputRange: [0, 1],
     outputRange: [length, 0],
   });
-
-  const AnimatedPath = Animated.createAnimatedComponent(Path);
 
   return (
     <View style={[StyleSheet.absoluteFillObject, { justifyContent: 'center' }, style]} pointerEvents="none">

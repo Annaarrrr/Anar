@@ -18,6 +18,7 @@ const { width } = Dimensions.get('window');
 interface Props {
   goals: GoalPin[];
   tasks: Task[];
+  active?: boolean;
 }
 
 function makeStyles(colors: Colors) {
@@ -284,7 +285,7 @@ function makeStyles(colors: Colors) {
 
 import { HighlighterBadge } from './common/HighlighterBadge';
 
-export function ProgressScreen({ goals, tasks }: Props) {
+function ProgressScreenInner({ goals, tasks, active = false }: Props) {
   const { colors, t, language } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isRTL = language === 'ar';
@@ -599,3 +600,5 @@ export function ProgressScreen({ goals, tasks }: Props) {
     </View>
   );
 }
+
+export const ProgressScreen = React.memo(ProgressScreenInner);

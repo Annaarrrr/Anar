@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   ActivityIndicator,
@@ -52,7 +52,7 @@ function AppInner() {
   const [settingsOpen, setSettingsOpen]   = useState(false);
 
   // preferredId: which goal to mark active; falls back to latest
-  const fetchGoals = async (preferredId?: string | null) => {
+  const fetchGoals = useCallback(async (preferredId?: string | null) => {
     try {
       const allGoals = await api.getGoals();
       setGoals(allGoals);
@@ -69,7 +69,7 @@ function AppInner() {
     } catch (err) {
       console.error('Failed to fetch goals:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -93,7 +93,7 @@ function AppInner() {
       }
     };
     initializeApp();
-  }, []);
+  }, [fetchGoals]);
 
   // Android hardware back — close journey map or settings first
   useEffect(() => {
@@ -106,11 +106,11 @@ function AppInner() {
     return () => sub.remove();
   }, [selectedGoal, settingsOpen]);
 
-  const handleFinishOnboarding = async () => {
+  const handleFinishOnboarding = useCallback(async () => {
     setScreen('auth');
-  };
+  }, []);
 
-  const handleAuthSuccess = async (newToken: string) => {
+  const handleAuthSuccess = useCallback(async (newToken: string) => {
     setToken(newToken);
     const savedActiveId = await AsyncStorage.getItem('anar_active_goal');
     setActiveGoalId(savedActiveId);
@@ -118,15 +118,15 @@ function AppInner() {
     setScreen('main');
     setActiveTab('home');
     setRenderedTab('home');
-  };
+  }, [fetchGoals]);
 
-  const handleSetActiveGoal = async (id: string) => {
+  const handleSetActiveGoal = useCallback(async (id: string) => {
     setActiveGoalId(id);
     await AsyncStorage.setItem('anar_active_goal', id);
     await fetchGoals(id);
-  };
+  }, [fetchGoals]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await api.logout();
     setToken(null);
     setGoals([]);
@@ -136,19 +136,42 @@ function AppInner() {
     setScreen('onboarding');
     setActiveTab('home');
     setRenderedTab('home');
-  };
+  }, []);
 
-  const handleGoalPress = (goal: GoalPin) => {
+  const handleGoalPress = useCallback((goal: GoalPin) => {
     const fresh = goals.find((g) => g.id === goal.id) ?? goal;
     setSelectedGoal(fresh);
-  };
+  }, [goals]);
 
-  const handleTabPress = (key: ActiveTab) => {
+  const handleTabPress = useCallback((key: ActiveTab) => {
     setActiveTab(key);
-    requestAnimationFrame(() => {
-      setRenderedTab(key);
-    });
-  };
+    setRenderedTab(key);
+  }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
+
+  const handleCloseJourney = useCallback(() => {
+    setSelectedGoal(null);
+  }, []);
+
+  const handleRefreshJourneyGoals = useCallback(async () => {
+    await fetchGoals();
+    if (selectedGoal) {
+      try {
+        const all = await api.getGoals();
+        const fresh = all.find((g) => g.id === selectedGoal.id);
+        if (fresh) setSelectedGoal(fresh);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }, [fetchGoals, selectedGoal]);
+
+  const handleRefreshGoals = useCallback(() => {
+    fetchGoals(activeGoalId);
+  }, [fetchGoals, activeGoalId]);
 
   if (!fontsLoaded || !appReady) {
     return (
@@ -162,57 +185,17 @@ function AppInner() {
 
   // Safe area + status bar bg logic
   const safeAreaBg =
-    isJourneyOpen              ? '#0F0E2A'
+    isJourneyOpen              ? colors.bg
     : screen === 'main' && activeTab === 'vision' ? colors.corkHeader
     : screen === 'onboarding'  ? '#1E1D3B'
     : colors.bg;
 
   const statusBarStyle =
-    isJourneyOpen             ? 'light'
+    isJourneyOpen             ? colors.statusBar
     : screen === 'onboarding' ? 'light'
     : colors.statusBar;
 
-  const renderActiveTabScreen = (tab: ActiveTab) => {
-    switch (tab) {
-      case 'home':
-        return (
-          <HomeScreen
-            onNavigate={handleTabPress}
-            activeGoal={activeGoal}
-            tasks={tasks}
-            onLogout={handleLogout}
-            onOpenSettings={() => setSettingsOpen(true)}
-          />
-        );
-      case 'chat':
-        return <ChatScreen onNavigate={handleTabPress} refreshGoal={fetchGoals} />;
-      case 'vision':
-        return (
-          <VisionBoardScreen
-            onNavigate={handleTabPress}
-            goals={goals}
-            activeGoalId={activeGoalId}
-            onGoalPress={handleGoalPress}
-            onSetActiveGoal={handleSetActiveGoal}
-            refreshGoals={() => fetchGoals(activeGoalId)}
-          />
-        );
-      case 'progress':
-        return <ProgressScreen goals={goals} tasks={tasks} />;
-      default:
-        return (
-          <HomeScreen
-            onNavigate={handleTabPress}
-            activeGoal={activeGoal}
-            tasks={tasks}
-            onLogout={handleLogout}
-            onOpenSettings={() => setSettingsOpen(true)}
-          />
-        );
-    }
-  };
-
-  const showNotebookBg = !(screen === 'main' && activeTab === 'vision');
+  const showNotebookBg = isJourneyOpen || !(screen === 'main' && activeTab === 'vision');
 
   return (
     <View style={[styles.container, { backgroundColor: safeAreaBg }]}>
@@ -235,18 +218,47 @@ function AppInner() {
             /* ── Journey Map fullscreen ── */
             <JourneyMapScreen
               goal={selectedGoal!}
-              onBack={() => setSelectedGoal(null)}
-              refreshGoals={async () => {
-                await fetchGoals();
-                const fresh = (await api.getGoals()).find((g) => g.id === selectedGoal!.id);
-                if (fresh) setSelectedGoal(fresh);
-              }}
+              onBack={handleCloseJourney}
+              refreshGoals={handleRefreshJourneyGoals}
             />
           ) : (
-            /* ── Normal tab navigation ── */
             <View style={{ flex: 1, position: 'relative' }}>
               <View style={{ flex: 1 }}>
-                {renderActiveTabScreen(renderedTab)}
+                <View style={{ flex: 1, display: renderedTab === 'home' ? 'flex' : 'none' }}>
+                  <HomeScreen
+                    active={renderedTab === 'home'}
+                    onNavigate={handleTabPress}
+                    activeGoal={activeGoal}
+                    tasks={tasks}
+                    onLogout={handleLogout}
+                    onOpenSettings={handleOpenSettings}
+                  />
+                </View>
+                <View style={{ flex: 1, display: renderedTab === 'chat' ? 'flex' : 'none' }}>
+                  <ChatScreen
+                    active={renderedTab === 'chat'}
+                    onNavigate={handleTabPress}
+                    refreshGoal={fetchGoals}
+                  />
+                </View>
+                <View style={{ flex: 1, display: renderedTab === 'vision' ? 'flex' : 'none' }}>
+                  <VisionBoardScreen
+                    active={renderedTab === 'vision'}
+                    onNavigate={handleTabPress}
+                    goals={goals}
+                    activeGoalId={activeGoalId}
+                    onGoalPress={handleGoalPress}
+                    onSetActiveGoal={handleSetActiveGoal}
+                    refreshGoals={handleRefreshGoals}
+                  />
+                </View>
+                <View style={{ flex: 1, display: renderedTab === 'progress' ? 'flex' : 'none' }}>
+                  <ProgressScreen
+                    active={renderedTab === 'progress'}
+                    goals={goals}
+                    tasks={tasks}
+                  />
+                </View>
               </View>
 
               {/* ── Tab Bar ── */}

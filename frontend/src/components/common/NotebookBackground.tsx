@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppSettings } from '../../context/AppContext';
 
-export function NotebookBackground() {
+export const NotebookBackground = React.memo(function NotebookBackground() {
   const { colors, theme } = useAppSettings();
   const { height, width } = Dimensions.get('window');
 
@@ -72,4 +72,4 @@ export function NotebookBackground() {
       </Svg>
     </View>
   );
-}
+});

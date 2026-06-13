@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppSettings } from '../../context/AppContext';
 
-export function WashiTape({ style }: { style?: any }) {
+export const WashiTape = React.memo(function WashiTape({ style }: { style?: any }) {
   const { colors, theme } = useAppSettings();
 
   return (
@@ -19,9 +19,9 @@ export function WashiTape({ style }: { style?: any }) {
       pointerEvents="none"
     />
   );
-}
+});
 
-export function Pushpin({ style }: { style?: any }) {
+export const Pushpin = React.memo(function Pushpin({ style }: { style?: any }) {
   const { colors } = useAppSettings();
 
   return (
@@ -60,7 +60,7 @@ export function Pushpin({ style }: { style?: any }) {
       </Svg>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   washiTape: {

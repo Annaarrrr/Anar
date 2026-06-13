@@ -9,11 +9,11 @@ interface Props {
   style?: any;
 }
 
-export function TornEdge({ color, borderColor, style }: Props) {
+export const TornEdge = React.memo(function TornEdge({ color, borderColor, style }: Props) {
   const { theme } = useAppSettings();
   const screenWidth = Dimensions.get('window').width;
   const width = screenWidth + 24;
-  const steps = 150;
+  const steps = 50;
 
   // Memoize path generation to prevent running loops on every frame of drawer animation
   const { shadowPath, fiberPath, sheetPath } = useMemo(() => {
@@ -53,4 +53,4 @@ export function TornEdge({ color, borderColor, style }: Props) {
       </Svg>
     </View>
   );
-}
+});
