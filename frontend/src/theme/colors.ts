@@ -38,45 +38,45 @@ export interface Colors {
 }
 
 export const lightColors: Colors = {
-  bg:              '#F3F4FD',
-  bgSecondary:     '#F8F9FF',
+  bg:              '#FFFDF4', // warm vintage sketchbook paper
+  bgSecondary:     '#FAF3E5', // lightly toasted card paper
   surface:         '#FFFFFF',
   surfaceElevated: '#FFFFFF',
-  border:          '#E2E8F0',
-  borderLight:     '#F1F5F9',
-  textPrimary:     '#1E293B',
-  textSecondary:   '#64748B',
-  textMuted:       '#94A3B8',
-  accent:          '#6C5CE7',
-  accentAlt:       '#00BFA6',
+  border:          '#2D211A', // thick dark espresso ink border
+  borderLight:     '#E6DFD5', // softer paper folding lines
+  textPrimary:     '#2D211A',
+  textSecondary:   '#65534A', // warm cocoa ink
+  textMuted:       '#9E8C82', // light clay ink
+  accent:          '#FF9F43', // Anar Glowing Amber
+  accentAlt:       '#8779F5', // Glowing Intellect Purple
   tabBar:          '#FFFFFF',
-  tabBarBorder:    '#F1F3F9',
+  tabBarBorder:    '#FAF3E5',
   statusBar:       'dark',
   corkBg:          '#C68B59',
   corkHeader:      '#8B4513',
   corkTaskBar:     '#7F4F24',
-  heroCard:        '#F0EEFF',
-  inputBg:         '#F3F4FD',
+  heroCard:        '#FFF6EB', // soft glowing light amber card
+  inputBg:         '#FAF3E5',
 };
 
 export const darkColors: Colors = {
-  bg:              '#0E0E1A',
-  bgSecondary:     '#13131F',
-  surface:         '#1A1B2E',
-  surfaceElevated: '#232440',
-  border:          '#2D2E4A',
-  borderLight:     '#252644',
-  textPrimary:     '#EEEEFF',
-  textSecondary:   '#8B8CB0',
-  textMuted:       '#5C5B94',
-  accent:          '#8779F5',   // slightly brighter purple for dark bg
-  accentAlt:       '#00D4BA',   // slightly brighter teal for dark bg
-  tabBar:          '#13131F',
-  tabBarBorder:    '#1E1F35',
+  bg:              '#100E17', // deep twilight chalkboard
+  bgSecondary:     '#181524', // dark chalkboard card background
+  surface:         '#211E30', // elevated chalkboard surface
+  surfaceElevated: '#2A263D',
+  border:          '#2D2942', // chalkboard grid lines
+  borderLight:     '#211E30',
+  textPrimary:     '#FFF5EA', // bright cream chalk text
+  textSecondary:   '#A39BBF', // soft pastel violet chalk text
+  textMuted:       '#625D7E', // muted chalk lines
+  accent:          '#FFB830', // radiant amber glow
+  accentAlt:       '#A093FF', // neon violet glow
+  tabBar:          '#100E17',
+  tabBarBorder:    '#181524',
   statusBar:       'light',
-  corkBg:          '#5A3010',   // dark mahogany cork
-  corkHeader:      '#2E1505',   // very dark wood
-  corkTaskBar:     '#3A1D08',   // dark wood task bar
-  heroCard:        '#1C1B35',
-  inputBg:         '#1A1B2E',
+  corkBg:          '#5A3010',
+  corkHeader:      '#2E1505',
+  corkTaskBar:     '#3A1D08',
+  heroCard:        '#1B1728',
+  inputBg:         '#181524',
 };

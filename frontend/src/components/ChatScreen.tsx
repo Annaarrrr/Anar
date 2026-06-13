@@ -14,7 +14,8 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { ArrowRight, Mic, Send, Sparkles } from 'lucide-react-native';
+import { ArrowLeftIcon, ArrowRightIcon, MicIcon, SendIcon, SparklesIcon } from './common/CustomIcons';
+import { SketchButton } from './common/SketchButton';
 import { ActiveTab, Message } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -204,8 +205,12 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
       >
         {/* ── Header ── */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => onNavigate('home')} style={styles.backBtn}>
-            <ArrowRight size={20} color="#A0AEC0" />
+          <TouchableOpacity onPress={() => onNavigate('home')} style={styles.backBtn} activeOpacity={0.7}>
+            {isRTL ? (
+              <ArrowRightIcon size={20} color={colors.textPrimary} />
+            ) : (
+              <ArrowLeftIcon size={20} color={colors.textPrimary} />
+            )}
           </TouchableOpacity>
 
           <View style={styles.headerInfo}>
@@ -216,10 +221,9 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
             </View>
           </View>
 
-          {/* AI Avatar with glow */}
+          {/* AI Avatar with sketch style */}
           <View style={styles.avatarWrap}>
-            <Animated.View style={[styles.avatarGlow, { opacity: avatarGlow }]} />
-            <Mascot size={46} />
+            <Mascot size={42} />
           </View>
         </View>
 
@@ -296,7 +300,7 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
               <View style={styles.goalCard}>
                 {/* Card header */}
                 <View style={styles.goalCardHeader}>
-                  <Sparkles size={13} color="#A78BFA" />
+                  <SparklesIcon size={14} color={colors.accent} />
                   <Text style={styles.goalCardHeaderText}>{t.chat_goal_proposed}</Text>
                 </View>
 
@@ -309,7 +313,7 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
                       onChangeText={setEditedGoalText}
                       textAlign="center"
                       autoFocus
-                      placeholderTextColor="#4A4875"
+                      placeholderTextColor={colors.textMuted}
                     />
                   ) : (
                     <Text style={styles.goalText}>{suggestedGoal}</Text>
@@ -326,37 +330,55 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
                 <View style={styles.goalBtnsRow}>
                   {isEditingGoal ? (
                     <>
-                      <TouchableOpacity
-                        onPress={() => setIsEditingGoal(false)}
-                        style={styles.goalBtnSecondary}
-                      >
-                        <Text style={styles.goalBtnSecondaryText}>{t.chat_cancel}</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          if (editedGoalText.trim()) setSuggestedGoal(editedGoalText);
-                          setIsEditingGoal(false);
-                        }}
-                        style={styles.goalBtnPrimary}
-                      >
-                        <Text style={styles.goalBtnPrimaryText}>{t.chat_save}</Text>
-                      </TouchableOpacity>
+                      <View style={{ flex: 0.8 }}>
+                        <SketchButton
+                          onPress={() => setIsEditingGoal(false)}
+                          variant="secondary"
+                          style={{ height: 40 }}
+                          textStyle={{ fontSize: 12 }}
+                          title={t.chat_cancel}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <SketchButton
+                          onPress={() => {
+                            if (editedGoalText.trim()) setSuggestedGoal(editedGoalText);
+                            setIsEditingGoal(false);
+                          }}
+                          variant="primary"
+                          style={{ height: 40 }}
+                          textStyle={{ fontSize: 12 }}
+                          title={t.chat_save}
+                        />
+                      </View>
                     </>
                   ) : (
                     <>
-                      <TouchableOpacity onPress={handleEditGoal} style={styles.goalBtnSecondary}>
-                        <Text style={styles.goalBtnSecondaryText}>{t.chat_edit_goal}</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={handleAcceptGoal}
-                        disabled={creating}
-                        style={styles.goalBtnPrimary}
-                      >
-                        {creating
-                          ? <ActivityIndicator color="#050B18" size="small" />
-                          : <Text style={styles.goalBtnPrimaryText}>{isRTL ? 'نعم، اعتمد الهدف' : 'Yes, approve goal'}</Text>
-                        }
-                      </TouchableOpacity>
+                      <View style={{ flex: 0.8 }}>
+                        <SketchButton
+                          onPress={handleEditGoal}
+                          variant="secondary"
+                          style={{ height: 40 }}
+                          textStyle={{ fontSize: 12 }}
+                          title={t.chat_edit_goal}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <SketchButton
+                          onPress={handleAcceptGoal}
+                          disabled={creating}
+                          variant="primary"
+                          style={{ height: 40 }}
+                        >
+                          {creating ? (
+                            <ActivityIndicator color="white" />
+                          ) : (
+                            <Text style={[styles.primaryBtnText, { fontSize: 12 }]}>
+                              {isRTL ? 'نعم، اعتمد الهدف' : 'Yes, approve goal'}
+                            </Text>
+                          )}
+                        </SketchButton>
+                      </View>
                     </>
                   )}
                 </View>
@@ -386,17 +408,18 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
           {/* Send button */}
           <TouchableOpacity
             onPress={() => handleSendMessage()}
+            disabled={!inputVal.trim()}
             style={[styles.sendBtn, !inputVal.trim() && styles.sendBtnDisabled]}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <Send size={18} color="#FFFFFF" />
+            <SendIcon size={18} color={!inputVal.trim() ? colors.textMuted : '#FFFFFF'} />
           </TouchableOpacity>
 
           {/* Text input */}
           <View style={styles.inputWrap}>
             <TextInput
               placeholder={t.chat_placeholder}
-              placeholderTextColor="#3D5066"
+              placeholderTextColor={colors.textMuted}
               value={inputVal}
               onChangeText={setInputVal}
               style={styles.input}
@@ -407,8 +430,9 @@ export function ChatScreen({ onNavigate, refreshGoal }: Props) {
             <TouchableOpacity
               onPress={() => Alert.alert(isRTL ? 'التسجيل الصوتي' : 'Voice Input', isRTL ? 'ميزة الإدخال الصوتي ستتوفر قريباً' : 'Voice input coming soon')}
               style={styles.micBtn}
+              activeOpacity={0.7}
             >
-              <Mic size={18} color="#3D5066" />
+              <MicIcon size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -434,13 +458,13 @@ function makeStyles(colors: any) {
       position: 'absolute',
       top: -60, left: -60,
       width: 260, height: 260, borderRadius: 130,
-      backgroundColor: colors.accentAlt, opacity: 0.05,
+      backgroundColor: colors.accentAlt, opacity: 0.08,
     },
     bgBlue2: {
       position: 'absolute',
       bottom: 120, right: -80,
       width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.05,
+      backgroundColor: colors.accent, opacity: 0.08,
     },
 
     /* ── Header ── */
@@ -452,57 +476,41 @@ function makeStyles(colors: any) {
       alignItems: 'center',
       justifyContent: 'space-between',
       backgroundColor: colors.surface,
-      borderBottomWidth: 1,
+      borderBottomWidth: 2,
       borderColor: colors.border,
     },
     backBtn: {
-      width: 38, height: 38, borderRadius: 12,
-      backgroundColor: colors.bgSecondary,
+      width: 38, height: 38, borderRadius: 10,
+      backgroundColor: colors.surface,
+      borderWidth: 2, borderColor: colors.border,
       alignItems: 'center', justifyContent: 'center',
+      shadowColor: colors.border, shadowOffset: { width: 2, height: 2 },
+      shadowOpacity: 1, shadowRadius: 0, elevation: 2,
     },
     headerInfo: {
       alignItems: 'center',
       flex: 1,
     },
     headerTitle: {
-      fontSize: 16, fontFamily: 'Cairo_700Bold', color: colors.accent,
+      fontSize: 16, fontFamily: 'Cairo_700Bold', color: colors.textPrimary,
     },
     statusRow: {
       flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2,
     },
     statusDot: {
-      width: 6, height: 6, borderRadius: 3,
-      backgroundColor: colors.accentAlt,
-      shadowColor: colors.accentAlt, shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.8, shadowRadius: 4, elevation: 2,
+      width: 8, height: 8, borderRadius: 4,
+      backgroundColor: colors.accent,
+      borderWidth: 1.5, borderColor: colors.border,
     },
     statusText: {
-      fontSize: 10, fontFamily: 'Cairo_600SemiBold',
-      color: colors.accentAlt, letterSpacing: 0.4,
+      fontSize: 10, fontFamily: 'Cairo_700Bold',
+      color: colors.textSecondary, letterSpacing: 0.4,
     },
 
     /* AI avatar */
     avatarWrap: {
       width: 44, height: 44,
       alignItems: 'center', justifyContent: 'center',
-    },
-    avatarGlow: {
-      position: 'absolute', width: 52, height: 52, borderRadius: 26,
-      backgroundColor: colors.accent,
-    },
-    avatarCircle: {
-      width: 44, height: 44, borderRadius: 22,
-      backgroundColor: colors.surfaceElevated,
-      alignItems: 'center', justifyContent: 'center',
-      borderWidth: 2, borderColor: colors.accent, zIndex: 1,
-    },
-    robotFace: {
-      width: 26, height: 18, borderRadius: 9,
-      backgroundColor: colors.bg,
-      justifyContent: 'center', alignItems: 'center',
-    },
-    robotEyes: {
-      width: 15, height: 5, borderRadius: 3, backgroundColor: colors.accent,
     },
 
     /* ── Stream ── */
@@ -518,23 +526,25 @@ function makeStyles(colors: any) {
 
     /* Bubbles */
     aiBubble: {
-      backgroundColor: colors.surfaceElevated,
-      borderWidth: 1, borderColor: colors.borderLight,
-      borderRadius: 20, borderBottomLeftRadius: 4,
+      backgroundColor: colors.surface,
+      borderWidth: 2, borderColor: colors.border,
+      borderRadius: 18, borderBottomLeftRadius: 4,
       paddingVertical: 12, paddingHorizontal: 16,
       maxWidth: width - 90,
-      shadowColor: colors.accent, shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08, shadowRadius: 8, elevation: 2,
+      shadowColor: colors.border, shadowOffset: { width: 2.5, height: 2.5 },
+      shadowOpacity: 1, shadowRadius: 0, elevation: 3,
     },
     userBubble: {
-      backgroundColor: colors.accent + '15',
-      borderWidth: 1, borderColor: colors.accent + '40',
-      borderRadius: 20, borderBottomRightRadius: 4,
+      backgroundColor: colors.accent + '22',
+      borderWidth: 2, borderColor: colors.border,
+      borderRadius: 18, borderBottomRightRadius: 4,
       paddingVertical: 12, paddingHorizontal: 16,
       maxWidth: width - 90,
+      shadowColor: colors.border, shadowOffset: { width: 2.5, height: 2.5 },
+      shadowOpacity: 1, shadowRadius: 0, elevation: 3,
     },
     bubbleText: {
-      fontSize: 14, fontFamily: 'Cairo_500Medium',
+      fontSize: 14, fontFamily: 'Cairo_600SemiBold',
       color: colors.textPrimary, lineHeight: 23,
     },
     userBubbleText: {
@@ -543,51 +553,44 @@ function makeStyles(colors: any) {
 
     /* Avatar dot */
     bubbleAvatar: {
-      width: 34, height: 34, borderRadius: 17,
-      backgroundColor: colors.surfaceElevated,
+      width: 34, height: 34,
       alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1.5, borderColor: colors.accent, flexShrink: 0,
-    },
-    miniRobotFace: {
-      width: 20, height: 14, borderRadius: 7,
-      backgroundColor: colors.bg,
-      justifyContent: 'center', alignItems: 'center',
-    },
-    miniRobotEyes: {
-      width: 11, height: 4, borderRadius: 2, backgroundColor: colors.accent,
+      flexShrink: 0,
     },
 
     /* Chips */
     chipsContent: {
-      gap: 6, paddingHorizontal: 16,
+      gap: 8, paddingHorizontal: 16,
     },
     chip: {
-      backgroundColor: colors.surfaceElevated,
-      borderWidth: 1, borderColor: colors.accent + '40',
-      borderRadius: 16, paddingVertical: 5, paddingHorizontal: 12,
+      backgroundColor: colors.surface,
+      borderWidth: 2, borderColor: colors.border,
+      borderRadius: 12, paddingVertical: 6, paddingHorizontal: 12,
+      shadowColor: colors.border, shadowOffset: { width: 2, height: 2 },
+      shadowOpacity: 1, shadowRadius: 0, elevation: 2,
     },
     chipText: {
-      fontSize: 11, fontFamily: 'Cairo_700Bold', color: colors.accent,
+      fontSize: 11, fontFamily: 'Cairo_700Bold', color: colors.textPrimary,
     },
 
     /* ── Goal card ── */
     goalCard: {
-      flex: 1, backgroundColor: colors.surfaceElevated,
-      borderRadius: 20, borderWidth: 1, borderColor: colors.accent + '44',
+      flex: 1, backgroundColor: colors.surface,
+      borderRadius: 18, borderWidth: 2.5, borderColor: colors.border,
       padding: 16, maxWidth: width - 90,
-      shadowColor: colors.accent, shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
+      shadowColor: colors.border, shadowOffset: { width: 4, height: 4 },
+      shadowOpacity: 1, shadowRadius: 0, elevation: 4,
     },
     goalCardHeader: {
       flexDirection: 'row', alignItems: 'center', gap: 5,
       alignSelf: 'flex-end', marginBottom: 10,
     },
     goalCardHeaderText: {
-      fontSize: 10, fontFamily: 'Cairo_700Bold', color: colors.accent, letterSpacing: 0.5,
+      fontSize: 11, fontFamily: 'Cairo_700Bold', color: colors.accent, letterSpacing: 0.5,
     },
     goalContent: {
-      backgroundColor: colors.surface, borderRadius: 12,
-      padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.bgSecondary, borderRadius: 12,
+      padding: 14, marginBottom: 12, borderWidth: 2, borderColor: colors.border,
     },
     goalText: {
       fontSize: 14, fontFamily: 'Cairo_700Bold', color: colors.textPrimary,
@@ -595,7 +598,7 @@ function makeStyles(colors: any) {
     },
     goalInput: {
       fontSize: 14, fontFamily: 'Cairo_700Bold', color: colors.textPrimary,
-      padding: 0, height: 40, borderBottomWidth: 1.5, borderBottomColor: colors.accent,
+      padding: 0, height: 40, borderBottomWidth: 2, borderBottomColor: colors.accent,
       textAlign: 'center',
     },
     goalPrompt: {
@@ -605,22 +608,9 @@ function makeStyles(colors: any) {
     goalBtnsRow: {
       flexDirection: 'row', gap: 8,
     },
-    goalBtnSecondary: {
-      flex: 0.8, height: 40, borderRadius: 12,
-      borderWidth: 1.5, borderColor: colors.accent,
-      backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center',
-    },
-    goalBtnSecondaryText: {
-      fontSize: 12, fontFamily: 'Cairo_700Bold', color: colors.accent,
-    },
-    goalBtnPrimary: {
-      flex: 1, height: 40, borderRadius: 12,
-      backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
-      shadowColor: colors.accent, shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.4, shadowRadius: 8, elevation: 4,
-    },
-    goalBtnPrimaryText: {
-      fontSize: 12, fontFamily: 'Cairo_700Bold', color: '#FFFFFF',
+    primaryBtnText: {
+      color: '#FFFFFF',
+      fontFamily: 'Cairo_700Bold',
     },
 
     /* ── Typing indicator ── */
@@ -628,32 +618,34 @@ function makeStyles(colors: any) {
       flexDirection: 'row', gap: 5, alignItems: 'center',
     },
     typingDot: {
-      width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.textMuted,
+      width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.border,
     },
 
     /* ── Input area ── */
     inputArea: {
       position: 'absolute', bottom: 70, left: 0, right: 0,
-      backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border,
+      backgroundColor: colors.surface, borderTopWidth: 2, borderColor: colors.border,
       paddingHorizontal: 14, paddingVertical: 12,
       flexDirection: 'row', alignItems: 'center', gap: 10,
     },
     sendBtn: {
       width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent,
       alignItems: 'center', justifyContent: 'center',
-      shadowColor: colors.accent, shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.4, shadowRadius: 8, elevation: 4,
+      borderWidth: 2, borderColor: colors.border,
+      shadowColor: colors.border, shadowOffset: { width: 2, height: 2 },
+      shadowOpacity: 1, shadowRadius: 0, elevation: 3,
     },
     sendBtnDisabled: {
-      backgroundColor: colors.border, shadowOpacity: 0,
+      backgroundColor: colors.bgSecondary,
+      opacity: 0.5,
     },
     inputWrap: {
       flex: 1, height: 44, backgroundColor: colors.inputBg,
-      borderWidth: 1, borderColor: colors.borderLight, borderRadius: 22,
+      borderWidth: 2, borderColor: colors.border, borderRadius: 12,
       flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14,
     },
     input: {
-      flex: 1, fontFamily: 'Cairo_400Regular', fontSize: 13,
+      flex: 1, fontFamily: 'Cairo_600SemiBold', fontSize: 13,
       color: colors.textPrimary, height: '100%', paddingRight: 8,
     },
     micBtn: {

@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
 
@@ -22,14 +22,14 @@ function makeStyles(colors: Colors) {
       height: 150,
       borderRadius: 75,
       backgroundColor: colors.accent,
-      borderWidth: 5,
-      borderColor: colors.bg,
+      borderWidth: 4,
+      borderColor: colors.border,
       justifyContent: 'center',
       alignItems: 'center',
       shadowColor: colors.accent,
       shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.25,
-      shadowRadius: 15,
+      shadowOpacity: 0.35,
+      shadowRadius: 20,
       elevation: 8,
       zIndex: 2,
     },
@@ -46,65 +46,75 @@ function makeStyles(colors: Colors) {
       gap: 24,
       width: '100%',
       height: '100%',
+      position: 'relative',
     },
     bulbFaceReady: {
       flexDirection: 'column',
       justifyContent: 'center',
-      gap: 8,
+      gap: 4,
     },
     eye: {
-      width: 16,
-      height: 40,
-      borderRadius: 8,
-      backgroundColor: colors.accentAlt,
+      width: 14,
+      height: 36,
+      borderRadius: 7,
+      backgroundColor: colors.border,
+      marginTop: -16,
     },
     eyeHappy: {
       height: 10,
       borderRadius: 5,
-      borderWidth: 3,
-      borderColor: colors.accentAlt,
+      borderWidth: 3.5,
+      borderColor: colors.border,
       backgroundColor: 'transparent',
       borderBottomWidth: 0,
       transform: [{ scaleY: -1 }],
+      marginTop: -12,
+    },
+    blushCheek: {
+      width: 16,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: 'rgba(255, 159, 67, 0.45)', // glowing warm orange blush
+      position: 'absolute',
     },
     bulbBase: {
-      width: 70,
-      height: 25,
+      width: 66,
+      height: 24,
       backgroundColor: colors.textMuted,
-      borderBottomLeftRadius: 12,
-      borderBottomRightRadius: 12,
+      borderBottomLeftRadius: 10,
+      borderBottomRightRadius: 10,
       borderWidth: 3,
-      borderColor: colors.bg,
+      borderColor: colors.border,
       marginTop: -3,
       zIndex: 1,
     },
     bulbBaseMini: {
-      width: 50,
+      width: 46,
       height: 18,
       backgroundColor: colors.textMuted,
       borderBottomLeftRadius: 8,
       borderBottomRightRadius: 8,
-      borderWidth: 2,
-      borderColor: colors.bg,
+      borderWidth: 2.5,
+      borderColor: colors.border,
       marginTop: -2,
       zIndex: 1,
     },
     bulbTip: {
       width: 8,
-      height: 20,
-      backgroundColor: colors.accent,
+      height: 18,
+      backgroundColor: colors.accentAlt,
       borderRadius: 4,
       position: 'absolute',
-      bottom: 25,
+      bottom: 22,
       zIndex: 0,
     },
     bulbTipMini: {
       width: 6,
       height: 14,
-      backgroundColor: colors.accent,
+      backgroundColor: colors.accentAlt,
       borderRadius: 3,
       position: 'absolute',
-      bottom: 65,
+      bottom: 60,
       zIndex: 0,
     },
     stairsWrapper: {
@@ -122,8 +132,8 @@ function makeStyles(colors: Colors) {
       backgroundColor: colors.surfaceElevated,
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
+      borderWidth: 2,
+      borderColor: colors.border,
     },
     stairStep2: {
       width: 150,
@@ -131,72 +141,86 @@ function makeStyles(colors: Colors) {
       backgroundColor: colors.surface,
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
+      borderWidth: 2,
+      borderColor: colors.border,
     },
     stairStep3: {
       width: 100,
       height: 30,
-      backgroundColor: colors.border,
+      backgroundColor: colors.bgSecondary,
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
+      borderWidth: 2,
+      borderColor: colors.border,
     },
     starIcon: {
-      fontSize: 48,
+      fontSize: 44,
       position: 'absolute',
       top: 25,
       right: 35,
     },
     questionMark: {
-      fontSize: 64,
+      fontSize: 56,
       fontFamily: 'Cairo_700Bold',
       color: colors.accentAlt,
       position: 'absolute',
-      top: 15,
+      top: 20,
       left: 35,
     },
     glassesContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 10,
+      marginTop: 8,
     },
     glassesCircle: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       borderWidth: 3,
-      borderColor: colors.bg,
+      borderColor: colors.border,
       backgroundColor: 'transparent',
     },
     glassesBridge: {
       width: 12,
       height: 3,
-      backgroundColor: colors.bg,
+      backgroundColor: colors.border,
     },
     eyeReadyContainer: {
       flexDirection: 'row',
-      gap: 36,
+      gap: 32,
       position: 'absolute',
-      top: 58,
+      top: 54,
     },
     eyeReady: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-      backgroundColor: colors.accentAlt,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.border,
     },
     smile: {
-      width: 20,
-      height: 10,
+      width: 16,
+      height: 8,
       borderWidth: 3,
-      borderColor: colors.accentAlt,
-      borderRadius: 10,
+      borderColor: colors.border,
+      borderRadius: 8,
       borderTopWidth: 0,
       backgroundColor: 'transparent',
-      marginTop: -8,
+      marginTop: 6,
+    },
+    glowRing: {
+      position: 'absolute',
+      width: 150,
+      height: 150,
+      borderRadius: 75,
+      backgroundColor: colors.accent,
+      zIndex: -1,
+    },
+    glowRingMini: {
+      width: 110,
+      height: 110,
+      borderRadius: 55,
+      marginTop: -40,
     },
   });
 }
@@ -204,23 +228,88 @@ function makeStyles(colors: Colors) {
 export function Mascot({ size = 150, variant = 'welcome' }: Props) {
   const { colors } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  
-  // The original mascot wrapper was 260x260 to fit props. We scale down from that.
-  // Wait, if we use 260x260, the bounding box for chat avatars will be 260 * scale!
-  // It's better if `welcome` just has a tight bounding box.
-  // But wait! If we do bounding box based on variant:
+
+  // Animation Refs
+  const levitateAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // 1. levitation loop (gentle float)
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(levitateAnim, {
+          toValue: 1,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(levitateAnim, {
+          toValue: 0,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // 2. radiating glow loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 1800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
   const baseWidth = variant === 'welcome' ? 150 : 260;
   const scale = size / baseWidth;
+
+  // Pulse interpolation for glowing ring (scale up, fade out)
+  const glowScale = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.25],
+  });
+  const glowOpacity = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.25, 0],
+  });
+
+  // Levitate translation
+  const translateY = levitateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -7],
+  });
 
   const renderContent = () => {
     switch (variant) {
       case 'stairs':
         return (
           <View style={[styles.mascotWrapper, { width: 260, height: 260 }]}>
+            {/* Glowing Ring */}
+            <Animated.View
+              style={[
+                styles.glowRing,
+                styles.glowRingMini,
+                {
+                  transform: [{ scale: glowScale }],
+                  opacity: glowOpacity,
+                },
+              ]}
+            />
             <View style={[styles.bulbBody, styles.bulbBodyMini]}>
               <View style={styles.bulbFace}>
                 <View style={[styles.eye, styles.eyeHappy]} />
                 <View style={[styles.eye, styles.eyeHappy]} />
+                {/* Blushing Cheeks */}
+                <View style={[styles.blushCheek, { left: 24, top: 46 }]} />
+                <View style={[styles.blushCheek, { right: 24, top: 46 }]} />
+                <View style={[styles.smile, { position: 'absolute', top: 48 }]} />
               </View>
             </View>
             <View style={styles.bulbBaseMini} />
@@ -238,6 +327,16 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
       case 'ready':
         return (
           <View style={[styles.mascotWrapper, { width: 260, height: 260 }]}>
+            {/* Glowing Ring */}
+            <Animated.View
+              style={[
+                styles.glowRing,
+                {
+                  transform: [{ scale: glowScale }],
+                  opacity: glowOpacity,
+                },
+              ]}
+            />
             <Text style={styles.questionMark}>؟</Text>
             <View style={styles.bulbBody}>
               <View style={[styles.bulbFace, styles.bulbFaceReady]}>
@@ -250,7 +349,10 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
                   <View style={styles.eyeReady} />
                   <View style={styles.eyeReady} />
                 </View>
-                <View style={styles.smile} />
+                <View style={[styles.smile, { marginTop: 0 }]} />
+                {/* Blushing Cheeks */}
+                <View style={[styles.blushCheek, { left: 38, top: 76 }]} />
+                <View style={[styles.blushCheek, { right: 38, top: 76 }]} />
               </View>
             </View>
             <View style={styles.bulbBase} />
@@ -261,10 +363,25 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
       default:
         return (
           <View style={[styles.mascotWrapper, { width: 150, height: 180 }]}>
+            {/* Glowing Ring */}
+            <Animated.View
+              style={[
+                styles.glowRing,
+                {
+                  transform: [{ scale: glowScale }],
+                  opacity: glowOpacity,
+                },
+              ]}
+            />
             <View style={styles.bulbBody}>
               <View style={styles.bulbFace}>
                 <View style={styles.eye} />
                 <View style={styles.eye} />
+                {/* Blushing Cheeks */}
+                <View style={[styles.blushCheek, { left: 26, top: 76 }]} />
+                <View style={[styles.blushCheek, { right: 26, top: 76 }]} />
+                {/* Smile */}
+                <View style={[styles.smile, { position: 'absolute', top: 76 }]} />
               </View>
             </View>
             <View style={styles.bulbBase} />
@@ -279,9 +396,9 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
 
   return (
     <View style={{ width: containerWidth, height: containerHeight, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={[{ transform: [{ scale }] }, { position: 'absolute' }]}>
+      <Animated.View style={[{ transform: [{ scale }, { translateY }] }, { position: 'absolute' }]}>
         {renderContent()}
-      </View>
+      </Animated.View>
     </View>
   );
 }

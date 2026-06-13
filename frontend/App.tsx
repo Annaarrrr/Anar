@@ -29,8 +29,8 @@ import { JourneyMapScreen }  from './src/components/JourneyMapScreen';
 import { ProgressScreen }    from './src/components/ProgressScreen';
 import { SettingsScreen }    from './src/components/SettingsScreen';
 
-// Icons (4 tabs)
-import { Home, MessageSquare, Sparkles, BarChart2 } from 'lucide-react-native';
+// Custom Hand-Drawn Icons
+import { HomeIcon, ChatIcon, VisionIcon, ProgressIcon } from './src/components/common/CustomIcons';
 
 // ─── Inner App (needs context to be mounted first) ────────────────────────────
 function AppInner() {
@@ -227,24 +227,24 @@ function AppInner() {
               </View>
 
               {/* ── Tab Bar ── */}
-              <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.tabBarBorder }]}>
+              <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.border }]}>
                 {(
                   [
-                    { key: 'home',     label: t.nav_home,     Icon: Home           },
-                    { key: 'chat',     label: t.nav_chat,     Icon: MessageSquare  },
-                    { key: 'vision',   label: t.nav_vision,   Icon: Sparkles       },
-                    { key: 'progress', label: t.nav_progress, Icon: BarChart2      },
+                    { key: 'home',     label: t.nav_home,     Icon: HomeIcon      },
+                    { key: 'chat',     label: t.nav_chat,     Icon: ChatIcon      },
+                    { key: 'vision',   label: t.nav_vision,   Icon: VisionIcon    },
+                    { key: 'progress', label: t.nav_progress, Icon: ProgressIcon  },
                   ] as { key: ActiveTab; label: string; Icon: any }[]
                 ).map(({ key, label, Icon }) => {
                   const active = activeTab === key;
                   return (
                     <TouchableOpacity key={key} onPress={() => setActiveTab(key)} style={styles.tabItem}>
-                      <Icon size={22} color={active ? colors.accentAlt : colors.textMuted} />
-                      <Text style={[styles.tabLabel, { color: active ? colors.accentAlt : colors.textMuted,
+                      <Icon size={22} color={active ? colors.accent : colors.textMuted} />
+                      <Text style={[styles.tabLabel, { color: active ? colors.accent : colors.textMuted,
                         fontFamily: active ? 'Cairo_700Bold' : 'Cairo_400Regular' }]}>
                         {label}
                       </Text>
-                      {active && <View style={[styles.activeDot, { backgroundColor: colors.accentAlt }]} />}
+                      {active && <View style={[styles.activeDot, { backgroundColor: colors.accent }]} />}
                     </TouchableOpacity>
                   );
                 })}

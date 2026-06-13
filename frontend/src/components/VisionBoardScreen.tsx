@@ -11,7 +11,8 @@ import {
   Platform,
   TextInput,
 } from 'react-native';
-import { Share2, Plus, Check, X, MessageSquare, Pencil, Trash2 } from 'lucide-react-native';
+import { ShareIcon, PlusIcon, CheckIcon, XIcon, ChatIcon, PencilIcon, TrashIcon } from './common/CustomIcons';
+import { SketchButton } from './common/SketchButton';
 import { ActiveTab, GoalPin } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -133,8 +134,9 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
             isRTL ? 'تم نسخ رابط لوحتك البصرية' : 'Link to your vision board copied'
           )}
           style={styles.headerBtn}
+          activeOpacity={0.7}
         >
-          <Share2 size={18} color="rgba(255,255,255,0.85)" />
+          <ShareIcon size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -147,12 +149,12 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
           <View style={styles.emptyBoard}>
             {/* Single "starter" pinned note */}
             <View style={[styles.emptyCard, { transform: [{ rotate: '-2deg' }] }]}>
-              <View style={[styles.pinDot, { backgroundColor: '#6C5CE7', top: -8, alignSelf: 'center' }]} />
+              <View style={[styles.pinDot, { backgroundColor: colors.accent, top: -8, alignSelf: 'center' }]} />
               <Text style={styles.emptyCardEmoji}>💬</Text>
               <Text style={styles.emptyCardTitle}>{t.vision_empty_title}</Text>
               <Text style={styles.emptyCardText}>{t.vision_empty_text}</Text>
-              <TouchableOpacity onPress={() => onNavigate('chat')} style={styles.emptyCardBtn}>
-                <MessageSquare size={14} color="#6C5CE7" />
+              <TouchableOpacity onPress={() => onNavigate('chat')} style={styles.emptyCardBtn} activeOpacity={0.7}>
+                <ChatIcon size={14} color={colors.textPrimary} />
                 <Text style={styles.emptyCardBtnText}>{t.vision_empty_btn}</Text>
               </TouchableOpacity>
             </View>
@@ -223,7 +225,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                             style={[styles.goalPin, styles.addPin, { transform: [{ rotate: '1.5deg' }] }]}
                             activeOpacity={0.8}
                           >
-                            <Plus size={28} color="#6C5CE7" />
+                            <PlusIcon size={28} color={colors.textPrimary} />
                             <Text style={styles.addPinText}>{t.vision_new_goal}</Text>
                           </TouchableOpacity>
                         );
@@ -302,8 +304,8 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
       {/* ── Today's Task Bar (above tab bar) ── */}
       {focusGoal && (
         <View style={styles.taskBar}>
-          <TouchableOpacity onPress={handleCompleteTask} style={styles.taskCheckBtn}>
-            <Check size={15} color="#FFFFFF" />
+          <TouchableOpacity onPress={handleCompleteTask} style={styles.taskCheckBtn} activeOpacity={0.7}>
+            <CheckIcon size={15} color="#FFFFFF" />
           </TouchableOpacity>
 
           <View style={styles.taskBarCenter}>
@@ -315,7 +317,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
             </Text>
           </View>
 
-          <TouchableOpacity onPress={() => onGoalPress(focusGoal)} style={styles.taskBarBtn}>
+          <TouchableOpacity onPress={() => onGoalPress(focusGoal)} style={styles.taskBarBtn} activeOpacity={0.7}>
             <Text style={styles.taskBarBtnText}>{t.vision_journey_btn}</Text>
           </TouchableOpacity>
         </View>
@@ -334,26 +336,26 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <TouchableOpacity onPress={() => setTaskModalGoal(null)}>
-                  <X size={20} color="#64748B" />
+                  <XIcon size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
 
                 {taskModalGoal && (
                   isEditing ? (
                     <>
                       <TouchableOpacity onPress={handleEditSave}>
-                        <Check size={20} color="#00BFA6" />
+                        <CheckIcon size={20} color={colors.accentAlt} />
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => setIsEditing(false)}>
-                        <X size={20} color="#64748B" />
+                        <XIcon size={20} color={colors.textSecondary} />
                       </TouchableOpacity>
                     </>
                   ) : (
                     <>
                       <TouchableOpacity onPress={() => setIsEditing(true)}>
-                        <Pencil size={18} color="#64748B" />
+                        <PencilIcon size={18} color={colors.textSecondary} />
                       </TouchableOpacity>
                       <TouchableOpacity onPress={handleDelete}>
-                        <Trash2 size={18} color="#EF4444" />
+                        <TrashIcon size={18} color="#EF4444" />
                       </TouchableOpacity>
                     </>
                   )
@@ -399,7 +401,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                       activeOpacity={0.7}
                     >
                       <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
-                        {task.completed && <Check size={11} color="white" />}
+                        {task.completed && <CheckIcon size={11} color="white" />}
                       </View>
                       <Text style={[styles.taskText, task.completed && styles.taskTextDone]}>
                         {task.text}
@@ -408,26 +410,23 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                   ))}
                 </ScrollView>
 
-                <TouchableOpacity
+                <SketchButton
                   onPress={() => { setTaskModalGoal(null); onGoalPress(taskModalGoal); }}
-                  style={styles.modalJourneyBtn}
-                >
-                  <Text style={styles.modalJourneyBtnText}>{t.journey_view_all} {isRTL ? '←' : '→'}</Text>
-                </TouchableOpacity>
+                  variant="primary"
+                  title={`${t.journey_view_all} ${isRTL ? '←' : '→'}`}
+                  style={{ marginBottom: 12 }}
+                />
 
                 {/* Set as Active Goal button */}
                 {taskModalGoal.id !== (activeGoalId ?? focusGoal?.id) && (
-                  <TouchableOpacity
+                  <SketchButton
                     onPress={async () => {
                       setTaskModalGoal(null);
                       await onSetActiveGoal(taskModalGoal.id);
                     }}
-                    style={styles.setActiveBtn}
-                  >
-                    <Text style={styles.setActiveBtnText}>
-                      {isRTL ? '⭐ تعيين كهدف نشط' : '⭐ Set as Active Goal'}
-                    </Text>
-                  </TouchableOpacity>
+                    variant="accentAlt"
+                    title={isRTL ? '⭐ تعيين كهدف نشط' : '⭐ Set as Active Goal'}
+                  />
                 )}
               </>
             )}
@@ -437,17 +436,15 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
     </View>
   );
 }
-
-// ── Theme-aware styles ────────────────────────────────────────────────────────
 function makeStyles(colors: Colors, theme: 'light' | 'dark') {
   // Cork-specific surface: warm cream in light, dark walnut in dark
-  const corkCard     = theme === 'light' ? '#FFFDE7' : '#2C1A0E';
-  const corkCardText = theme === 'light' ? '#1E293B' : '#E8D5C0';
-  const corkCardSub  = theme === 'light' ? '#64748B' : '#A08060';
-  const addPinBg     = theme === 'light' ? 'rgba(255,255,255,0.55)' : 'rgba(60,35,15,0.6)';
-  const mascotBubBg  = theme === 'light' ? '#FFFFFF' : '#2C1A0E';
-  const mascotBubTxt = theme === 'light' ? '#5856D6' : '#B39DFF';
-  const bubbleTailClr= theme === 'light' ? '#FFFFFF' : '#2C1A0E';
+  const corkCard     = theme === 'light' ? '#FFFDF0' : '#281E17';
+  const corkCardText = theme === 'light' ? '#2D211A' : '#FFF5EA';
+  const corkCardSub  = theme === 'light' ? '#6D5A50' : '#A39BBF';
+  const addPinBg     = theme === 'light' ? 'rgba(255,255,255,0.45)' : 'rgba(50,40,30,0.5)';
+  const mascotBubBg  = theme === 'light' ? '#FFFFFF' : '#211E30';
+  const mascotBubTxt = theme === 'light' ? colors.textPrimary : colors.textPrimary;
+  const bubbleTailClr= theme === 'light' ? '#FFFFFF' : '#211E30';
 
   return StyleSheet.create({
     container: {
@@ -479,6 +476,8 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       backgroundColor: 'rgba(255,255,255,0.12)',
       alignItems: 'center',
       justifyContent: 'center',
+      borderWidth: 1.5,
+      borderColor: 'rgba(255,255,255,0.3)',
     },
     headerTitle: {
       fontSize: 18,
@@ -497,21 +496,22 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     /* Progress summary card */
     progressCard: {
       width: '100%',
-      backgroundColor: theme === 'light' ? '#5856D6' : '#3A3080',
+      backgroundColor: theme === 'light' ? colors.accent : colors.surface,
       borderRadius: 18,
       padding: 18,
       marginBottom: 20,
-      position: 'relative',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      elevation: 7,
+      borderWidth: 2.5,
+      borderColor: colors.border,
+      shadowColor: colors.border,
+      shadowOffset: { width: 4, height: 4 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+      elevation: 6,
     },
     progressCardTitle: {
       fontSize: 12,
-      fontFamily: 'Cairo_600SemiBold',
-      color: 'rgba(255,255,255,0.7)',
+      fontFamily: 'Cairo_700Bold',
+      color: theme === 'light' ? '#FFFFFF' : colors.textPrimary,
       textAlign: 'center',
       marginBottom: 10,
     },
@@ -522,14 +522,16 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       marginBottom: 10,
     },
     progressBadge: {
-      backgroundColor: 'rgba(255,255,255,0.18)',
+      backgroundColor: 'rgba(255,255,255,0.2)',
       paddingHorizontal: 10,
       paddingVertical: 3,
       borderRadius: 8,
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.3)',
     },
     progressBadgeText: {
       fontSize: 11,
-      fontFamily: 'Cairo_600SemiBold',
+      fontFamily: 'Cairo_700Bold',
       color: '#FFFFFF',
     },
     progressPercent: {
@@ -538,21 +540,23 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       color: '#FFFFFF',
     },
     progressTrack: {
-      height: 8,
+      height: 10,
       backgroundColor: 'rgba(255,255,255,0.2)',
-      borderRadius: 4,
+      borderRadius: 5,
       overflow: 'hidden',
       marginBottom: 12,
+      borderWidth: 1,
+      borderColor: 'rgba(0,0,0,0.1)',
     },
     progressFill: {
       height: '100%',
-      backgroundColor: '#F5C44B',
-      borderRadius: 4,
+      backgroundColor: '#FFD700',
+      borderRadius: 5,
     },
     progressGoalText: {
       fontSize: 12,
-      fontFamily: 'Cairo_600SemiBold',
-      color: 'rgba(255,255,255,0.8)',
+      fontFamily: 'Cairo_700Bold',
+      color: 'rgba(255,255,255,0.9)',
       textAlign: 'right',
     },
 
@@ -576,13 +580,15 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       minHeight: 170,
       backgroundColor: corkCard,
       padding: 14,
-      borderRadius: 4,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: corkCardText,
       position: 'relative',
       shadowColor: '#000',
-      shadowOffset: { width: 2, height: 6 },
-      shadowOpacity: theme === 'light' ? 0.22 : 0.45,
-      shadowRadius: 8,
-      elevation: 5,
+      shadowOffset: { width: 3, height: 3 },
+      shadowOpacity: 0.35,
+      shadowRadius: 0,
+      elevation: 4,
       alignItems: 'center',
       justifyContent: 'center',
       gap: 6,
@@ -594,23 +600,23 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     goalPinText: {
       fontSize: 13,
       fontFamily: 'Cairo_700Bold',
-      // light: warm dark brown — harmonious on any pastel
-      // dark: warm parchment — readable on dark walnut
-      color: theme === 'light' ? '#3B2008' : '#E8D5C0',
+      color: corkCardText,
       textAlign: 'center',
       lineHeight: 20,
     },
     goalPinBar: {
       width: '100%',
-      height: 4,
-      backgroundColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
-      borderRadius: 2,
+      height: 6,
+      backgroundColor: 'rgba(0,0,0,0.08)',
+      borderRadius: 3,
       overflow: 'hidden',
       marginTop: 4,
+      borderWidth: 1,
+      borderColor: corkCardText,
     },
     goalPinBarFill: {
       height: '100%',
-      borderRadius: 2,
+      borderRadius: 3,
     },
     goalPinFooter: {
       flexDirection: 'row',
@@ -622,21 +628,21 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     goalPinCount: {
       fontSize: 10,
       fontFamily: 'Cairo_700Bold',
-      color: theme === 'light' ? '#7A4B1A' : '#A08060',
+      color: corkCardText,
     },
     goalPinHint: {
       fontSize: 9,
-      fontFamily: 'Cairo_400Regular',
-      color: theme === 'light' ? '#9B6A30' : '#856040',
+      fontFamily: 'Cairo_600SemiBold',
+      color: corkCardSub,
     },
 
     /* Add goal pin */
     addPin: {
       backgroundColor: addPinBg,
       borderWidth: 2,
-      borderColor: 'rgba(108,92,231,0.35)',
+      borderColor: corkCardText,
       borderStyle: 'dashed',
-      shadowOpacity: 0.08,
+      shadowOpacity: 0.1,
       justifyContent: 'center',
       alignItems: 'center',
       gap: 8,
@@ -644,7 +650,7 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     addPinText: {
       fontSize: 13,
       fontFamily: 'Cairo_700Bold',
-      color: '#6C5CE7',
+      color: corkCardText,
     },
 
     /* Push pin dot */
@@ -658,6 +664,8 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       shadowOpacity: 0.35,
       shadowRadius: 2,
       elevation: 3,
+      borderWidth: 1.5,
+      borderColor: '#FFFFFF',
     },
 
     /* Empty board */
@@ -669,14 +677,16 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     emptyCard: {
       width: width * 0.68,
       backgroundColor: corkCard,
-      borderRadius: 4,
+      borderRadius: 12,
       padding: 24,
       alignItems: 'center',
       gap: 10,
+      borderWidth: 2,
+      borderColor: corkCardText,
       shadowColor: '#000',
-      shadowOffset: { width: 2, height: 6 },
-      shadowOpacity: theme === 'light' ? 0.22 : 0.45,
-      shadowRadius: 8,
+      shadowOffset: { width: 3, height: 3 },
+      shadowOpacity: 0.35,
+      shadowRadius: 0,
       elevation: 5,
       position: 'relative',
     },
@@ -688,7 +698,7 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     },
     emptyCardText: {
       fontSize: 13,
-      fontFamily: 'Cairo_400Regular',
+      fontFamily: 'Cairo_600SemiBold',
       color: corkCardSub,
       textAlign: 'center',
       lineHeight: 22,
@@ -697,16 +707,17 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: theme === 'light' ? '#EEF2FF' : 'rgba(108,92,231,0.2)',
+      backgroundColor: colors.bg,
       paddingHorizontal: 16,
       paddingVertical: 10,
-      borderRadius: 12,
-      marginTop: 4,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: corkCardText,
     },
     emptyCardBtnText: {
       fontSize: 13,
       fontFamily: 'Cairo_700Bold',
-      color: '#6C5CE7',
+      color: corkCardText,
     },
 
     /* Mascot */
@@ -722,17 +733,19 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       borderRadius: 16,
       paddingVertical: 12,
       paddingHorizontal: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: theme === 'light' ? 0.12 : 0.4,
-      shadowRadius: 8,
+      borderWidth: 2,
+      borderColor: colors.border,
+      shadowColor: colors.border,
+      shadowOffset: { width: 2.5, height: 2.5 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
       elevation: 3,
       position: 'relative',
     },
     mascotText: {
       fontSize: 12,
       fontFamily: 'Cairo_700Bold',
-      color: mascotBubTxt,
+      color: colors.textPrimary,
       textAlign: 'right',
       lineHeight: 20,
     },
@@ -749,9 +762,8 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       borderStyle: 'solid',
       borderTopColor: 'transparent',
       borderBottomColor: 'transparent',
-      borderLeftColor: bubbleTailClr,
+      borderLeftColor: colors.border,
     },
-
 
     /* Task bar */
     taskBar: {
@@ -765,25 +777,22 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       paddingHorizontal: 16,
       paddingVertical: 12,
       gap: 12,
-      borderTopWidth: 2,
+      borderTopWidth: 2.5,
       borderColor: theme === 'light' ? '#6B3A1A' : '#1A0A03',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: theme === 'light' ? 0.25 : 0.5,
-      shadowRadius: 8,
-      elevation: 8,
     },
     taskCheckBtn: {
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: '#00BFA6',
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#00BFA6',
-      shadowOffset: { width: 0, height: 3 },
+      borderWidth: 2,
+      borderColor: '#FFFFFF',
+      shadowColor: '#000',
+      shadowOffset: { width: 2, height: 2 },
       shadowOpacity: 0.35,
-      shadowRadius: 6,
+      shadowRadius: 0,
       elevation: 3,
     },
     taskBarCenter: {
@@ -792,8 +801,8 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     },
     taskBarLabel: {
       fontSize: 9,
-      fontFamily: 'Cairo_600SemiBold',
-      color: 'rgba(255,255,255,0.55)',
+      fontFamily: 'Cairo_700Bold',
+      color: 'rgba(255,255,255,0.65)',
     },
     taskBarText: {
       fontSize: 12,
@@ -802,12 +811,12 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       marginTop: 2,
     },
     taskBarBtn: {
-      backgroundColor: 'rgba(255,255,255,0.15)',
+      backgroundColor: 'rgba(255,255,255,0.18)',
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 10,
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.2)',
+      borderWidth: 1.5,
+      borderColor: 'rgba(255,255,255,0.3)',
     },
     taskBarBtnText: {
       fontSize: 11,
@@ -823,8 +832,11 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     },
     modalSheet: {
       backgroundColor: colors.surface,
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderWidth: 2.5,
+      borderBottomWidth: 0,
+      borderColor: colors.border,
       padding: 24,
       paddingBottom: 40,
       maxHeight: '78%',
@@ -833,7 +845,8 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       width: 40,
       height: 4,
       borderRadius: 2,
-      backgroundColor: colors.borderLight,
+      backgroundColor: colors.border,
+      opacity: 0.3,
       alignSelf: 'center',
       marginBottom: 18,
     },
@@ -854,11 +867,11 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     modalTitleInput: {
       flex: 1,
       fontSize: 14,
-      fontFamily: 'Cairo_600SemiBold',
+      fontFamily: 'Cairo_700Bold',
       color: colors.textPrimary,
       textAlign: 'right',
       paddingRight: 12,
-      borderBottomWidth: 1,
+      borderBottomWidth: 2,
       borderBottomColor: colors.accent,
       paddingVertical: 2,
     },
@@ -870,34 +883,36 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     },
     modalProgressBar: {
       flex: 1,
-      height: 8,
-      backgroundColor: colors.borderLight,
-      borderRadius: 4,
+      height: 10,
+      backgroundColor: colors.bgSecondary,
+      borderRadius: 5,
       overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: colors.border,
     },
     modalProgressFill: {
       height: '100%',
       backgroundColor: colors.accent,
-      borderRadius: 4,
+      borderRadius: 5,
     },
     modalProgressLabel: {
       fontSize: 12,
       fontFamily: 'Cairo_700Bold',
-      color: colors.accent,
+      color: colors.textPrimary,
     },
     taskRow: {
       flexDirection: 'row-reverse',
       alignItems: 'center',
       gap: 12,
       paddingVertical: 12,
-      borderBottomWidth: 1,
+      borderBottomWidth: 1.5,
       borderColor: colors.borderLight,
     },
-    taskRowDone: { opacity: 0.45 },
+    taskRowDone: { opacity: 0.65 },
     checkbox: {
       width: 22,
       height: 22,
-      borderRadius: 11,
+      borderRadius: 6,
       borderWidth: 2,
       borderColor: colors.border,
       alignItems: 'center',
@@ -905,8 +920,8 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       backgroundColor: colors.surface,
     },
     checkboxDone: {
-      backgroundColor: '#00BFA6',
-      borderColor: '#00BFA6',
+      backgroundColor: colors.accentAlt,
+      borderColor: colors.border,
     },
     taskText: {
       flex: 1,

@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Svg, { Circle, Path, Line } from 'react-native-svg';
-import { TrendingUp, Target, CheckCircle, Zap } from 'lucide-react-native';
+import { TrendingUpIcon, TargetIcon, CheckIcon, ZapIcon } from './common/CustomIcons';
 import { GoalPin, Task } from '../types';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
@@ -62,10 +62,10 @@ function makeStyles(colors: Colors) {
     headerBadge: {
       paddingHorizontal: 12,
       paddingVertical: 6,
-      borderRadius: 12,
-      backgroundColor: colors.surfaceElevated,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      borderWidth: 2,
+      borderColor: colors.border,
     },
     headerBadgeText: {
       fontSize: 11,
@@ -82,17 +82,17 @@ function makeStyles(colors: Colors) {
     },
     statCard: {
       flex: 1,
-      backgroundColor: colors.surfaceElevated,
-      borderRadius: 20,
+      backgroundColor: colors.surface,
+      borderRadius: 14,
       padding: 16,
       alignItems: 'center',
       gap: 6,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      shadowColor: colors.accent,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
+      borderWidth: 2,
+      borderColor: colors.border,
+      shadowColor: colors.border,
+      shadowOffset: { width: 3, height: 3 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
       elevation: 3,
     },
     statValue: {
@@ -103,7 +103,7 @@ function makeStyles(colors: Colors) {
     },
     statLabel: {
       fontSize: 11,
-      fontFamily: 'Cairo_600SemiBold',
+      fontFamily: 'Cairo_700Bold',
       color: colors.textMuted,
       textAlign: 'center',
     },
@@ -119,16 +119,16 @@ function makeStyles(colors: Colors) {
       paddingBottom: 10,
     },
     card: {
-      backgroundColor: colors.surfaceElevated,
-      borderRadius: 22,
+      backgroundColor: colors.surface,
+      borderRadius: 18,
       padding: 20,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      elevation: 2,
+      borderWidth: 2,
+      borderColor: colors.border,
+      shadowColor: colors.border,
+      shadowOffset: { width: 4, height: 4 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+      elevation: 4,
     },
     cardHeader: {
       flexDirection: 'row',
@@ -145,12 +145,14 @@ function makeStyles(colors: Colors) {
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 8,
-      backgroundColor: colors.accent + '15',
+      backgroundColor: colors.bg,
+      borderWidth: 1.5,
+      borderColor: colors.border,
     },
     cardBadgeText: {
       fontSize: 10,
       fontFamily: 'Cairo_700Bold',
-      color: colors.accent,
+      color: colors.textPrimary,
     },
 
     /* Ring chart */
@@ -212,13 +214,13 @@ function makeStyles(colors: Colors) {
     /* ── Goals list ── */
     goalsSection: {
       backgroundColor: colors.surface,
-      borderRadius: 30,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
-      shadowRadius: 10,
+      borderRadius: 18,
+      borderWidth: 2.5,
+      borderColor: colors.border,
+      shadowColor: colors.border,
+      shadowOffset: { width: 4, height: 4 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
       elevation: 5,
       marginHorizontal: 20,
       marginBottom: 30,
@@ -227,8 +229,8 @@ function makeStyles(colors: Colors) {
     goalsHeader: {
       paddingHorizontal: 24,
       paddingVertical: 18,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.borderLight,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.border,
     },
     goalsHeaderTitle: {
       fontSize: 15,
@@ -239,7 +241,7 @@ function makeStyles(colors: Colors) {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 14,
-      borderBottomWidth: 1,
+      borderBottomWidth: 1.5,
       borderBottomColor: colors.borderLight,
       gap: 12,
     },
@@ -254,14 +256,16 @@ function makeStyles(colors: Colors) {
       color: colors.textPrimary,
     },
     goalBarTrack: {
-      height: 6,
+      height: 8,
       backgroundColor: colors.bg,
-      borderRadius: 3,
+      borderRadius: 4,
       overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: colors.border,
     },
     goalBarFill: {
       height: '100%',
-      borderRadius: 3,
+      borderRadius: 4,
     },
     goalPct: {
       fontSize: 12,
@@ -369,20 +373,20 @@ export function ProgressScreen({ goals, tasks }: Props) {
       {/* ── Stat row ── */}
       <View style={styles.statRow}>
         <View style={styles.statCard}>
-          <Target size={20} color={colors.accent} />
+          <TargetIcon size={20} color={colors.accent} />
           <Text style={styles.statValue}>{totalGoals}</Text>
           <Text style={styles.statLabel}>{isRTL ? 'أهداف' : 'Goals'}</Text>
         </View>
 
         <View style={styles.statCard}>
-          <CheckCircle size={20} color={colors.accentAlt} />
+          <CheckIcon size={20} color={colors.accentAlt} />
           <Text style={[styles.statValue, { color: colors.accentAlt }]}>{completedTasks}</Text>
           <Text style={styles.statLabel}>{isRTL ? 'مهام منجزة' : 'Tasks Done'}</Text>
         </View>
 
         <View style={styles.statCard}>
-          <Zap size={20} color="#F59E0B" />
-          <Text style={[styles.statValue, { color: '#F59E0B' }]}>{overallPct}%</Text>
+          <ZapIcon size={20} color={colors.accent} />
+          <Text style={[styles.statValue, { color: colors.accent }]}>{overallPct}%</Text>
           <Text style={styles.statLabel}>{isRTL ? 'إجمالي' : 'Overall'}</Text>
         </View>
       </View>
@@ -451,7 +455,7 @@ export function ProgressScreen({ goals, tasks }: Props) {
         {/* Card 2: Weekly trend */}
         <View style={[styles.card, { width: width * 0.85 }]}>
           <View style={styles.cardHeader}>
-            <TrendingUp size={16} color={colors.accent} />
+            <TrendingUpIcon size={16} color={colors.accent} />
             <Text style={styles.cardTitle}>
               {isRTL ? 'نشاط الأسبوع' : 'Weekly Activity'}
             </Text>

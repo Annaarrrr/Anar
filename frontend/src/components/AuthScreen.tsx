@@ -11,7 +11,8 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { Mail, Lock, Globe } from 'lucide-react-native';
+import { MailIcon, LockIcon, GlobeIcon } from './common/CustomIcons';
+import { SketchButton } from './common/SketchButton';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
@@ -31,13 +32,13 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       position: 'absolute',
       top: -80, right: -60,
       width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.07,
+      backgroundColor: colors.accent, opacity: 0.12,
     },
     bgTeal: {
       position: 'absolute',
       bottom: 160, left: -80,
       width: 240, height: 240, borderRadius: 120,
-      backgroundColor: colors.accentAlt, opacity: 0.05,
+      backgroundColor: colors.accentAlt, opacity: 0.08,
     },
     container: {
       flex: 1,
@@ -46,50 +47,46 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     scrollContainer: {
       flexGrow: 1,
       justifyContent: 'center',
-      padding: 24,
+      padding: 20,
     },
     card: {
-      backgroundColor: colors.surfaceElevated,
-      borderRadius: 32,
-      padding: 30,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
-      shadowColor: colors.accent,
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.15,
-      shadowRadius: 20,
-      elevation: 8,
+      backgroundColor: colors.surface,
+      borderRadius: 18,
+      padding: 26,
+      borderWidth: 2.5,
+      borderColor: colors.border,
+      // Solid offset shadow for sketchbook feel
+      shadowColor: colors.border,
+      shadowOffset: { width: 6, height: 6 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+      elevation: 6,
     },
     header: {
       alignItems: 'center',
-      marginBottom: 28,
+      marginBottom: 24,
     },
     title: {
-      fontSize: 24,
+      fontSize: 26,
       fontFamily: 'Cairo_700Bold',
-      color: colors.accent,
+      color: colors.textPrimary,
       textAlign: 'center',
     },
     subtitle: {
       fontSize: 13,
-      fontFamily: 'Cairo_400Regular',
+      fontFamily: 'Cairo_600SemiBold',
       color: colors.textSecondary,
       marginTop: 6,
       textAlign: 'center',
       lineHeight: 20,
     },
     socialContainer: {
-      gap: 12,
+      gap: 16,
     },
-    appleBtn: {
+    socialBtnContent: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      borderRadius: 14,
-      height: 52,
       gap: 10,
     },
     appleBtnText: {
@@ -98,18 +95,7 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
       fontSize: 14,
     },
     appleIcon: {
-      fontSize: 18,
-    },
-    googleBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      borderRadius: 14,
-      height: 52,
-      gap: 10,
+      fontSize: 16,
     },
     googleBtnText: {
       color: colors.textPrimary,
@@ -119,28 +105,31 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     dividerContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginVertical: 20,
+      marginVertical: 18,
       gap: 10,
     },
     dividerLine: {
       flex: 1,
-      height: 1,
+      height: 2,
       backgroundColor: colors.border,
+      opacity: 0.25,
     },
     dividerText: {
       fontSize: 13,
-      fontFamily: 'Cairo_600SemiBold',
-      color: colors.textMuted,
+      fontFamily: 'Cairo_700Bold',
+      color: colors.textSecondary,
     },
     errorText: {
       color: '#EF4444',
       fontSize: 12,
-      fontFamily: 'Cairo_600SemiBold',
+      fontFamily: 'Cairo_700Bold',
       backgroundColor: theme === 'dark' ? 'rgba(239,68,68,0.12)' : '#FEF2F2',
       padding: 10,
       borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: '#EF4444',
       marginBottom: 16,
-      textAlign: 'right',
+      textAlign: 'center',
     },
     form: {
       gap: 14,
@@ -148,9 +137,9 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     inputContainer: {
       flexDirection: 'row-reverse',
       alignItems: 'center',
-      borderWidth: 1.5,
+      borderWidth: 2,
       borderColor: colors.border,
-      borderRadius: 14,
+      borderRadius: 12,
       backgroundColor: colors.bgSecondary,
       paddingHorizontal: 16,
       height: 52,
@@ -160,27 +149,11 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     },
     input: {
       flex: 1,
-      fontFamily: 'Cairo_400Regular',
+      fontFamily: 'Cairo_600SemiBold',
       fontSize: 14,
       color: colors.textPrimary,
       textAlign: 'right',
       height: '100%',
-    },
-    primaryBtn: {
-      backgroundColor: colors.accent,
-      borderRadius: 14,
-      height: 52,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: 8,
-      shadowColor: colors.accent,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 4,
-    },
-    primaryBtnDisabled: {
-      opacity: 0.7,
     },
     primaryBtnText: {
       color: '#FFFFFF',
@@ -190,11 +163,13 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     switchButton: {
       marginTop: 18,
       alignItems: 'center',
+      alignSelf: 'center',
     },
     switchText: {
       color: colors.accent,
-      fontFamily: 'Cairo_600SemiBold',
+      fontFamily: 'Cairo_700Bold',
       fontSize: 13,
+      textDecorationLine: 'underline',
     },
     footerContainer: {
       marginTop: 24,
@@ -202,14 +177,15 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     },
     footerText: {
       fontSize: 11,
-      fontFamily: 'Cairo_400Regular',
+      fontFamily: 'Cairo_600SemiBold',
       color: colors.textMuted,
       textAlign: 'center',
       lineHeight: 18,
     },
     footerLink: {
-      color: colors.accent,
-      fontFamily: 'Cairo_600SemiBold',
+      color: colors.textPrimary,
+      fontFamily: 'Cairo_700Bold',
+      textDecorationLine: 'underline',
     },
   });
 }
@@ -227,7 +203,7 @@ export function AuthScreen({ onAuthSuccess }: Props) {
 
   // Bilingual strings
   const s = {
-    title:       isRTL ? 'مرحباً بك'                                  : 'Welcome Back',
+    title:       isRTL ? 'مرحباً بك في أنار'                         : 'Welcome to Anar',
     subtitle:    isRTL ? 'سجل دخولك أو أنشئ حساباً جديداً للبدء'     : 'Sign in or create a new account to get started',
     apple:       isRTL ? 'المتابعة باستخدام Apple'                     : 'Continue with Apple',
     google:      isRTL ? 'المتابعة باستخدام جوجل'                      : 'Continue with Google',
@@ -303,15 +279,19 @@ export function AuthScreen({ onAuthSuccess }: Props) {
 
             {/* Social Logins */}
             <View style={styles.socialContainer}>
-              <TouchableOpacity onPress={handleAppleLogin} style={styles.appleBtn}>
-                <Text style={styles.appleBtnText}>{s.apple}</Text>
-                <Text style={styles.appleIcon}>🍏</Text>
-              </TouchableOpacity>
+              <SketchButton onPress={handleAppleLogin} variant="secondary">
+                <View style={styles.socialBtnContent}>
+                  <Text style={styles.appleBtnText}>{s.apple}</Text>
+                  <Text style={styles.appleIcon}>🍏</Text>
+                </View>
+              </SketchButton>
 
-              <TouchableOpacity onPress={handleGoogleLogin} style={styles.googleBtn}>
-                <Text style={styles.googleBtnText}>{s.google}</Text>
-                <Globe size={18} color="#EA4335" />
-              </TouchableOpacity>
+              <SketchButton onPress={handleGoogleLogin} variant="secondary">
+                <View style={styles.socialBtnContent}>
+                  <Text style={styles.googleBtnText}>{s.google}</Text>
+                  <GlobeIcon size={18} color="#EA4335" />
+                </View>
+              </SketchButton>
             </View>
 
             {/* Divider */}
@@ -327,7 +307,7 @@ export function AuthScreen({ onAuthSuccess }: Props) {
             {/* Form */}
             <View style={styles.form}>
               <View style={styles.inputContainer}>
-                <Mail size={18} color={colors.textMuted} style={styles.inputIcon} />
+                <MailIcon size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
                   placeholder={s.email}
                   placeholderTextColor={colors.textMuted}
@@ -340,7 +320,7 @@ export function AuthScreen({ onAuthSuccess }: Props) {
               </View>
 
               <View style={styles.inputContainer}>
-                <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
+                <LockIcon size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
                   placeholder={s.password}
                   placeholderTextColor={colors.textMuted}
@@ -352,20 +332,23 @@ export function AuthScreen({ onAuthSuccess }: Props) {
                 />
               </View>
 
-              <TouchableOpacity
-                onPress={handleSubmit}
-                disabled={loading}
-                style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]}
-              >
-                {loading
-                  ? <ActivityIndicator color="white" />
-                  : <Text style={styles.primaryBtnText}>{isLogin ? s.login : s.signup}</Text>
-                }
-              </TouchableOpacity>
+              <View style={{ marginTop: 8 }}>
+                <SketchButton
+                  onPress={handleSubmit}
+                  disabled={loading}
+                  variant="primary"
+                >
+                  {loading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.primaryBtnText}>{isLogin ? s.login : s.signup}</Text>
+                  )}
+                </SketchButton>
+              </View>
             </View>
 
             {/* Form Switcher */}
-            <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.switchButton}>
+            <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.switchButton} activeOpacity={0.7}>
               <Text style={styles.switchText}>{isLogin ? s.toSignup : s.toLogin}</Text>
             </TouchableOpacity>
 

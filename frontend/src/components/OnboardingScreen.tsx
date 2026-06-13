@@ -11,6 +11,8 @@ import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
 import { Mascot } from './Mascot';
 
+import { SketchButton } from './common/SketchButton';
+
 const { width } = Dimensions.get('window');
 
 interface Props {
@@ -30,13 +32,13 @@ function makeStyles(colors: Colors) {
       position: 'absolute',
       top: -80, right: -60,
       width: 280, height: 280, borderRadius: 140,
-      backgroundColor: colors.accent, opacity: 0.07,
+      backgroundColor: colors.accent, opacity: 0.12,
     },
     bgTeal: {
       position: 'absolute',
       bottom: 160, left: -80,
       width: 240, height: 240, borderRadius: 120,
-      backgroundColor: colors.accentAlt, opacity: 0.05,
+      backgroundColor: colors.accentAlt, opacity: 0.08,
     },
     topBar: {
       height: 50,
@@ -47,16 +49,22 @@ function makeStyles(colors: Colors) {
     },
     skipBtn: {
       paddingVertical: 6,
-      paddingHorizontal: 12,
-      backgroundColor: colors.surfaceElevated,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.borderLight,
+      paddingHorizontal: 14,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: colors.border,
+      // Solid offset shadow
+      shadowColor: colors.border,
+      shadowOffset: { width: 2, height: 2 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+      elevation: 2,
     },
     skipText: {
       fontSize: 13,
-      fontFamily: 'Cairo_600SemiBold',
-      color: colors.textSecondary,
+      fontFamily: 'Cairo_700Bold',
+      color: colors.textPrimary,
     },
     centerSection: {
       flex: 1.2,
@@ -73,7 +81,7 @@ function makeStyles(colors: Colors) {
       zIndex: 10,
     },
     title: {
-      fontSize: 22,
+      fontSize: 24,
       fontFamily: 'Cairo_700Bold',
       color: colors.textPrimary,
       textAlign: 'center',
@@ -81,7 +89,7 @@ function makeStyles(colors: Colors) {
     },
     description: {
       fontSize: 14,
-      fontFamily: 'Cairo_400Regular',
+      fontFamily: 'Cairo_600SemiBold',
       color: colors.textSecondary,
       textAlign: 'center',
       marginTop: 12,
@@ -100,32 +108,20 @@ function makeStyles(colors: Colors) {
       gap: 8,
     },
     dot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.borderLight,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      borderWidth: 2,
+      borderColor: colors.border,
+      backgroundColor: colors.bg,
     },
     activeDot: {
       width: 24,
-      backgroundColor: colors.accentAlt,
+      backgroundColor: colors.accent,
     },
-    nextBtn: {
-      backgroundColor: colors.accentAlt,
-      borderRadius: 14,
-      height: 52,
+    btnContainer: {
       width: width - 48,
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: colors.accentAlt,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 10,
-      elevation: 6,
-    },
-    nextBtnText: {
-      color: '#FFFFFF',
-      fontSize: 15,
-      fontFamily: 'Cairo_700Bold',
+      paddingHorizontal: 12,
     },
   });
 }
@@ -139,7 +135,7 @@ export function OnboardingScreen({ onFinish }: Props) {
   const slides = [
     {
       title: isRTL ? 'أهلاً بك في أنار' : 'Welcome to Anar',
-      description: isRTL ? 'حيث تتحول الأفكار إلى خطة' : 'Where ideas become plans',
+      description: isRTL ? 'حيث يتحول الأفكار إلى خطة' : 'Where ideas become plans',
       mascotType: 'welcome',
       skipSide: 'left',
     },
@@ -166,8 +162,6 @@ export function OnboardingScreen({ onFinish }: Props) {
   };
 
   const currentSlide = slides[step];
-
-
 
   return (
     <SafeAreaView style={styles.container}>
@@ -214,13 +208,17 @@ export function OnboardingScreen({ onFinish }: Props) {
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity onPress={handleNext} style={styles.nextBtn} activeOpacity={0.8}>
-          <Text style={styles.nextBtnText}>
-            {step === 2 
-              ? (isRTL ? 'ابدأ الآن' : 'Get Started') 
-              : (isRTL ? 'التالي ←' : 'Next →')}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.btnContainer}>
+          <SketchButton
+            onPress={handleNext}
+            title={
+              step === 2 
+                ? (isRTL ? 'ابدأ الآن' : 'Get Started') 
+                : (isRTL ? 'التالي ←' : 'Next →')
+            }
+            variant="primary"
+          />
+        </View>
       </View>
     </SafeAreaView>
   );

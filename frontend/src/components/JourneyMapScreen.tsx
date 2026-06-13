@@ -12,7 +12,18 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { Lock, Check, X, ArrowRight, ChevronRight, Trophy, Zap, Target } from 'lucide-react-native';
+import {
+  LockIcon,
+  CheckIcon,
+  XIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ChevronRightIcon,
+  TrophyIcon,
+  ZapIcon,
+  TargetIcon,
+} from './common/CustomIcons';
+import { SketchButton } from './common/SketchButton';
 import { GoalPin, Task } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -226,7 +237,11 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
       {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
-          <ArrowRight size={18} color={colors.textPrimary} />
+          {isRTL ? (
+            <ArrowRightIcon size={18} color={colors.textPrimary} />
+          ) : (
+            <ArrowLeftIcon size={18} color={colors.textPrimary} />
+          )}
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerSub}>{jt.headerLabel}</Text>
@@ -238,7 +253,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
       </View>
 
       {/* ── Goal Summary Card ── */}
-      <View style={[styles.goalCard, { borderColor: goal.pinColor + '33' }]}>
+      <View style={[styles.goalCard, { borderColor: colors.border }]}>
         {/* Left: text */}
         <View style={styles.goalCardLeft}>
           <Text style={styles.goalCardTitle} numberOfLines={2}>{goal.text}</Text>
@@ -246,7 +261,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
             {completedCount}/{N} {jt.tasks} {jt.completed}
           </Text>
           <View style={styles.goalCardStreak}>
-            <Zap size={11} color={goal.pinColor} />
+            <ZapIcon size={11} color={goal.pinColor} />
             <Text style={[styles.goalCardStreakText, { color: goal.pinColor }]}>
               {isRTL ? `5 ${jt.streakDays}` : `5 ${jt.streakDays}`}
             </Text>
@@ -255,9 +270,9 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
         {/* Right: circular progress ring */}
         <View style={styles.goalCardRight}>
-          <View style={[styles.progressRingOuter, { borderColor: goal.pinColor + '22' }]}>
+          <View style={[styles.progressRingOuter, { borderColor: colors.border }]}>
             <View style={[styles.progressRingInner, { borderColor: goal.pinColor }]}>
-              <Text style={[styles.progressRingNum, { color: goal.pinColor }]}>{progressPercent}%</Text>
+              <Text style={[styles.progressRingNum, { color: colors.textPrimary }]}>{progressPercent}%</Text>
             </View>
           </View>
         </View>
@@ -277,7 +292,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         {/* Finish banner */}
         <View style={styles.finishBanner}>
           <View style={[styles.finishIcon, { backgroundColor: goal.pinColor + '22' }]}>
-            <Trophy size={18} color={goal.pinColor} />
+            <TrophyIcon size={18} color={goal.pinColor} />
           </View>
           <Text style={[styles.finishText, { color: goal.pinColor }]}>{jt.finish}</Text>
         </View>
@@ -291,7 +306,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
           return (
             <View key={stage.id} style={styles.nodeRow}>
               {/* Connector dash above each node (connects to banner above or previous node) */}
-              <View style={[styles.connectorDash, { backgroundColor: goal.pinColor + '30' }]} />
+              <View style={[styles.connectorDash, { backgroundColor: colors.border }]} />
 
               <TouchableOpacity
                 onPress={() => handleNodePress(displayIdx)}
@@ -308,9 +323,9 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                   <Text
                     style={[
                       styles.nodeLabel,
-                      status === 'completed' && { color: '#00BFA6' },
-                      status === 'active'    && { color: '#FFFFFF', fontSize: 14 },
-                      status === 'locked'    && { color: '#3D3C6A' },
+                      status === 'completed' && { color: colors.accentAlt },
+                      status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
+                      status === 'locked'    && { color: colors.textMuted },
                     ]}
                     numberOfLines={2}
                   >
@@ -320,7 +335,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                 </View>
 
                 {/* Connector line from label to node */}
-                <View style={[styles.connectorH, { backgroundColor: goal.pinColor + '30' }]} />
+                <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
 
                 {/* Node circle */}
                 <View style={styles.nodeOrbitContainer}>
@@ -332,19 +347,19 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                         { borderColor: goal.pinColor + '55', transform: [{ scale: pulseAnim }] }
                       ]} />
                       {/* Node */}
-                      <View style={[styles.nodeCircle, { backgroundColor: goal.pinColor, borderColor: '#FFFFFF', shadowColor: goal.pinColor }]}>
+                      <View style={[styles.nodeCircle, { backgroundColor: goal.pinColor, borderColor: colors.border, shadowColor: colors.border }]}>
                         <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
                       </View>
                     </>
                   ) : status === 'completed' ? (
                     <>
                       <View style={[styles.nodeCircle, styles.nodeCompleted]}>
-                        <Check size={20} color="#FFFFFF" />
+                        <CheckIcon size={20} color="#FFFFFF" />
                       </View>
                     </>
                   ) : (
                     <View style={[styles.nodeCircle, styles.nodeLocked]}>
-                      <Lock size={16} color="#4A4875" />
+                      <LockIcon size={16} color={colors.textMuted} />
                     </View>
                   )}
                 </View>
@@ -354,11 +369,11 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         })}
 
         {/* Bottom connector from last node to start marker */}
-        <View style={[styles.connectorDash, { backgroundColor: goal.pinColor + '30' }]} />
+        <View style={[styles.connectorDash, { backgroundColor: colors.border }]} />
 
         {/* Start marker */}
         <View style={styles.startMarker}>
-          <View style={[styles.startDot, { borderColor: goal.pinColor + '55', backgroundColor: goal.pinColor + '22' }]} />
+          <View style={[styles.startDot, { borderColor: colors.border, backgroundColor: goal.pinColor + '22' }]} />
           <Text style={styles.startText}>{jt.start}</Text>
         </View>
       </ScrollView>
@@ -389,8 +404,8 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
           <View style={styles.drawerHandle} />
 
           {/* Close */}
-          <TouchableOpacity style={styles.drawerClose} onPress={() => setDrawerVisible(false)}>
-            <X size={16} color="#5C5B94" />
+          <TouchableOpacity style={styles.drawerClose} onPress={() => setDrawerVisible(false)} activeOpacity={0.7}>
+            <XIcon size={14} color={colors.textPrimary} />
           </TouchableOpacity>
 
           {/* Stage header */}
@@ -401,13 +416,13 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
             <View style={styles.drawerHeaderText}>
               <View style={[
                 styles.drawerBadge,
-                drawerStatus === 'completed' && { backgroundColor: '#00BFA620' },
-                drawerStatus === 'active'    && { backgroundColor: goal.pinColor + '22' },
-                drawerStatus === 'locked'    && { backgroundColor: '#EF444420' },
+                drawerStatus === 'completed' && { backgroundColor: colors.accentAlt + '20', borderColor: colors.accentAlt },
+                drawerStatus === 'active'    && { backgroundColor: goal.pinColor + '22', borderColor: goal.pinColor },
+                drawerStatus === 'locked'    && { backgroundColor: '#EF444420', borderColor: '#EF4444' },
               ]}>
                 <Text style={[
                   styles.drawerBadgeText,
-                  drawerStatus === 'completed' && { color: '#00BFA6' },
+                  drawerStatus === 'completed' && { color: colors.accentAlt },
                   drawerStatus === 'active'    && { color: goal.pinColor },
                   drawerStatus === 'locked'    && { color: '#EF4444' },
                 ]}>
@@ -437,7 +452,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
           {drawerStatus === 'locked' ? (
             <View style={styles.drawerLockedBody}>
               <View style={[styles.drawerLockIcon, { backgroundColor: goal.pinColor + '15' }]}>
-                <Lock size={26} color={goal.pinColor} />
+                <LockIcon size={26} color={goal.pinColor} />
               </View>
               <Text style={styles.drawerLockText}>{jt.lockMsg}</Text>
             </View>
@@ -448,24 +463,22 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
               <Text style={{ fontSize: 42 }}>🏆</Text>
               <Text style={styles.celebrationTitle}>{jt.stageDone}</Text>
               {selectedStageIdx !== null && selectedStageIdx < goal.stages.length - 1 ? (
-                <TouchableOpacity
+                <SketchButton
                   onPress={() => {
                     setSelectedStageIdx(selectedStageIdx + 1);
                     setShowCompletedTasks(false);
                   }}
-                  style={[styles.celebrationBtn, { backgroundColor: goal.pinColor }]}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.celebrationBtnText}>{jt.proceedNext}</Text>
-                </TouchableOpacity>
+                  title={jt.proceedNext}
+                  variant="primary"
+                  style={{ marginTop: 8 }}
+                />
               ) : (
-                <TouchableOpacity
+                <SketchButton
                   onPress={() => setDrawerVisible(false)}
-                  style={[styles.celebrationBtn, { backgroundColor: '#6C5CE7' }]}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.celebrationBtnText}>{jt.goalDone}</Text>
-                </TouchableOpacity>
+                  title={jt.goalDone}
+                  variant="accentAlt"
+                  style={{ marginTop: 8 }}
+                />
               )}
               <TouchableOpacity onPress={() => setShowCompletedTasks(true)} style={styles.reviewLink}>
                 <Text style={styles.reviewLinkText}>{jt.reviewTasks}</Text>
@@ -490,9 +503,9 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                   <Animated.View style={[styles.taskCheckWrap, { transform: [{ scale: scaleAnims[idx] }] }]}>
                     <View style={[
                       styles.taskCheck,
-                      task.completed && { backgroundColor: goal.pinColor, borderColor: goal.pinColor },
+                      task.completed && { backgroundColor: goal.pinColor, borderColor: colors.border },
                     ]}>
-                      {task.completed && <Check size={11} color="#FFF" />}
+                      {task.completed && <CheckIcon size={10} color="#FFF" />}
                     </View>
                   </Animated.View>
                   <Text style={[styles.taskText, task.completed && styles.taskTextDone]}>
@@ -506,7 +519,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                   <Text style={[styles.moreBtnText, { color: goal.pinColor }]}>
                     {jt.moreTasks(drawerTasks.length - 3)}
                   </Text>
-                  <ChevronRight size={14} color={goal.pinColor} />
+                  <ChevronRightIcon size={12} color={goal.pinColor} />
                 </TouchableOpacity>
               )}
 
@@ -514,9 +527,9 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
               <TouchableOpacity
                 onPress={() => setModalVisible(true)}
                 style={[styles.ctaBtn, { backgroundColor: goal.pinColor }]}
-                activeOpacity={0.85}
+                activeOpacity={0.8}
               >
-                <Target size={16} color="#FFF" />
+                <TargetIcon size={16} color="#FFF" />
                 <Text style={styles.ctaBtnText}>{jt.viewAll}</Text>
               </TouchableOpacity>
 
@@ -546,8 +559,8 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseBtn}>
-                <X size={18} color="#5C5B94" />
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseBtn} activeOpacity={0.7}>
+                <XIcon size={14} color={colors.textPrimary} />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>{goal.emoji} {goal.text}</Text>
             </View>
@@ -573,9 +586,9 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                 >
                   <View style={[
                     styles.mCheckbox,
-                    task.completed && { backgroundColor: goal.pinColor, borderColor: goal.pinColor },
+                    task.completed && { backgroundColor: goal.pinColor, borderColor: colors.border },
                   ]}>
-                    {task.completed && <Check size={12} color="#FFF" />}
+                    {task.completed && <CheckIcon size={10} color="#FFF" />}
                   </View>
                   <Text style={[styles.mTaskText, task.completed && styles.mTaskTextDone]}>
                     {task.text}
@@ -596,7 +609,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     backgroundColor: colors.bg,
   },
 
-  /* ── Background glow blobs (Unified across app) ── */
   bgGrad2: {
     position: 'absolute',
     top: -80,
@@ -618,7 +630,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     opacity: 0.05,
   },
 
-  /* ── Header ── */
   header: {
     height: Platform.OS === 'ios' ? 90 : 64,
     paddingTop: Platform.OS === 'ios' ? 44 : 8,
@@ -628,14 +639,19 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     gap: 12,
   },
   backBtn: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     backgroundColor: colors.surfaceElevated,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
+    shadowColor: colors.border,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   headerCenter: {
     flex: 1,
@@ -661,22 +677,21 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  /* ── Goal Summary Card ── */
   goalCard: {
     marginHorizontal: 18,
     marginBottom: 8,
     borderRadius: 22,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 2.5,
     borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 18,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowColor: colors.border,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   goalCardLeft: {
     flex: 1,
@@ -711,7 +726,7 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    borderWidth: 3,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -719,7 +734,7 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    borderWidth: 3,
+    borderWidth: 2.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -728,7 +743,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
   },
 
-  /* ── Map ── */
   mapScroll: { flex: 1 },
   mapContent: {
     paddingTop: 28,
@@ -736,7 +750,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     minHeight: '100%',
   },
 
-  /* Finish/Start */
   finishBanner: {
     alignItems: 'center',
     marginBottom: 16,
@@ -746,6 +759,13 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 16,
+    borderWidth: 2.5,
+    borderColor: colors.border,
+    shadowColor: colors.border,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   finishIcon: {
     width: 40,
@@ -753,6 +773,8 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
   },
   finishText: {
     fontSize: 11,
@@ -769,12 +791,19 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 16,
+    borderWidth: 2.5,
+    borderColor: colors.border,
+    shadowColor: colors.border,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   startDot: {
     width: 14,
     height: 14,
     borderRadius: 7,
-    borderWidth: 2,
+    borderWidth: 2.5,
   },
   startText: {
     fontSize: 10,
@@ -783,7 +812,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     letterSpacing: 0.6,
   },
 
-  /* Nodes */
   nodeRow: {
     width: '100%',
     alignItems: 'center',
@@ -791,9 +819,9 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     marginVertical: 6,
   },
   connectorDash: {
-    width: 2,
+    width: 2.5,
     height: 44,
-    borderRadius: 1,
+    borderRadius: 1.25,
     marginBottom: 6,
   },
   nodeLayout: {
@@ -806,7 +834,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
   nodeLayoutRight: { flexDirection: 'row-reverse' },
   nodeLayoutLeft:  { flexDirection: 'row' },
 
-  /* Label */
   labelContainer: {
     flex: 1,
     gap: 2,
@@ -820,6 +847,8 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     borderRadius: 6,
     alignSelf: 'flex-end',
     marginBottom: 3,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   nowBadgeText: {
     fontSize: 9,
@@ -838,14 +867,12 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     marginTop: 1,
   },
 
-  /* Connector horizontal line */
   connectorH: {
     width: 20,
-    height: 1.5,
-    borderRadius: 1,
+    height: 2.5,
+    borderRadius: 1.25,
   },
 
-  /* Node circles */
   nodeOrbitContainer: {
     width: 68,
     height: 68,
@@ -858,7 +885,7 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    borderWidth: 2,
+    borderWidth: 2.5,
   },
   nodeCircle: {
     width: 56,
@@ -866,27 +893,26 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
+    borderWidth: 2.5,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
     flexShrink: 0,
     zIndex: 2,
   },
   nodeCompleted: {
-    backgroundColor: '#00BFA6',
-    borderColor: '#00BFA6',
-    shadowColor: '#00BFA6',
+    backgroundColor: colors.accentAlt,
+    borderColor: colors.border,
+    shadowColor: colors.border,
   },
   nodeLocked: {
-    backgroundColor: '#131230',
-    borderColor: '#2D2B52',
+    backgroundColor: colors.bgSecondary,
+    borderColor: colors.border,
     shadowColor: 'transparent',
   },
   nodeEmoji: { fontSize: 22 },
 
-  /* ── Drawer ── */
   drawer: {
     position: 'absolute',
     bottom: 0,
@@ -898,19 +924,21 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 14,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
+    shadowColor: colors.border,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     elevation: 20,
-    borderTopWidth: 1,
-    borderColor: colors.borderLight,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderColor: colors.border,
   },
   drawerHandle: {
     width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.borderLight,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.border,
     alignSelf: 'center',
     marginBottom: 14,
   },
@@ -918,7 +946,19 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     position: 'absolute',
     top: 14,
     right: 20,
-    padding: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.border,
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   drawerHeader: {
     flexDirection: 'row',
@@ -933,6 +973,8 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    borderWidth: 2,
+    borderColor: colors.border,
   },
   drawerEmojiText: { fontSize: 24 },
   drawerHeaderText: {
@@ -945,6 +987,8 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 8,
     alignSelf: 'flex-end',
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   drawerBadgeText: {
     fontSize: 10,
@@ -957,7 +1001,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     textAlign: 'right',
   },
 
-  /* Progress bar */
   drawerProgressRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -966,9 +1009,11 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
   },
   drawerProgressTrack: {
     flex: 1,
-    height: 6,
-    backgroundColor: colors.border,
-    borderRadius: 3,
+    height: 10,
+    backgroundColor: colors.bgSecondary,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   drawerProgressFill: {
@@ -982,7 +1027,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     textAlign: 'right',
   },
 
-  /* Locked */
   drawerLockedBody: {
     alignItems: 'center',
     paddingVertical: 16,
@@ -994,6 +1038,13 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
+    shadowColor: colors.border,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   drawerLockText: {
     fontSize: 13,
@@ -1004,16 +1055,16 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     paddingHorizontal: 20,
   },
 
-  /* Celebration */
   celebrationBody: {
     alignItems: 'center',
     paddingVertical: 10,
     gap: 10,
+    alignSelf: 'stretch',
   },
   celebrationTitle: {
     fontSize: 15,
     fontFamily: 'Cairo_700Bold',
-    color: '#00BFA6',
+    color: colors.accentAlt,
     textAlign: 'center',
   },
   celebrationBtn: {
@@ -1045,7 +1096,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  /* Tasks list in drawer */
   tasksForLabel: {
     fontSize: 10,
     fontFamily: 'Cairo_600SemiBold',
@@ -1063,16 +1113,26 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 14,
     marginBottom: 8,
-    borderLeftWidth: 3,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderLeftWidth: 5,
+    shadowColor: colors.border,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
-  taskRowDone: { opacity: 0.45 },
+  taskRowDone: {
+    opacity: 0.6,
+    backgroundColor: colors.bgSecondary,
+  },
   taskCheckWrap: {},
   taskCheck: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surfaceElevated,
@@ -1101,7 +1161,6 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     fontFamily: 'Cairo_600SemiBold',
   },
 
-  /* CTA */
   ctaBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1109,10 +1168,13 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 18,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 5,
+    borderWidth: 2,
+    borderColor: colors.border,
+    shadowColor: colors.border,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
     marginTop: 4,
   },
   ctaBtnText: {
@@ -1121,14 +1183,12 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  /* Floating emojis */
   floatingEmoji: {
     position: 'absolute',
     fontSize: 26,
     zIndex: 9999,
   },
 
-  /* ── Modal ── */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
@@ -1141,14 +1201,15 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     padding: 22,
     paddingBottom: Platform.OS === 'ios' ? 42 : 30,
     maxHeight: '80%',
-    borderTopWidth: 1,
-    borderColor: colors.borderLight,
+    borderWidth: 2.5,
+    borderBottomWidth: 0,
+    borderColor: colors.border,
   },
   modalHandle: {
     width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.borderLight,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.border,
     alignSelf: 'center',
     marginBottom: 18,
   },
@@ -1159,7 +1220,19 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     marginBottom: 16,
   },
   modalCloseBtn: {
-    padding: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.border,
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
   },
   modalTitle: {
     fontSize: 14,
@@ -1177,14 +1250,16 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
   },
   modalProgressTrack: {
     flex: 1,
-    height: 8,
-    backgroundColor: colors.border,
-    borderRadius: 4,
+    height: 10,
+    backgroundColor: colors.bgSecondary,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   modalProgressFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
   modalProgressPct: {
     fontSize: 12,
@@ -1197,16 +1272,16 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-  },
-  mTaskRowDone: { opacity: 0.4 },
-  mCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
+    borderBottomWidth: 2,
     borderColor: colors.borderLight,
+  },
+  mTaskRowDone: { opacity: 0.6 },
+  mCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surface,
