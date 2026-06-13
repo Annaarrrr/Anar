@@ -34,33 +34,36 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
 
   const OptionBtn = ({
     label, selected, onPress, icon,
-  }: { label: string; selected: boolean; onPress: () => void; icon?: React.ReactNode }) => (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[
-        ss.optionBtn,
-        {
-          backgroundColor: selected ? colors.accent + '18' : colors.bg,
-          borderColor: colors.border,
-          shadowColor: colors.border,
-        },
-      ]}
-      activeOpacity={0.75}
-    >
-      {icon && <View style={ss.optionIcon}>{icon}</View>}
-      <Text style={[ss.optionLabel, { color: colors.textPrimary }]}>
-        {label}
-      </Text>
-      {selected && (
-        <View style={[ss.checkDot, { backgroundColor: colors.accent, borderColor: colors.border }]}>
-          <CheckIcon size={10} color="#FFFFFF" />
-        </View>
-      )}
-    </TouchableOpacity>
-  );
+  }: { label: string; selected: boolean; onPress: () => void; icon?: React.ReactNode }) => {
+    const selectedBg = theme === 'dark' ? '#332515' : '#FFEAD2';
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        style={[
+          ss.optionBtn,
+          {
+            backgroundColor: selected ? selectedBg : colors.bg,
+            borderColor: colors.border,
+            shadowColor: colors.border,
+          },
+        ]}
+        activeOpacity={0.75}
+      >
+        {icon && <View style={ss.optionIcon}>{icon}</View>}
+        <Text style={[ss.optionLabel, { color: colors.textPrimary, backgroundColor: 'transparent' }]}>
+          {label}
+        </Text>
+        {selected && (
+          <View style={[ss.checkDot, { backgroundColor: colors.accent, borderColor: colors.border }]}>
+            <CheckIcon size={10} color="#FFFFFF" />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const SectionTitle = ({ children }: { children: string }) => (
-    <Text style={[ss.sectionTitle, { color: colors.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+    <Text style={[ss.sectionTitle, { color: colors.textMuted, textAlign: isRTL ? 'right' : 'left', backgroundColor: 'transparent' }]}>
       {children}
     </Text>
   );
@@ -74,7 +77,7 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
         <TouchableOpacity onPress={onClose} style={[ss.closeBtn, { backgroundColor: colors.surface, borderColor: colors.border }]} activeOpacity={0.7}>
           <XIcon size={18} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[ss.headerTitle, { color: colors.textPrimary }]}>{t.settings_title}</Text>
+        <Text style={[ss.headerTitle, { color: colors.textPrimary, backgroundColor: 'transparent' }]}>{t.settings_title}</Text>
         <View style={{ width: 38 }} />
       </View>
 
@@ -86,7 +89,7 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
 
           {/* Theme */}
           <View style={ss.row}>
-            <Text style={[ss.rowLabel, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+            <Text style={[ss.rowLabel, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left', backgroundColor: 'transparent' }]}>
               {t.settings_theme}
             </Text>
           </View>
@@ -109,7 +112,7 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
 
           {/* Language */}
           <View style={ss.row}>
-            <Text style={[ss.rowLabel, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+            <Text style={[ss.rowLabel, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left', backgroundColor: 'transparent' }]}>
               {t.settings_language}
             </Text>
           </View>
@@ -137,20 +140,20 @@ export function SettingsScreen({ onClose, onLogout }: Props) {
             style={[
               ss.logoutBtn,
               {
-                backgroundColor: theme === 'dark' ? 'rgba(239,68,68,0.12)' : '#FEF2F2',
+                backgroundColor: theme === 'dark' ? '#2D1215' : '#FEF2F2',
                 borderColor:     '#EF4444',
                 shadowColor:     '#EF4444',
               },
             ]}
             activeOpacity={0.75}
           >
-            <Text style={ss.logoutText}>{t.settings_logout}</Text>
+            <Text style={[ss.logoutText, { backgroundColor: 'transparent' }]}>{t.settings_logout}</Text>
             <LogOutIcon size={16} color="#EF4444" />
           </TouchableOpacity>
         </View>
 
         {/* App version */}
-        <Text style={[ss.version, { color: colors.textMuted }]}>Anar v1.0.0</Text>
+        <Text style={[ss.version, { color: colors.textMuted, backgroundColor: 'transparent' }]}>Anar v1.0.0</Text>
 
       </ScrollView>
     </View>
@@ -209,6 +212,7 @@ const ss = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 4,
+    backgroundColor: 'transparent',
   },
   row: {
     flexDirection: 'row',
@@ -219,6 +223,7 @@ const ss = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Cairo_700Bold',
     flex: 1,
+    backgroundColor: 'transparent',
   },
   optionRow: {
     flexDirection: 'row',
@@ -246,6 +251,7 @@ const ss = StyleSheet.create({
   optionLabel: {
     fontSize: 13,
     fontFamily: 'Cairo_700Bold',
+    backgroundColor: 'transparent',
   },
   checkDot: {
     width: 16,
@@ -278,6 +284,7 @@ const ss = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Cairo_700Bold',
     color: '#EF4444',
+    backgroundColor: 'transparent',
   },
   version: {
     fontSize: 11,
