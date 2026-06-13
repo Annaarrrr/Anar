@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   ScrollView,
   Platform,
   Dimensions,
+  Pressable,
+  Animated,
+  Easing,
 } from 'react-native';
 import Svg, { Circle, Path, Line } from 'react-native-svg';
 import { TrendingUpIcon, TargetIcon, CheckIcon, ZapIcon } from './common/CustomIcons';
@@ -285,6 +288,130 @@ function makeStyles(colors: Colors) {
 
 import { HighlighterBadge } from './common/HighlighterBadge';
 
+interface ProgressStatCardProps {
+  icon: React.ReactNode;
+  value: string | number;
+  valueColor?: string;
+  label: string;
+  styles: any;
+  rotate: string;
+}
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const ProgressStatCard = React.memo(({ icon, value, valueColor, label, styles, rotate }: ProgressStatCardProps) => {
+  const wiggleAnim = React.useRef(new Animated.Value(0)).current;
+  const directionRef = React.useRef(1);
+
+  const handlePressIn = () => {
+    directionRef.current = Math.random() > 0.5 ? 1 : -1;
+    Animated.spring(wiggleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(wiggleAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const rotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [rotate, `${parseFloat(rotate) + directionRef.current * 3}deg`],
+  });
+
+  const scale = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.95],
+  });
+
+  return (
+    <AnimatedPressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[
+        styles.statCard,
+        {
+          transform: [{ rotate: rotateVal }, { scale }],
+        }
+      ]}
+    >
+      {icon}
+      <Text style={[styles.statValue, valueColor ? { color: valueColor } : {}]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </AnimatedPressable>
+  );
+});
+ProgressStatCard.displayName = 'ProgressStatCard';
+
+interface ProgressChartCardProps {
+  children: React.ReactNode;
+  styles: any;
+  width: number;
+}
+
+const ProgressChartCard = React.memo(({ children, styles, width }: ProgressChartCardProps) => {
+  const wiggleAnim = React.useRef(new Animated.Value(0)).current;
+  const directionRef = React.useRef(1);
+
+  const handlePressIn = () => {
+    directionRef.current = Math.random() > 0.5 ? 1 : -1;
+    Animated.spring(wiggleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(wiggleAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const rotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', `${directionRef.current * 1.5}deg`],
+  });
+
+  const scale = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.98],
+  });
+
+  return (
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={{ width }}
+    >
+      <Animated.View
+        style={[
+          styles.card,
+          {
+            transform: [{ rotate: rotateVal }, { scale }],
+            width: '100%',
+          }
+        ]}
+      >
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+});
+ProgressChartCard.displayName = 'ProgressChartCard';
+
 interface GoalProgressRowProps {
   goal: {
     id: string;
@@ -295,20 +422,108 @@ interface GoalProgressRowProps {
   };
   isLast: boolean;
   styles: any;
+  active: boolean;
 }
 
-const GoalProgressRow = React.memo(({ goal, isLast, styles }: GoalProgressRowProps) => {
+const GoalProgressRow = React.memo(({ goal, isLast, styles, active }: GoalProgressRowProps) => {
+  const wiggleAnim = useRef(new Animated.Value(0)).current;
+  const emojiAnim  = useRef(new Animated.Value(0)).current;
+  const barAnim    = useRef(new Animated.Value(0)).current;
+  const directionRef = useRef(1);
+
+  // Animate bar fill whenever screen becomes active
+  useEffect(() => {
+    if (active) {
+      barAnim.setValue(0);
+      Animated.timing(barAnim, {
+        toValue: goal.pct,
+        duration: 700,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false, // width requires layout driver
+      }).start();
+    }
+  }, [active, goal.pct]);
+
+  const handlePressIn = () => {
+    directionRef.current = Math.random() > 0.5 ? 1 : -1;
+    Animated.parallel([
+      Animated.spring(wiggleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 160,
+        friction: 10,
+      }),
+      Animated.sequence([
+        Animated.timing(emojiAnim, {
+          toValue: -6,
+          duration: 80,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(emojiAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 200,
+          friction: 8,
+        }),
+      ]),
+    ]).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(wiggleAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 160,
+      friction: 10,
+    }).start();
+  };
+
+  const rotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', `${directionRef.current * 1.5}deg`],
+  });
+  const scaleVal = wiggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.97],
+  });
+
+  const barWidth = barAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
   return (
-    <View style={[styles.goalRow, isLast && styles.goalRowLast]}>
-      <Text style={styles.goalEmoji}>{goal.emoji}</Text>
-      <View style={styles.goalInfo}>
-        <Text style={styles.goalName} numberOfLines={1}>{goal.text}</Text>
-        <View style={styles.goalBarTrack}>
-          <View style={[styles.goalBarFill, { width: `${goal.pct}%`, backgroundColor: goal.pinColor }]} />
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+    >
+      <Animated.View
+        style={[
+          styles.goalRow,
+          isLast && styles.goalRowLast,
+          { transform: [{ rotate: rotateVal }, { scale: scaleVal }] },
+        ]}
+      >
+        <Animated.Text
+          style={[styles.goalEmoji, { transform: [{ translateY: emojiAnim }] }]}
+        >
+          {goal.emoji}
+        </Animated.Text>
+        <View style={styles.goalInfo}>
+          <Text style={styles.goalName} numberOfLines={1}>{goal.text}</Text>
+          <View style={styles.goalBarTrack}>
+            <Animated.View
+              style={[
+                styles.goalBarFill,
+                { width: barWidth, backgroundColor: goal.pinColor },
+              ]}
+            />
+          </View>
         </View>
-      </View>
-      <Text style={styles.goalPct}>{goal.pct}%</Text>
-    </View>
+        <Text style={styles.goalPct}>{goal.pct}%</Text>
+      </Animated.View>
+    </Pressable>
   );
 });
 GoalProgressRow.displayName = 'GoalProgressRow';
@@ -317,6 +532,54 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
   const { colors, t, language } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isRTL = language === 'ar';
+
+  // Entrance slide-up when tab activates
+  const slideAnim   = useRef(new Animated.Value(12)).current;
+  const fadeAnim    = useRef(new Animated.Value(0)).current;
+  const sectionAnim = useRef(new Animated.Value(16)).current;
+  const sectionFade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (active) {
+      // Header slides in
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 250,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+      // Goals section slides in with a small delay
+      Animated.parallel([
+        Animated.timing(sectionAnim, {
+          toValue: 0,
+          duration: 300,
+          delay: 120,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(sectionFade, {
+          toValue: 1,
+          duration: 300,
+          delay: 120,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      slideAnim.setValue(12);
+      fadeAnim.setValue(0);
+      sectionAnim.setValue(16);
+      sectionFade.setValue(0);
+    }
+  }, [active]);
 
   const [frozenData, setFrozenData] = useState({
     goals,
@@ -388,7 +651,12 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
         <View style={styles.safeTop} />
 
         {/* ── Top bar ── */}
-        <View style={styles.topBar}>
+        <Animated.View
+          style={[
+            styles.topBar,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+          ]}
+        >
           <View style={styles.greetBlock}>
             <Text style={styles.greetDate}>{today}</Text>
             <Text style={styles.headerTitle}>
@@ -400,27 +668,35 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
             textColor={colors.textPrimary}
             highlightColor={colors.accent + '20'}
           />
-        </View>
+        </Animated.View>
 
         {/* ── Stat row ── */}
         <View style={styles.statRow}>
-          <View style={styles.statCard}>
-            <TargetIcon size={20} color={colors.accent} />
-            <Text style={styles.statValue}>{totalGoals}</Text>
-            <Text style={styles.statLabel}>{isRTL ? 'أهداف' : 'Goals'}</Text>
-          </View>
+          <ProgressStatCard
+            rotate="-1.5deg"
+            icon={<TargetIcon size={20} color={colors.accent} />}
+            value={totalGoals}
+            label={isRTL ? 'أهداف' : 'Goals'}
+            styles={styles}
+          />
 
-          <View style={styles.statCard}>
-            <CheckIcon size={20} color={colors.accentAlt} />
-            <Text style={[styles.statValue, { color: colors.accentAlt }]}>{completedTasks}</Text>
-            <Text style={styles.statLabel}>{isRTL ? 'مهام منجزة' : 'Tasks Done'}</Text>
-          </View>
+          <ProgressStatCard
+            rotate="1.2deg"
+            icon={<CheckIcon size={20} color={colors.accentAlt} />}
+            value={completedTasks}
+            valueColor={colors.accentAlt}
+            label={isRTL ? 'مهام منجزة' : 'Tasks Done'}
+            styles={styles}
+          />
 
-          <View style={styles.statCard}>
-            <ZapIcon size={20} color={colors.accent} />
-            <Text style={[styles.statValue, { color: colors.accent }]}>{overallPct}%</Text>
-            <Text style={styles.statLabel}>{isRTL ? 'إجمالي' : 'Overall'}</Text>
-          </View>
+          <ProgressStatCard
+            rotate="-0.8deg"
+            icon={<ZapIcon size={20} color={colors.accent} />}
+            value={`${overallPct}%`}
+            valueColor={colors.accent}
+            label={isRTL ? 'إجمالي' : 'Overall'}
+            styles={styles}
+          />
         </View>
 
         {/* ── Charts (Horizontal Swipe) ── */}
@@ -433,7 +709,7 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
           snapToInterval={(width * 0.85) + 16}
         >
           {/* Card 1: Ring chart */}
-          <View style={[styles.card, { width: width * 0.85 }]}>
+          <ProgressChartCard styles={styles} width={width * 0.85}>
             <View style={styles.cardHeader}>
               <HighlighterBadge
                 text={`${overallPct}%`}
@@ -526,10 +802,10 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
                 </Text>
               </View>
             </View>
-          </View>
+          </ProgressChartCard>
 
           {/* Card 2: Weekly trend */}
-          <View style={[styles.card, { width: width * 0.85 }]}>
+          <ProgressChartCard styles={styles} width={width * 0.85}>
             <View style={styles.cardHeader}>
               <TrendingUpIcon size={16} color={colors.accent} />
               <Text style={styles.cardTitle}>
@@ -594,11 +870,16 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
                 </Text>
               ))}
             </View>
-          </View>
+          </ProgressChartCard>
         </ScrollView>
 
         {/* ── Goals breakdown (Now part of main scroll) ── */}
-        <View style={[styles.goalsSection, { minHeight: 300 }]}>
+        <Animated.View
+          style={[
+            styles.goalsSection,
+            { minHeight: 300, opacity: sectionFade, transform: [{ translateY: sectionAnim }] },
+          ]}
+        >
           <View style={styles.goalsHeader}>
             <Text style={styles.goalsHeaderTitle}>
               {isRTL ? 'تفاصيل الأهداف' : 'Goals Breakdown'}
@@ -625,11 +906,12 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
                   goal={g}
                   isLast={i === goalStats.length - 1}
                   styles={styles}
+                  active={active}
                 />
               ))
             )}
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </View>
   );
