@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { ShareIcon, PlusIcon, CheckIcon, XIcon, ChatIcon, PencilIcon, TrashIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
+import { Pushpin } from './common/PinOrnaments';
 import { ActiveTab, GoalPin } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -176,8 +177,8 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
             {/* Progress summary card */}
             {focusGoal && (
               <View style={styles.progressCard}>
-                <View style={[styles.pinDot, { backgroundColor: '#EF4444', top: -8, left: 24 }]} />
-                <View style={[styles.pinDot, { backgroundColor: '#EF4444', top: -8, right: 24 }]} />
+                <Pushpin style={{ top: -15, left: 24, alignSelf: 'flex-start' }} />
+                <Pushpin style={{ top: -15, right: 24, alignSelf: 'flex-end' }} />
                 <Text style={styles.progressCardTitle}>{t.vision_progress}</Text>
                 <View style={styles.progressRow}>
                   <View style={styles.progressBadge}>
@@ -225,6 +226,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                             style={[styles.goalPin, styles.addPin, { transform: [{ rotate: '1.5deg' }] }]}
                             activeOpacity={0.8}
                           >
+                            <Pushpin style={{ top: -15, alignSelf: 'center' }} />
                             <PlusIcon size={28} color={colors.textPrimary} />
                             <Text style={styles.addPinText}>{t.vision_new_goal}</Text>
                           </TouchableOpacity>
@@ -257,7 +259,7 @@ export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress
                             setEditGoalText(goal.text);
                           }}
                         >
-                          <View style={[styles.pinDot, { backgroundColor: goal.pinColor, top: -8, alignSelf: 'center' }]} />
+                          <Pushpin style={{ top: -15, alignSelf: 'center' }} />
                           {/* Active goal star badge */}
                           {isActive && (
                             <View style={styles.activeBadge}>

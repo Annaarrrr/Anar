@@ -302,6 +302,7 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
                 },
               ]}
             />
+
             <View style={[styles.bulbBody, styles.bulbBodyMini]}>
               <View style={styles.bulbFace}>
                 <View style={[styles.eye, styles.eyeHappy]} />
@@ -337,6 +338,7 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
                 },
               ]}
             />
+
             <Text style={styles.questionMark}>؟</Text>
             <View style={styles.bulbBody}>
               <View style={[styles.bulbFace, styles.bulbFaceReady]}>
@@ -373,6 +375,7 @@ export function Mascot({ size = 150, variant = 'welcome' }: Props) {
                 },
               ]}
             />
+
             <View style={styles.bulbBody}>
               <View style={styles.bulbFace}>
                 <View style={styles.eye} />

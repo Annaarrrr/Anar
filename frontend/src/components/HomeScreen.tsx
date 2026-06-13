@@ -20,6 +20,7 @@ import {
 } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
 import { NotebookBackground } from './common/NotebookBackground';
+import { WashiTape, Pushpin } from './common/PinOrnaments';
 import { ActiveTab, Goal, Task } from '../types';
 import { useAppSettings } from '../context/AppContext';
 import { Mascot } from './Mascot';
@@ -125,7 +126,8 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
           <>
             {/* ── Stats row ── */}
             <View style={styles.statsRow}>
-              <View style={styles.statCard}>
+              <View style={[styles.statCard, { transform: [{ rotate: '-1.5deg' }] }]}>
+                <WashiTape style={{ top: -8, backgroundColor: 'rgba(135, 121, 245, 0.25)' }} />
                 <View style={[styles.statIconBox, { backgroundColor: colors.accentAlt + '20' }]}>
                   <CheckIcon size={16} color={colors.accentAlt} />
                 </View>
@@ -133,7 +135,8 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
                 <Text style={styles.statLabel}>{t.home_stat_tasks}</Text>
               </View>
 
-              <View style={styles.statCard}>
+              <View style={[styles.statCard, { transform: [{ rotate: '1.2deg' }] }]}>
+                <WashiTape style={{ top: -8 }} />
                 <View style={[styles.statIconBox, { backgroundColor: colors.accent + '20' }]}>
                   <TrendingUpIcon size={16} color={colors.accent} />
                 </View>
@@ -141,7 +144,8 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
                 <Text style={styles.statLabel}>{isRTL ? 'التقدم' : 'Progress'}</Text>
               </View>
 
-              <View style={styles.statCard}>
+              <View style={[styles.statCard, { transform: [{ rotate: '-0.8deg' }] }]}>
+                <WashiTape style={{ top: -8, backgroundColor: 'rgba(101, 83, 74, 0.25)' }} />
                 <View style={[styles.statIconBox, { backgroundColor: colors.textSecondary + '20' }]}>
                   <TargetIcon size={16} color={colors.textSecondary} />
                 </View>
@@ -152,6 +156,7 @@ export function HomeScreen({ onNavigate, activeGoal, tasks, onLogout, onOpenSett
 
             {/* ── Hero goal card (flex: 1 → takes remaining space) ── */}
             <View style={styles.heroCard}>
+              <Pushpin style={{ top: -14 }} />
               {/* Badge */}
               <View style={styles.heroBadgeRow}>
                 <View style={styles.heroBadge}>

@@ -25,6 +25,7 @@ import {
 } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
 import { NotebookBackground } from './common/NotebookBackground';
+import { TornEdge } from './common/TornEdge';
 import { GoalPin, Task } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
@@ -402,6 +403,13 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
       {/* ── Bottom Drawer ── */}
       {drawerVisible && drawerStage && (
         <Animated.View style={[styles.drawer, { transform: [{ translateY: drawerTranslateY }] }]}>
+          {/* Unified realistic torn paper edge */}
+          <TornEdge
+            color={colors.surfaceElevated}
+            borderColor={colors.border}
+            style={{ position: 'absolute', top: -21, left: -12 }}
+          />
+
           {/* Handle */}
           <View style={styles.drawerHandle} />
 
@@ -921,17 +929,14 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: colors.surfaceElevated,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
     paddingHorizontal: 22,
-    paddingTop: 14,
+    paddingTop: 18,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     shadowColor: colors.border,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 20,
-    borderTopWidth: 3,
     borderLeftWidth: 3,
     borderRightWidth: 3,
     borderColor: colors.border,
