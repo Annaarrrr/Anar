@@ -95,6 +95,11 @@ const GoalPinCard = React.memo(({
     outputRange: [1, 0.95],
   });
 
+  const pinRotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1],
+    outputRange: ['0deg', '-8deg', '8deg', '-6deg', '4deg', '0deg'],
+  });
+
   return (
     <Pressable
       onPress={() => onGoalPress(goal)}
@@ -115,7 +120,15 @@ const GoalPinCard = React.memo(({
           isActive && { borderWidth: 2.5, borderColor: '#00BFA6' },
         ]}
       >
-        <Pushpin style={{ top: -15, alignSelf: 'center' }} />
+        <Animated.View style={{
+          position: 'absolute',
+          top: -15,
+          alignSelf: 'center',
+          transform: [{ rotate: pinRotateVal }],
+          zIndex: 12,
+        }}>
+          <Pushpin style={{ position: 'relative', top: 0 }} />
+        </Animated.View>
         {isActive && (
           <View style={styles.activeBadge}>
             <Text style={styles.activeBadgeText}>
@@ -178,6 +191,11 @@ const AddPinCard = React.memo(({ onPress, colors, t, styles }: AddPinCardProps) 
     outputRange: [1, 0.95],
   });
 
+  const pinRotateVal = wiggleAnim.interpolate({
+    inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1],
+    outputRange: ['0deg', '-8deg', '8deg', '-6deg', '4deg', '0deg'],
+  });
+
   return (
     <Pressable
       onPress={onPress}
@@ -195,7 +213,15 @@ const AddPinCard = React.memo(({ onPress, colors, t, styles }: AddPinCardProps) 
           }
         ]}
       >
-        <Pushpin style={{ top: -15, alignSelf: 'center' }} />
+        <Animated.View style={{
+          position: 'absolute',
+          top: -15,
+          alignSelf: 'center',
+          transform: [{ rotate: pinRotateVal }],
+          zIndex: 12,
+        }}>
+          <Pushpin style={{ position: 'relative', top: 0 }} />
+        </Animated.View>
         <PlusIcon size={28} color={colors.textPrimary} />
         <Text style={styles.addPinText}>{t.vision_new_goal}</Text>
       </Animated.View>
@@ -219,15 +245,27 @@ const VisionModalTaskRow = React.memo(({
   onPress,
   styles,
 }: VisionModalTaskRowProps) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    scaleAnim.setValue(1);
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 1.3, duration: 100, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1.0, friction: 4, tension: 40, useNativeDriver: true }),
+    ]).start();
+  }, [task.completed]);
+
   return (
     <TouchableOpacity
       onPress={() => onPress(goalId, task.id, task.completed)}
       style={[styles.taskRow, task.completed && styles.taskRowDone]}
       activeOpacity={0.7}
     >
-      <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
-        {task.completed && <CheckIcon size={11} color="white" />}
-      </View>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
+          {task.completed && <CheckIcon size={11} color="white" />}
+        </View>
+      </Animated.View>
       <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
         <Text style={[styles.taskText, task.completed && { color: colors.textMuted }]}>
           {task.text}
