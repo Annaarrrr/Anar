@@ -231,6 +231,7 @@ export function Mascot({ size = 150, variant = 'welcome', animated = true }: Pro
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const disableGlow = size < 100 || !animated;
+  const disableFloat = size < 60 || !animated;
 
   // Animation Refs
   const levitateAnim = useRef(new Animated.Value(0)).current;
@@ -240,21 +241,24 @@ export function Mascot({ size = 150, variant = 'welcome', animated = true }: Pro
     if (!animated) return;
 
     // 1. levitation loop (gentle float)
-    const levitateLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(levitateAnim, {
-          toValue: 1,
-          duration: 2200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(levitateAnim, {
-          toValue: 0,
-          duration: 2200,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    levitateLoop.start();
+    let levitateLoop: any;
+    if (!disableFloat) {
+      levitateLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(levitateAnim, {
+            toValue: 1,
+            duration: 2200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(levitateAnim, {
+            toValue: 0,
+            duration: 2200,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      levitateLoop.start();
+    }
 
     // 2. radiating glow loop
     let pulseLoop: any;
@@ -277,12 +281,14 @@ export function Mascot({ size = 150, variant = 'welcome', animated = true }: Pro
     }
 
     return () => {
-      levitateLoop.stop();
+      if (levitateLoop) {
+        levitateLoop.stop();
+      }
       if (pulseLoop) {
         pulseLoop.stop();
       }
     };
-  }, [animated, disableGlow]);
+  }, [animated, disableGlow, disableFloat]);
 
   const baseWidth = variant === 'welcome' ? 150 : 260;
   const scale = size / baseWidth;
