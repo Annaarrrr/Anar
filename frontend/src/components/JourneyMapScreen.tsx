@@ -46,12 +46,244 @@ interface Props {
 type NodeStatus = 'completed' | 'active' | 'locked';
 
 
+interface StageNodeRowProps {
+  stage: any;
+  displayIdx: number;
+  realIdx: number;
+  status: NodeStatus;
+  labelOnRight: boolean;
+  pinColor: string;
+  colors: any;
+  theme: 'light' | 'dark';
+  isRTL: boolean;
+  jt: any;
+  pulseAnim: Animated.Value;
+  onNodePress: (displayIdx: number) => void;
+  onMeasureLayout: (realIdx: number, centerY: number, layout: { y: number; height: number }) => void;
+  styles: any;
+}
+
+const StageNodeRow = React.memo(({
+  stage,
+  displayIdx,
+  realIdx,
+  status,
+  labelOnRight,
+  pinColor,
+  colors,
+  theme,
+  isRTL,
+  jt,
+  pulseAnim,
+  onNodePress,
+  onMeasureLayout,
+  styles,
+}: StageNodeRowProps) => {
+  return (
+    <View
+      style={styles.nodeRow}
+      onLayout={(e) => {
+        const { y, height } = e.nativeEvent.layout;
+        const centerY = y + 44 + 34;
+        onMeasureLayout(realIdx, centerY, { y, height });
+      }}
+    >
+      {/* Spacer instead of dots to let the continuous winding path show through */}
+      <View style={{ height: 44 }} />
+
+      <TouchableOpacity
+        onPress={() => onNodePress(displayIdx)}
+        style={styles.nodeLayout}
+        activeOpacity={0.8}
+      >
+        {/* Column 1: Left Side */}
+        <View style={styles.nodeSideColumn}>
+          {!labelOnRight && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+              <View style={[styles.labelContainer, { alignItems: 'flex-end' }]}>
+                {status === 'active' && (
+                  <View style={[styles.nowBadge, { backgroundColor: pinColor }]}>
+                    <Text style={styles.nowBadgeText}>{jt.now}</Text>
+                  </View>
+                )}
+                <Text
+                  style={[
+                    styles.nodeLabel,
+                    status === 'completed' && { color: colors.accentAlt },
+                    status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
+                    status === 'locked'    && { color: colors.textMuted },
+                    { textAlign: 'right' }
+                  ]}
+                  numberOfLines={2}
+                >
+                  {stage.label}
+                </Text>
+                <Text style={[styles.nodeSub, { textAlign: 'right' }]}>{stage.sublabel}</Text>
+              </View>
+              <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
+            </View>
+          )}
+        </View>
+
+        {/* Column 2: Center Node */}
+        <View style={styles.nodeCenterColumn}>
+          <View style={styles.nodeOrbitContainer}>
+            {status === 'active' ? (
+              <>
+                <Animated.View style={[
+                  styles.nodeOrbit,
+                  { borderColor: pinColor + '55', transform: [{ scale: pulseAnim }] }
+                ]} />
+                <View style={[styles.nodeCircle, { backgroundColor: pinColor, borderColor: colors.border, shadowColor: colors.border }]}>
+                  <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
+                </View>
+              </>
+            ) : status === 'completed' ? (
+              <View style={[styles.nodeCircle, styles.nodeCompleted]}>
+                <CheckIcon size={20} color="#FFFFFF" />
+              </View>
+            ) : (
+              <View style={[styles.nodeCircle, styles.nodeLocked]}>
+                <LockIcon size={16} color={colors.textMuted} />
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Column 3: Right Side */}
+        <View style={styles.nodeSideColumn}>
+          {labelOnRight && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
+              <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
+              <View style={[styles.labelContainer, { alignItems: 'flex-start' }]}>
+                {status === 'active' && (
+                  <View style={[styles.nowBadge, { backgroundColor: pinColor }]}>
+                    <Text style={styles.nowBadgeText}>{jt.now}</Text>
+                  </View>
+                )}
+                <Text
+                  style={[
+                    styles.nodeLabel,
+                    status === 'completed' && { color: colors.accentAlt },
+                    status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
+                    status === 'locked'    && { color: colors.textMuted },
+                    { textAlign: 'left' }
+                  ]}
+                  numberOfLines={2}
+                >
+                  {stage.label}
+                </Text>
+                <Text style={[styles.nodeSub, { textAlign: 'left' }]}>{stage.sublabel}</Text>
+              </View>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+});
+StageNodeRow.displayName = 'StageNodeRow';
+
+interface JourneyDrawerTaskRowProps {
+  task: Task;
+  pinColor: string;
+  colors: any;
+  onPress: (taskId: string, currentlyCompleted: boolean) => void;
+  styles: any;
+}
+
+const JourneyDrawerTaskRow = React.memo(({
+  task,
+  pinColor,
+  colors,
+  onPress,
+  styles,
+}: JourneyDrawerTaskRowProps) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    scaleAnim.setValue(1);
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 1.35, duration: 100, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1.0, friction: 4, tension: 40, useNativeDriver: true }),
+    ]).start();
+  }, [task.completed]);
+
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(task.id, task.completed)}
+      style={[
+        styles.taskRow,
+        task.completed && styles.taskRowDone,
+        { borderLeftColor: pinColor },
+      ]}
+      activeOpacity={0.75}
+    >
+      <Animated.View style={[styles.taskCheckWrap, { transform: [{ scale: scaleAnim }] }]}>
+        <View style={[
+          styles.taskCheck,
+          task.completed && { backgroundColor: pinColor, borderColor: colors.border },
+        ]}>
+          {task.completed && <CheckIcon size={10} color="#FFF" />}
+        </View>
+      </Animated.View>
+      <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
+        <Text style={[styles.taskText, task.completed && { color: colors.textMuted }]}>
+          {task.text}
+        </Text>
+        <AnimatedStrikethrough visible={task.completed} />
+      </View>
+    </TouchableOpacity>
+  );
+});
+JourneyDrawerTaskRow.displayName = 'JourneyDrawerTaskRow';
+
+interface JourneyModalTaskRowProps {
+  task: Task;
+  idx: number;
+  pinColor: string;
+  colors: any;
+  onPress: (taskId: string, completed: boolean, idx: number) => void;
+  styles: any;
+}
+
+const JourneyModalTaskRow = React.memo(({
+  task,
+  idx,
+  pinColor,
+  colors,
+  onPress,
+  styles,
+}: JourneyModalTaskRowProps) => {
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(task.id, task.completed, idx)}
+      style={[styles.mTaskRow, task.completed && styles.mTaskRowDone]}
+      activeOpacity={0.75}
+    >
+      <View style={[
+        styles.mCheckbox,
+        task.completed && { backgroundColor: pinColor, borderColor: colors.border },
+      ]}>
+        {task.completed && <CheckIcon size={10} color="#FFF" />}
+      </View>
+      <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
+        <Text style={[styles.mTaskText, task.completed && { color: colors.textMuted }]}>
+          {task.text}
+        </Text>
+        <AnimatedStrikethrough visible={task.completed} />
+      </View>
+    </TouchableOpacity>
+  );
+});
+JourneyModalTaskRow.displayName = 'JourneyModalTaskRow';
+
 export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const { colors, theme, language } = useAppSettings();
   const styles = React.useMemo(() => makeStyles(colors, theme), [colors, theme]);
   const isRTL = language === 'ar';
 
-  const jt = {
+  const jt = useMemo(() => ({
     headerLabel:   isRTL ? 'خريطة رحلة'                              : 'Journey Map',
     finish:        isRTL ? 'نهاية المسار'                            : 'Finish Line',
     start:         isRTL ? 'البداية'                                  : 'Start',
@@ -73,7 +305,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
     streakDays:    isRTL ? 'يوم متتالي'                              : 'day streak',
     tasks:         isRTL ? 'مهمة'                                     : 'tasks',
     completed:     isRTL ? 'مكتملة'                                   : 'completed',
-  };
+  }), [isRTL]);
 
   const [tasks, setTasks] = useState<Task[]>(goal.tasks);
   const [selectedStageIdx, setSelectedStageIdx] = useState<number | null>(null);
@@ -88,7 +320,6 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const drawerAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnims = useRef(Array.from({ length: 20 }, () => new Animated.Value(1))).current;
 
   const [showCelebration, setShowCelebration] = useState(false);
   const celebrationScale = useRef(new Animated.Value(0.5)).current;
@@ -190,12 +421,20 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const displayedStages = [...goal.stages].reverse();
   const toRealIdx = (displayIdx: number) => goal.stages.length - 1 - displayIdx;
 
-  const handleNodePress = (displayIdx: number) => {
-    const realIdx = toRealIdx(displayIdx);
+  const handleNodePress = useCallback((displayIdx: number) => {
+    const realIdx = goal.stages.length - 1 - displayIdx;
     setSelectedStageIdx(realIdx);
     setShowCompletedTasks(false);
     setDrawerVisible(true);
-  };
+  }, [goal.stages.length]);
+
+  const handleMeasureLayout = useCallback((realIdx: number, centerY: number, layout: { y: number; height: number }) => {
+    nodeLayoutsRef.current[realIdx] = layout;
+    setNodeCoords((prev) => {
+      if (prev[realIdx]?.y === centerY) return prev;
+      return { ...prev, [realIdx]: { x: width / 2, y: centerY } };
+    });
+  }, []);
 
   const pathD = useMemo(() => {
     const coordsList = Object.keys(nodeCoords)
@@ -233,15 +472,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
 
 
-  const toggleTask = async (taskId: string, currentlyCompleted: boolean, taskIndex: number = -1) => {
-    if (taskIndex >= 0 && taskIndex < scaleAnims.length) {
-      scaleAnims[taskIndex].setValue(1);
-      Animated.sequence([
-        Animated.timing(scaleAnims[taskIndex],  { toValue: 1.35, duration: 100, useNativeDriver: true }),
-        Animated.spring(scaleAnims[taskIndex],  { toValue: 1.0, friction: 4, tension: 40, useNativeDriver: true }),
-      ]).start();
-    }
-
+  const toggleTask = React.useCallback(async (taskId: string, currentlyCompleted: boolean) => {
     const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, completed: !currentlyCompleted } : t));
     setTasks(updatedTasks);
 
@@ -276,7 +507,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         prev.map((t) => (t.id === taskId ? { ...t, completed: currentlyCompleted } : t))
       );
     }
-  };
+  }, [tasks, selectedStageIdx, N, numStages, refreshGoals, jt.alertErr, jt.alertErrMsg]);
 
   const handleContentSizeChange = () => {
     if (!hasScrolledRef.current && scrollViewRef.current) {
@@ -363,26 +594,28 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
         {/* Sketchy winding timeline path */}
         {pathD !== '' && (
-          <Svg style={StyleSheet.absoluteFillObject} pointerEvents="none">
-            {/* Draw a subtle thick hand-drawn highlight behind */}
-            <Path
-              d={pathD}
-              fill="none"
-              stroke={goal.pinColor + '1C'}
-              strokeWidth={14}
-              strokeLinecap="round"
-            />
-            {/* Main dashed path */}
-            <Path
-              d={pathD}
-              fill="none"
-              stroke={colors.border}
-              strokeWidth={3}
-              strokeDasharray="6, 6"
-              strokeLinecap="round"
-              opacity={0.8}
-            />
-          </Svg>
+          <View style={StyleSheet.absoluteFillObject} pointerEvents="none" renderToHardwareTextureAndroid={true}>
+            <Svg style={StyleSheet.absoluteFillObject}>
+              {/* Draw a subtle thick hand-drawn highlight behind */}
+              <Path
+                d={pathD}
+                fill="none"
+                stroke={goal.pinColor + '1C'}
+                strokeWidth={14}
+                strokeLinecap="round"
+              />
+              {/* Main dashed path */}
+              <Path
+                d={pathD}
+                fill="none"
+                stroke={colors.border}
+                strokeWidth={3}
+                strokeDasharray="6, 6"
+                strokeLinecap="round"
+                opacity={0.8}
+              />
+            </Svg>
+          </View>
         )}
 
         {/* Finish banner */}
@@ -400,112 +633,23 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
           const labelOnRight = isRTL ? (displayIdx % 2 !== 0) : (displayIdx % 2 === 0);
 
           return (
-            <View
+            <StageNodeRow
               key={stage.id}
-              style={styles.nodeRow}
-              onLayout={(e) => {
-                const { y, height } = e.nativeEvent.layout;
-                nodeLayoutsRef.current[realIdx] = { y, height };
-                
-                const centerY = y + 44 + 34;
-                setNodeCoords((prev) => {
-                  if (prev[realIdx]?.y === centerY) return prev;
-                  return { ...prev, [realIdx]: { x: width / 2, y: centerY } };
-                });
-              }}
-            >
-              {/* Spacer instead of dots to let the continuous winding path show through */}
-              <View style={{ height: 44 }} />
-
-              <TouchableOpacity
-                onPress={() => handleNodePress(displayIdx)}
-                style={styles.nodeLayout}
-                activeOpacity={0.8}
-              >
-                {/* Column 1: Left Side */}
-                <View style={styles.nodeSideColumn}>
-                  {!labelOnRight && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-                      <View style={[styles.labelContainer, { alignItems: 'flex-end' }]}>
-                        {status === 'active' && (
-                          <View style={[styles.nowBadge, { backgroundColor: goal.pinColor }]}>
-                            <Text style={styles.nowBadgeText}>{jt.now}</Text>
-                          </View>
-                        )}
-                        <Text
-                          style={[
-                            styles.nodeLabel,
-                            status === 'completed' && { color: colors.accentAlt },
-                            status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
-                            status === 'locked'    && { color: colors.textMuted },
-                            { textAlign: 'right' }
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {stage.label}
-                        </Text>
-                        <Text style={[styles.nodeSub, { textAlign: 'right' }]}>{stage.sublabel}</Text>
-                      </View>
-                      <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
-                    </View>
-                  )}
-                </View>
-
-                {/* Column 2: Center Node */}
-                <View style={styles.nodeCenterColumn}>
-                  <View style={styles.nodeOrbitContainer}>
-                    {status === 'active' ? (
-                      <>
-                        <Animated.View style={[
-                          styles.nodeOrbit,
-                          { borderColor: goal.pinColor + '55', transform: [{ scale: pulseAnim }] }
-                        ]} />
-                        <View style={[styles.nodeCircle, { backgroundColor: goal.pinColor, borderColor: colors.border, shadowColor: colors.border }]}>
-                          <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
-                        </View>
-                      </>
-                    ) : status === 'completed' ? (
-                      <View style={[styles.nodeCircle, styles.nodeCompleted]}>
-                        <CheckIcon size={20} color="#FFFFFF" />
-                      </View>
-                    ) : (
-                      <View style={[styles.nodeCircle, styles.nodeLocked]}>
-                        <LockIcon size={16} color={colors.textMuted} />
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* Column 3: Right Side */}
-                <View style={styles.nodeSideColumn}>
-                  {labelOnRight && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
-                      <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
-                      <View style={[styles.labelContainer, { alignItems: 'flex-start' }]}>
-                        {status === 'active' && (
-                          <View style={[styles.nowBadge, { backgroundColor: goal.pinColor }]}>
-                            <Text style={styles.nowBadgeText}>{jt.now}</Text>
-                          </View>
-                        )}
-                        <Text
-                          style={[
-                            styles.nodeLabel,
-                            status === 'completed' && { color: colors.accentAlt },
-                            status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
-                            status === 'locked'    && { color: colors.textMuted },
-                            { textAlign: 'left' }
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {stage.label}
-                        </Text>
-                        <Text style={[styles.nodeSub, { textAlign: 'left' }]}>{stage.sublabel}</Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </View>
+              stage={stage}
+              displayIdx={displayIdx}
+              realIdx={realIdx}
+              status={status}
+              labelOnRight={labelOnRight}
+              pinColor={goal.pinColor}
+              colors={colors}
+              theme={theme}
+              isRTL={isRTL}
+              jt={jt}
+              pulseAnim={pulseAnim}
+              onNodePress={handleNodePress}
+              onMeasureLayout={handleMeasureLayout}
+              styles={styles}
+            />
           );
         })}
 
@@ -591,32 +735,15 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
             /* Active or Completed Task list */
             <View>
               <Text style={styles.tasksForLabel}>{jt.tasksFor}</Text>
-              {drawerTasks.slice(0, 3).map((task, idx) => (
-                <TouchableOpacity
+              {drawerTasks.slice(0, 3).map((task) => (
+                <JourneyDrawerTaskRow
                   key={task.id}
-                  onPress={() => toggleTask(task.id, task.completed, idx)}
-                  style={[
-                    styles.taskRow,
-                    { borderLeftColor: goal.pinColor },
-                    task.completed && styles.taskRowDone,
-                  ]}
-                  activeOpacity={0.75}
-                >
-                  <Animated.View style={[styles.taskCheckWrap, { transform: [{ scale: scaleAnims[idx] }] }]}>
-                    <View style={[
-                      styles.taskCheck,
-                      task.completed && { backgroundColor: goal.pinColor, borderColor: colors.border },
-                    ]}>
-                      {task.completed && <CheckIcon size={10} color="#FFF" />}
-                    </View>
-                  </Animated.View>
-                  <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
-                    <Text style={[styles.taskText, task.completed && { color: colors.textMuted }]}>
-                      {task.text}
-                    </Text>
-                    <AnimatedStrikethrough visible={task.completed} />
-                  </View>
-                </TouchableOpacity>
+                  task={task}
+                  pinColor={goal.pinColor}
+                  colors={colors}
+                  onPress={toggleTask}
+                  styles={styles}
+                />
               ))}
 
               {drawerTasks.length > 3 && (
@@ -682,25 +809,15 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
 
             <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 12 }}>
               {drawerTasks.map((task, idx) => (
-                <TouchableOpacity
+                <JourneyModalTaskRow
                   key={task.id}
-                  onPress={() => toggleTask(task.id, task.completed, idx)}
-                  style={[styles.mTaskRow, task.completed && styles.mTaskRowDone]}
-                  activeOpacity={0.75}
-                >
-                  <View style={[
-                    styles.mCheckbox,
-                    task.completed && { backgroundColor: goal.pinColor, borderColor: colors.border },
-                  ]}>
-                    {task.completed && <CheckIcon size={10} color="#FFF" />}
-                  </View>
-                  <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
-                    <Text style={[styles.mTaskText, task.completed && { color: colors.textMuted }]}>
-                      {task.text}
-                    </Text>
-                    <AnimatedStrikethrough visible={task.completed} />
-                  </View>
-                </TouchableOpacity>
+                  task={task}
+                  idx={idx}
+                  pinColor={goal.pinColor}
+                  colors={colors}
+                  onPress={toggleTask}
+                  styles={styles}
+                />
               ))}
             </ScrollView>
           </View>

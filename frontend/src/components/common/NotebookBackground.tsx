@@ -34,7 +34,11 @@ export const NotebookBackground = React.memo(function NotebookBackground() {
   if (theme === 'dark') {
     // Chalkboard grid theme
     return (
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.bg }]} pointerEvents="none">
+      <View
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.bg }]}
+        pointerEvents="none"
+        renderToHardwareTextureAndroid={true}
+      >
         <Svg width={width} height={height} style={StyleSheet.absoluteFillObject}>
           {/* Draw all horizontal and vertical grid lines as a single combined path */}
           <Path
@@ -51,7 +55,11 @@ export const NotebookBackground = React.memo(function NotebookBackground() {
 
   // Light theme: classic ruled notebook paper
   return (
-    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.bg }]} pointerEvents="none">
+    <View
+      style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.bg }]}
+      pointerEvents="none"
+      renderToHardwareTextureAndroid={true}
+    >
       <Svg width={width} height={height} style={StyleSheet.absoluteFillObject}>
         {/* Draw all ruled page lines as a single path */}
         <Path

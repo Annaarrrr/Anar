@@ -35,6 +35,40 @@ interface Props {
   active?:        boolean;
 }
 
+interface HomeStatCardProps {
+  rotate: string;
+  washiColor?: string;
+  iconBg: string;
+  icon: React.ReactNode;
+  value: string | number;
+  valueColor: string;
+  label: string;
+  styles: any;
+}
+
+const HomeStatCard = React.memo(({
+  rotate,
+  washiColor,
+  iconBg,
+  icon,
+  value,
+  valueColor,
+  label,
+  styles,
+}: HomeStatCardProps) => {
+  return (
+    <View style={[styles.statCard, { transform: [{ rotate }] }]}>
+      <WashiTape style={{ top: -8, ...(washiColor ? { backgroundColor: washiColor } : {}) }} />
+      <View style={[styles.statIconBox, { backgroundColor: iconBg }]}>
+        {icon}
+      </View>
+      <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+});
+HomeStatCard.displayName = 'HomeStatCard';
+
 function HomeScreenInner({
   onNavigate,
   activeGoal,
@@ -47,9 +81,36 @@ function HomeScreenInner({
   const isRTL = language === 'ar';
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
 
-  const completedCount  = tasks.filter((tk) => tk.completed).length;
-  const totalCount      = tasks.length;
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  // Frozen data that only updates when active === true
+  const [frozenData, setFrozenData] = React.useState({
+    activeGoal,
+    tasks,
+    completedCount: tasks.filter((tk) => tk.completed).length,
+    totalCount: tasks.length,
+    progressPercent: tasks.length > 0 ? Math.round((tasks.filter((tk) => tk.completed).length / tasks.length) * 100) : 0,
+  });
+
+  React.useEffect(() => {
+    if (active) {
+      const completed = tasks.filter((tk) => tk.completed).length;
+      const total = tasks.length;
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      setFrozenData({
+        activeGoal,
+        tasks,
+        completedCount: completed,
+        totalCount: total,
+        progressPercent: pct,
+      });
+    }
+  }, [active, activeGoal, tasks]);
+
+  const {
+    activeGoal: displayActiveGoal,
+    completedCount,
+    totalCount,
+    progressPercent,
+  } = frozenData;
 
   // Time-aware greeting
   const hour = new Date().getHours();
@@ -102,7 +163,7 @@ function HomeScreenInner({
       {/* ── Main content (fills remaining space) ── */}
       <View style={styles.main}>
 
-        {!activeGoal ? (
+        {!displayActiveGoal ? (
           /* ── Empty state ── */
           <View style={styles.emptyCard}>
             <Mascot size={80} animated={active} />
@@ -128,32 +189,37 @@ function HomeScreenInner({
           <>
             {/* ── Stats row ── */}
             <View style={styles.statsRow}>
-              <View style={[styles.statCard, { transform: [{ rotate: '-1.5deg' }] }]}>
-                <WashiTape style={{ top: -8, backgroundColor: 'rgba(135, 121, 245, 0.25)' }} />
-                <View style={[styles.statIconBox, { backgroundColor: colors.accentAlt + '20' }]}>
-                  <CheckIcon size={16} color={colors.accentAlt} />
-                </View>
-                <Text style={[styles.statValue, { color: colors.accentAlt }]}>{completedCount}</Text>
-                <Text style={styles.statLabel}>{t.home_stat_tasks}</Text>
-              </View>
+              <HomeStatCard
+                rotate="-1.5deg"
+                washiColor="rgba(135, 121, 245, 0.25)"
+                iconBg={colors.accentAlt + '20'}
+                icon={<CheckIcon size={16} color={colors.accentAlt} />}
+                value={completedCount}
+                valueColor={colors.accentAlt}
+                label={t.home_stat_tasks}
+                styles={styles}
+              />
 
-              <View style={[styles.statCard, { transform: [{ rotate: '1.2deg' }] }]}>
-                <WashiTape style={{ top: -8 }} />
-                <View style={[styles.statIconBox, { backgroundColor: colors.accent + '20' }]}>
-                  <TrendingUpIcon size={16} color={colors.accent} />
-                </View>
-                <Text style={[styles.statValue, { color: colors.accent }]}>{progressPercent}%</Text>
-                <Text style={styles.statLabel}>{isRTL ? 'التقدم' : 'Progress'}</Text>
-              </View>
+              <HomeStatCard
+                rotate="1.2deg"
+                iconBg={colors.accent + '20'}
+                icon={<TrendingUpIcon size={16} color={colors.accent} />}
+                value={`${progressPercent}%`}
+                valueColor={colors.accent}
+                label={isRTL ? 'التقدم' : 'Progress'}
+                styles={styles}
+              />
 
-              <View style={[styles.statCard, { transform: [{ rotate: '-0.8deg' }] }]}>
-                <WashiTape style={{ top: -8, backgroundColor: 'rgba(101, 83, 74, 0.25)' }} />
-                <View style={[styles.statIconBox, { backgroundColor: colors.textSecondary + '20' }]}>
-                  <TargetIcon size={16} color={colors.textSecondary} />
-                </View>
-                <Text style={[styles.statValue, { color: colors.textSecondary }]}>{totalCount}</Text>
-                <Text style={styles.statLabel}>{isRTL ? 'مهمة' : 'Total'}</Text>
-              </View>
+              <HomeStatCard
+                rotate="-0.8deg"
+                washiColor="rgba(101, 83, 74, 0.25)"
+                iconBg={colors.textSecondary + '20'}
+                icon={<TargetIcon size={16} color={colors.textSecondary} />}
+                value={totalCount}
+                valueColor={colors.textSecondary}
+                label={isRTL ? 'مهمة' : 'Total'}
+                styles={styles}
+              />
             </View>
 
             {/* ── Hero goal card (flex: 1 → takes remaining space) ── */}
@@ -174,7 +240,7 @@ function HomeScreenInner({
                 style={[styles.heroGoalText, { textAlign: isRTL ? 'right' : 'left' }]}
                 numberOfLines={3}
               >
-                {activeGoal.text}
+                {displayActiveGoal.text}
               </Text>
 
               {/* Spacer pushes progress + footer to bottom */}

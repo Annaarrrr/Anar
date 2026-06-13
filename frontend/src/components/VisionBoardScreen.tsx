@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { ShareIcon, PlusIcon, CheckIcon, XIcon, ChatIcon, PencilIcon, TrashIcon 
 import { SketchButton } from './common/SketchButton';
 import { Pushpin } from './common/PinOrnaments';
 import { AnimatedStrikethrough } from './common/AnimatedStrikethrough';
-import { ActiveTab, GoalPin } from '../types';
+import { ActiveTab, GoalPin, Task } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
 import { Colors } from '../theme/colors';
@@ -120,10 +120,58 @@ const AddPinCard = React.memo(({ onPress, colors, t, styles }: AddPinCardProps) 
 });
 AddPinCard.displayName = 'AddPinCard';
 
+interface VisionModalTaskRowProps {
+  task: Task;
+  goalId: string;
+  colors: any;
+  onPress: (goalId: string, taskId: string, completed: boolean) => void;
+  styles: any;
+}
+
+const VisionModalTaskRow = React.memo(({
+  task,
+  goalId,
+  colors,
+  onPress,
+  styles,
+}: VisionModalTaskRowProps) => {
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(goalId, task.id, task.completed)}
+      style={[styles.taskRow, task.completed && styles.taskRowDone]}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
+        {task.completed && <CheckIcon size={11} color="white" />}
+      </View>
+      <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
+        <Text style={[styles.taskText, task.completed && { color: colors.textMuted }]}>
+          {task.text}
+        </Text>
+        <AnimatedStrikethrough visible={task.completed} />
+      </View>
+    </TouchableOpacity>
+  );
+});
+VisionModalTaskRow.displayName = 'VisionModalTaskRow';
+
 function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, onSetActiveGoal, refreshGoals, active = false }: Props) {
   const { t, language, colors, theme } = useAppSettings();
   const isRTL = language === 'ar';
   const styles = useMemo(() => makeStyles(colors, theme), [colors, theme]);
+
+  const [frozenData, setFrozenData] = useState({
+    goals,
+    activeGoalId,
+  });
+
+  useEffect(() => {
+    if (active) {
+      setFrozenData({ goals, activeGoalId });
+    }
+  }, [active, goals, activeGoalId]);
+
+  const { goals: displayGoals, activeGoalId: displayActiveGoalId } = frozenData;
 
   const [taskModalGoal, setTaskModalGoal] = useState<GoalPin | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -181,8 +229,8 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
   };
 
   // The "focus" goal: user-chosen active or fallback to latest
-  const focusGoal = goals.length > 0
-    ? (activeGoalId ? (goals.find(g => g.id === activeGoalId) ?? goals[goals.length - 1]) : goals[goals.length - 1])
+  const focusGoal = displayGoals.length > 0
+    ? (displayActiveGoalId ? (displayGoals.find(g => g.id === displayActiveGoalId) ?? displayGoals[displayGoals.length - 1]) : displayGoals[displayGoals.length - 1])
     : null;
   const focusTasks        = focusGoal?.tasks ?? [];
   const completedCount    = focusTasks.filter((t) => t.completed).length;
@@ -203,7 +251,7 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
     }
   };
 
-  const toggleModalTask = async (goalId: string, taskId: string, currentlyCompleted: boolean) => {
+  const toggleModalTask = React.useCallback(async (goalId: string, taskId: string, currentlyCompleted: boolean) => {
     try {
       await api.toggleTask(taskId, !currentlyCompleted);
       await refreshGoals();
@@ -214,7 +262,7 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
     } catch {
       Alert.alert(t.error, isRTL ? 'فشل تحديث المهمة' : 'Failed to update task');
     }
-  };
+  }, [refreshGoals, t.error, isRTL]);
 
   return (
     <View style={styles.container}>
@@ -239,7 +287,7 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
         contentContainerStyle={styles.board}
         showsVerticalScrollIndicator={false}
       >
-        {goals.length === 0 ? (
+        {displayGoals.length === 0 ? (
           /* ── Empty Board State ── */
           <View style={styles.emptyBoard}>
             {/* Single "starter" pinned note */}
@@ -262,7 +310,7 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
                 </Text>
                 <View style={styles.bubbleTail} />
               </View>
-              <Mascot size={58} />
+              <Mascot size={58} animated={active} />
             </View>
           </View>
         ) : (
@@ -299,7 +347,7 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
                   | { type: 'goal'; goal: GoalPin }
                   | { type: 'add' };
                 const items: PinItem[] = [
-                  ...goals.map((g): PinItem => ({ type: 'goal', goal: g })),
+                  ...displayGoals.map((g): PinItem => ({ type: 'goal', goal: g })),
                   { type: 'add' },
                 ];
 
@@ -324,7 +372,7 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
                         );
                       }
                       const goal = item.goal;
-                      const isActive = goal.id === (activeGoalId ?? focusGoal?.id);
+                      const isActive = goal.id === (displayActiveGoalId ?? focusGoal?.id);
                       return (
                         <GoalPinCard
                           key={goal.id}
@@ -351,13 +399,13 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
             <View style={styles.mascotRow}>
               <View style={styles.mascotBubble}>
                 <Text style={styles.mascotText}>
-                  {goals.length >= 2
-                    ? t.vision_mascot_multi.replace('{n}', String(goals.length))
+                  {displayGoals.length >= 2
+                    ? t.vision_mascot_multi.replace('{n}', String(displayGoals.length))
                     : t.vision_mascot_single}
                 </Text>
                 <View style={styles.bubbleTail} />
               </View>
-              <Mascot size={58} />
+              <Mascot size={58} animated={active} />
             </View>
           </>
         )}
@@ -456,22 +504,14 @@ function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, 
 
                 <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 16 }}>
                   {taskModalGoal.tasks.map((task) => (
-                    <TouchableOpacity
+                    <VisionModalTaskRow
                       key={task.id}
-                      onPress={() => toggleModalTask(taskModalGoal.id, task.id, task.completed)}
-                      style={[styles.taskRow, task.completed && styles.taskRowDone]}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.checkbox, task.completed && styles.checkboxDone]}>
-                        {task.completed && <CheckIcon size={11} color="white" />}
-                      </View>
-                      <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
-                        <Text style={[styles.taskText, task.completed && { color: colors.textMuted }]}>
-                          {task.text}
-                        </Text>
-                        <AnimatedStrikethrough visible={task.completed} />
-                      </View>
-                    </TouchableOpacity>
+                      task={task}
+                      goalId={taskModalGoal.id}
+                      colors={colors}
+                      onPress={toggleModalTask}
+                      styles={styles}
+                    />
                   ))}
                 </ScrollView>
 

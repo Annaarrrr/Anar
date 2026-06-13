@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -285,19 +285,60 @@ function makeStyles(colors: Colors) {
 
 import { HighlighterBadge } from './common/HighlighterBadge';
 
+interface GoalProgressRowProps {
+  goal: {
+    id: string;
+    emoji: string;
+    text: string;
+    pct: number;
+    pinColor: string;
+  };
+  isLast: boolean;
+  styles: any;
+}
+
+const GoalProgressRow = React.memo(({ goal, isLast, styles }: GoalProgressRowProps) => {
+  return (
+    <View style={[styles.goalRow, isLast && styles.goalRowLast]}>
+      <Text style={styles.goalEmoji}>{goal.emoji}</Text>
+      <View style={styles.goalInfo}>
+        <Text style={styles.goalName} numberOfLines={1}>{goal.text}</Text>
+        <View style={styles.goalBarTrack}>
+          <View style={[styles.goalBarFill, { width: `${goal.pct}%`, backgroundColor: goal.pinColor }]} />
+        </View>
+      </View>
+      <Text style={styles.goalPct}>{goal.pct}%</Text>
+    </View>
+  );
+});
+GoalProgressRow.displayName = 'GoalProgressRow';
+
 function ProgressScreenInner({ goals, tasks, active = false }: Props) {
   const { colors, t, language } = useAppSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isRTL = language === 'ar';
 
+  const [frozenData, setFrozenData] = useState({
+    goals,
+    tasks,
+  });
+
+  useEffect(() => {
+    if (active) {
+      setFrozenData({ goals, tasks });
+    }
+  }, [active, goals, tasks]);
+
+  const { goals: displayGoals } = frozenData;
+
   // ── Real computed stats ──
-  const totalGoals     = goals.length;
-  const totalTasks     = goals.reduce((sum, g) => sum + g.tasks.length, 0);
-  const completedTasks = goals.reduce((sum, g) => sum + g.tasks.filter(t => t.completed).length, 0);
+  const totalGoals     = displayGoals.length;
+  const totalTasks     = displayGoals.reduce((sum, g) => sum + g.tasks.length, 0);
+  const completedTasks = displayGoals.reduce((sum, g) => sum + g.tasks.filter(t => t.completed).length, 0);
   const overallPct     = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Goals with individual progress
-  const goalStats = goals.map(g => ({
+  const goalStats = displayGoals.map(g => ({
     ...g,
     done:  g.tasks.filter(t => t.completed).length,
     total: g.tasks.length,
@@ -579,19 +620,12 @@ function ProgressScreenInner({ goals, tasks, active = false }: Props) {
               </View>
             ) : (
               goalStats.map((g, i) => (
-                <View
+                <GoalProgressRow
                   key={g.id}
-                  style={[styles.goalRow, i === goalStats.length - 1 && styles.goalRowLast]}
-                >
-                  <Text style={styles.goalEmoji}>{g.emoji}</Text>
-                  <View style={styles.goalInfo}>
-                    <Text style={styles.goalName} numberOfLines={1}>{g.text}</Text>
-                    <View style={styles.goalBarTrack}>
-                      <View style={[styles.goalBarFill, { width: `${g.pct}%`, backgroundColor: g.pinColor }]} />
-                    </View>
-                  </View>
-                  <Text style={styles.goalPct}>{g.pct}%</Text>
-                </View>
+                  goal={g}
+                  isLast={i === goalStats.length - 1}
+                  styles={styles}
+                />
               ))
             )}
           </View>

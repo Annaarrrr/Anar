@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   ActivityIndicator,
@@ -34,8 +34,78 @@ import { HomeIcon, ChatIcon, VisionIcon, ProgressIcon } from './src/components/c
 import { NotebookBackground } from './src/components/common/NotebookBackground';
 
 // ─── Inner App (needs context to be mounted first) ────────────────────────────
+interface TabBarItemProps {
+  tabKey: ActiveTab;
+  label: string;
+  Icon: any;
+  active: boolean;
+  colors: any;
+  onPress: (key: ActiveTab) => void;
+  styles: any;
+}
+
+const TabBarItem = React.memo(({
+  tabKey,
+  label,
+  Icon,
+  active,
+  colors,
+  onPress,
+  styles,
+}: TabBarItemProps) => {
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(tabKey)}
+      delayPressIn={0}
+      activeOpacity={0.7}
+      style={[
+        styles.tabItem,
+        active ? {
+          backgroundColor: colors.surfaceElevated,
+          borderLeftWidth: 2.5,
+          borderRightWidth: 2.5,
+          borderTopWidth: 2.5,
+          borderBottomWidth: 0,
+          borderColor: colors.border,
+          borderTopLeftRadius: 14,
+          borderTopRightRadius: 14,
+          height: Platform.OS === 'ios' ? 92 : 74,
+          paddingTop: 10,
+          shadowColor: colors.border,
+          shadowOffset: { width: 2, height: -2 },
+          shadowOpacity: 0.12,
+          shadowRadius: 2,
+          elevation: 6,
+          zIndex: 10,
+        } : {
+          height: Platform.OS === 'ios' ? 82 : 64,
+        }
+      ]}
+    >
+      <Icon size={22} color={active ? colors.accent : colors.textMuted} />
+      <Text style={[styles.tabLabel, { color: active ? colors.accent : colors.textMuted,
+        fontFamily: active ? 'Cairo_700Bold' : 'Cairo_400Regular' }]}>
+        {label}
+      </Text>
+      {active && <View style={[styles.activeDot, { backgroundColor: colors.accent }]} />}
+    </TouchableOpacity>
+  );
+});
+TabBarItem.displayName = 'TabBarItem';
+
 function AppInner() {
   const { colors, t, theme } = useAppSettings();
+
+  const tabs = useMemo(
+    () =>
+      [
+        { key: 'home',     label: t.nav_home,     Icon: HomeIcon },
+        { key: 'chat',     label: t.nav_chat,     Icon: ChatIcon },
+        { key: 'vision',   label: t.nav_vision,   Icon: VisionIcon },
+        { key: 'progress', label: t.nav_progress, Icon: ProgressIcon },
+      ] as { key: ActiveTab; label: string; Icon: any }[],
+    [t]
+  );
 
   const [fontsLoaded] = useFonts({ Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold });
 
@@ -139,9 +209,8 @@ function AppInner() {
   }, []);
 
   const handleGoalPress = useCallback((goal: GoalPin) => {
-    const fresh = goals.find((g) => g.id === goal.id) ?? goal;
-    setSelectedGoal(fresh);
-  }, [goals]);
+    setSelectedGoal(goal);
+  }, []);
 
   const handleTabPress = useCallback((key: ActiveTab) => {
     setActiveTab(key);
@@ -261,56 +330,19 @@ function AppInner() {
                 </View>
               </View>
 
-              {/* ── Tab Bar ── */}
               <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.border }]} pointerEvents="box-none">
-                {(
-                  [
-                    { key: 'home',     label: t.nav_home,     Icon: HomeIcon      },
-                    { key: 'chat',     label: t.nav_chat,     Icon: ChatIcon      },
-                    { key: 'vision',   label: t.nav_vision,   Icon: VisionIcon    },
-                    { key: 'progress', label: t.nav_progress, Icon: ProgressIcon  },
-                  ] as { key: ActiveTab; label: string; Icon: any }[]
-                ).map(({ key, label, Icon }) => {
-                  const active = activeTab === key;
-                  return (
-                    <TouchableOpacity
-                      key={key}
-                      onPress={() => handleTabPress(key)}
-                      delayPressIn={0}
-                      activeOpacity={0.7}
-                      style={[
-                        styles.tabItem,
-                        active ? {
-                          backgroundColor: colors.surfaceElevated,
-                          borderLeftWidth: 2.5,
-                          borderRightWidth: 2.5,
-                          borderTopWidth: 2.5,
-                          borderBottomWidth: 0,
-                          borderColor: colors.border,
-                          borderTopLeftRadius: 14,
-                          borderTopRightRadius: 14,
-                          height: Platform.OS === 'ios' ? 92 : 74,
-                          paddingTop: 10,
-                          shadowColor: colors.border,
-                          shadowOffset: { width: 2, height: -2 },
-                          shadowOpacity: 0.12,
-                          shadowRadius: 2,
-                          elevation: 6,
-                          zIndex: 10,
-                        } : {
-                          height: Platform.OS === 'ios' ? 82 : 64,
-                        }
-                      ]}
-                    >
-                      <Icon size={22} color={active ? colors.accent : colors.textMuted} />
-                      <Text style={[styles.tabLabel, { color: active ? colors.accent : colors.textMuted,
-                        fontFamily: active ? 'Cairo_700Bold' : 'Cairo_400Regular' }]}>
-                        {label}
-                      </Text>
-                      {active && <View style={[styles.activeDot, { backgroundColor: colors.accent }]} />}
-                    </TouchableOpacity>
-                  );
-                })}
+                {tabs.map(({ key, label, Icon }) => (
+                  <TabBarItem
+                    key={key}
+                    tabKey={key}
+                    label={label}
+                    Icon={Icon}
+                    active={activeTab === key}
+                    colors={colors}
+                    onPress={handleTabPress}
+                    styles={styles}
+                  />
+                ))}
               </View>
             </View>
           )}

@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useAppSettings } from '../context/AppContext';
-import { Colors } from '../theme/colors';
+import { Colors, lightColors, darkColors } from '../theme/colors';
 
 interface Props {
   size?: number; // Base body width is 150
@@ -226,9 +226,12 @@ function makeStyles(colors: Colors) {
   });
 }
 
+const lightStyles = makeStyles(lightColors);
+const darkStyles = makeStyles(darkColors);
+
 export const Mascot = React.memo(function Mascot({ size = 150, variant = 'welcome', animated = true }: Props) {
-  const { colors } = useAppSettings();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { theme } = useAppSettings();
+  const styles = theme === 'dark' ? darkStyles : lightStyles;
 
   const disableGlow = size < 100 || !animated;
   const disableFloat = size < 60 || !animated;

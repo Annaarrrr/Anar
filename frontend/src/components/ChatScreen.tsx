@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  FlatList,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -29,6 +30,79 @@ interface Props {
   active?: boolean;
 }
 
+interface ChatMessageRowProps {
+  msg: Message;
+  isRTL: boolean;
+  t: any;
+  handleChipSelect: (chipText: string) => void;
+  styles: any;
+}
+
+const ChatMessageRow = React.memo(({
+  msg,
+  isRTL,
+  t,
+  handleChipSelect,
+  styles,
+}: ChatMessageRowProps) => {
+  return (
+    <View
+      style={[
+        styles.msgWrapper,
+        msg.role === 'user' && styles.msgWrapperUser,
+      ]}
+    >
+      {/* AI avatar dot */}
+      {msg.role === 'ai' && (
+        <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
+          <Mascot size={32} animated={false} />
+        </View>
+      )}
+
+      {/* Bubble */}
+      <View style={msg.role === 'user' ? styles.userBubble : styles.aiBubble}>
+        <Text style={[
+          styles.bubbleText,
+          { textAlign: isRTL ? 'right' : 'left' },
+          msg.role === 'user' && styles.userBubbleText,
+        ]}>
+          {msg.text}
+        </Text>
+
+        {/* Quick-reply chips on first message */}
+        {msg.id === 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 12, marginHorizontal: -16 }}
+            contentContainerStyle={[styles.chipsContent, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+          >
+            <TouchableOpacity
+              onPress={() => handleChipSelect(isRTL ? 'تنظيم الوقت' : 'time')}
+              style={styles.chip}
+            >
+              <Text style={styles.chipText}>{t.chip_time}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleChipSelect(isRTL ? 'تطوير مهارة' : 'skill')}
+              style={styles.chip}
+            >
+              <Text style={styles.chipText}>{t.chip_skill}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleChipSelect(isRTL ? 'دراستي' : 'study')}
+              style={styles.chip}
+            >
+              <Text style={styles.chipText}>{t.chip_study}</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        )}
+      </View>
+    </View>
+  );
+});
+ChatMessageRow.displayName = 'ChatMessageRow';
+
 function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
   const { colors, t, language } = useAppSettings();
   const isRTL = language === 'ar';
@@ -53,7 +127,7 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [editedGoalText, setEditedGoalText] = useState('');
 
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
 
   // Pulsing glow on avatar
   const avatarGlow = useRef(new Animated.Value(0.6)).current;
@@ -97,7 +171,7 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
     return () => { dot1.stopAnimation(); dot2.stopAnimation(); dot3.stopAnimation(); };
   }, [isTyping]);
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = React.useCallback((textToSend?: string) => {
     const messageText = textToSend || inputVal;
     if (!messageText.trim()) return;
 
@@ -153,9 +227,9 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
       setMessages((prev) => [...prev, aiReply]);
       setSuggestedGoal(goalText);
     }, 1500);
-  };
+  }, [inputVal, isRTL]);
 
-  const handleChipSelect = (chipText: string) => {
+  const handleChipSelect = React.useCallback((chipText: string) => {
     let text = '';
     if (chipText === 'دراستي' || chipText === 'study') {
       text = isRTL ? 'أريد أن أدرس وأحسّن مستواي الأكاديمي' : 'I want to study and improve my academic level';
@@ -165,7 +239,7 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
       text = isRTL ? 'أريد تنظيم وقتي وإدارة مهامي اليومية بشكل أفضل' : 'I want to organize my time and manage my daily tasks better';
     }
     handleSendMessage(text);
-  };
+  }, [isRTL, handleSendMessage]);
 
   const handleAcceptGoal = async () => {
     if (!suggestedGoal) return;
@@ -230,180 +304,140 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
         </View>
 
         {/* ── Message stream ── */}
-        <ScrollView
-          ref={scrollViewRef}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <ChatMessageRow
+              msg={item}
+              isRTL={isRTL}
+              t={t}
+              handleChipSelect={handleChipSelect}
+              styles={styles}
+            />
+          )}
           contentContainerStyle={styles.streamContent}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
           showsVerticalScrollIndicator={false}
-        >
-          {messages.map((msg) => (
-            <View
-              key={msg.id}
-              style={[
-                styles.msgWrapper,
-                msg.role === 'user' && styles.msgWrapperUser,
-              ]}
-            >
-              {/* AI avatar dot */}
-              {msg.role === 'ai' && (
-                <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
-                  <Mascot size={32} />
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          removeClippedSubviews={Platform.OS === 'android'}
+          ListFooterComponent={
+            <View>
+              {/* ── Suggested Goal Card ── */}
+              {suggestedGoal && (
+                <View style={styles.msgWrapper}>
+                  <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
+                    <Mascot size={32} animated={false} />
+                  </View>
+                  <View style={styles.goalCard}>
+                    {/* Card header */}
+                    <View style={styles.goalCardHeader}>
+                      <SparklesIcon size={14} color={colors.accent} />
+                      <Text style={styles.goalCardHeaderText}>{t.chat_goal_proposed}</Text>
+                    </View>
+
+                    {/* Goal text */}
+                    <View style={styles.goalContent}>
+                      {isEditingGoal ? (
+                        <TextInput
+                          style={styles.goalInput}
+                          value={editedGoalText}
+                          onChangeText={setEditedGoalText}
+                          textAlign="center"
+                          autoFocus
+                          placeholderTextColor={colors.textMuted}
+                        />
+                      ) : (
+                        <Text style={styles.goalText}>{suggestedGoal}</Text>
+                      )}
+                    </View>
+
+                    <Text style={styles.goalPrompt}>
+                      {isEditingGoal
+                        ? (isRTL ? 'عدل نص الهدف المكتوب أعلاه ثم احفظه' : 'Edit the goal text above and save it')
+                        : (isRTL ? 'سيتم تثبيته كبطاقة في لوحة الرؤية وإنشاء خريطة رحلة مخصصة لك 📌' : 'It will be pinned to your vision board and a custom journey map will be created for you 📌')}
+                    </Text>
+
+                    {/* Action buttons */}
+                    <View style={styles.goalBtnsRow}>
+                      {isEditingGoal ? (
+                        <>
+                          <View style={{ flex: 0.8 }}>
+                            <SketchButton
+                              onPress={() => setIsEditingGoal(false)}
+                              variant="secondary"
+                              style={{ height: 40 }}
+                              textStyle={{ fontSize: 12 }}
+                              title={t.chat_cancel}
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <SketchButton
+                              onPress={() => {
+                                if (editedGoalText.trim()) setSuggestedGoal(editedGoalText);
+                                setIsEditingGoal(false);
+                              }}
+                              variant="primary"
+                              style={{ height: 40 }}
+                              textStyle={{ fontSize: 12 }}
+                              title={t.chat_save}
+                            />
+                          </View>
+                        </>
+                      ) : (
+                        <>
+                          <View style={{ flex: 0.8 }}>
+                            <SketchButton
+                              onPress={handleEditGoal}
+                              variant="secondary"
+                              style={{ height: 40 }}
+                              textStyle={{ fontSize: 12 }}
+                              title={t.chat_edit_goal}
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <SketchButton
+                              onPress={handleAcceptGoal}
+                              disabled={creating}
+                              variant="primary"
+                              style={{ height: 40 }}
+                            >
+                              {creating ? (
+                                <ActivityIndicator color="white" />
+                              ) : (
+                                <Text style={[styles.primaryBtnText, { fontSize: 12 }]}>
+                                  {t.chat_accept_goal}
+                                </Text>
+                              )}
+                            </SketchButton>
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  </View>
                 </View>
               )}
 
-              {/* Bubble */}
-              <View style={msg.role === 'user' ? styles.userBubble : styles.aiBubble}>
-                <Text style={[
-                  styles.bubbleText,
-                  { textAlign: isRTL ? 'right' : 'left' },
-                  msg.role === 'user' && styles.userBubbleText,
-                ]}>
-                  {msg.text}
-                </Text>
-
-                {/* Quick-reply chips on first message */}
-                {msg.id === 1 && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={{ marginTop: 12, marginHorizontal: -16 }}
-                    contentContainerStyle={[styles.chipsContent, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
-                  >
-                    <TouchableOpacity
-                      onPress={() => handleChipSelect(isRTL ? 'تنظيم الوقت' : 'time')}
-                      style={styles.chip}
-                    >
-                      <Text style={styles.chipText}>{t.chip_time}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleChipSelect(isRTL ? 'تطوير مهارة' : 'skill')}
-                      style={styles.chip}
-                    >
-                      <Text style={styles.chipText}>{t.chip_skill}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleChipSelect(isRTL ? 'دراستي' : 'study')}
-                      style={styles.chip}
-                    >
-                      <Text style={styles.chipText}>{t.chip_study}</Text>
-                    </TouchableOpacity>
-                  </ScrollView>
-                )}
-              </View>
+              {/* ── Typing indicator ── */}
+              {isTyping && (
+                <View style={styles.msgWrapper}>
+                  <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
+                    <Mascot size={32} animated={false} />
+                  </View>
+                  <View style={[styles.aiBubble, { paddingVertical: 14, paddingHorizontal: 18 }]}>
+                    <View style={styles.typingRow}>
+                      <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot1 }] }]} />
+                      <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot2 }] }]} />
+                      <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot3 }] }]} />
+                    </View>
+                  </View>
+                </View>
+              )}
             </View>
-          ))}
-
-          {/* ── Suggested Goal Card ── */}
-          {suggestedGoal && (
-            <View style={styles.msgWrapper}>
-              <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
-                <Mascot size={32} />
-              </View>
-              <View style={styles.goalCard}>
-                {/* Card header */}
-                <View style={styles.goalCardHeader}>
-                  <SparklesIcon size={14} color={colors.accent} />
-                  <Text style={styles.goalCardHeaderText}>{t.chat_goal_proposed}</Text>
-                </View>
-
-                {/* Goal text */}
-                <View style={styles.goalContent}>
-                  {isEditingGoal ? (
-                    <TextInput
-                      style={styles.goalInput}
-                      value={editedGoalText}
-                      onChangeText={setEditedGoalText}
-                      textAlign="center"
-                      autoFocus
-                      placeholderTextColor={colors.textMuted}
-                    />
-                  ) : (
-                    <Text style={styles.goalText}>{suggestedGoal}</Text>
-                  )}
-                </View>
-
-                <Text style={styles.goalPrompt}>
-                  {isEditingGoal
-                    ? (isRTL ? 'عدل نص الهدف المكتوب أعلاه ثم احفظه' : 'Edit the goal text above and save it')
-                    : (isRTL ? 'سيتم تثبيته كبطاقة في لوحة الرؤية وإنشاء خريطة رحلة مخصصة لك 📌' : 'It will be pinned to your vision board and a custom journey map will be created for you 📌')}
-                </Text>
-
-                {/* Action buttons */}
-                <View style={styles.goalBtnsRow}>
-                  {isEditingGoal ? (
-                    <>
-                      <View style={{ flex: 0.8 }}>
-                        <SketchButton
-                          onPress={() => setIsEditingGoal(false)}
-                          variant="secondary"
-                          style={{ height: 40 }}
-                          textStyle={{ fontSize: 12 }}
-                          title={t.chat_cancel}
-                        />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <SketchButton
-                          onPress={() => {
-                            if (editedGoalText.trim()) setSuggestedGoal(editedGoalText);
-                            setIsEditingGoal(false);
-                          }}
-                          variant="primary"
-                          style={{ height: 40 }}
-                          textStyle={{ fontSize: 12 }}
-                          title={t.chat_save}
-                        />
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={{ flex: 0.8 }}>
-                        <SketchButton
-                          onPress={handleEditGoal}
-                          variant="secondary"
-                          style={{ height: 40 }}
-                          textStyle={{ fontSize: 12 }}
-                          title={t.chat_edit_goal}
-                        />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <SketchButton
-                          onPress={handleAcceptGoal}
-                          disabled={creating}
-                          variant="primary"
-                          style={{ height: 40 }}
-                        >
-                          {creating ? (
-                            <ActivityIndicator color="white" />
-                          ) : (
-                            <Text style={[styles.primaryBtnText, { fontSize: 12 }]}>
-                              {t.chat_accept_goal}
-                            </Text>
-                          )}
-                        </SketchButton>
-                      </View>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* ── Typing indicator ── */}
-          {isTyping && (
-            <View style={styles.msgWrapper}>
-              <View style={[styles.bubbleAvatar, { backgroundColor: 'transparent', borderWidth: 0 }]}>
-                <Mascot size={32} />
-              </View>
-              <View style={[styles.aiBubble, { paddingVertical: 14, paddingHorizontal: 18 }]}>
-                <View style={styles.typingRow}>
-                  <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot1 }] }]} />
-                  <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot2 }] }]} />
-                  <Animated.View style={[styles.typingDot, { transform: [{ translateY: dot3 }] }]} />
-                </View>
-              </View>
-            </View>
-          )}
-        </ScrollView>
+          }
+        />
 
         {/* ── Input area ── */}
         <View style={styles.inputArea}>
