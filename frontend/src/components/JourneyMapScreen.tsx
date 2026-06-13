@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import Svg, { Path } from 'react-native-svg';
 import {
   View,
   Text,
@@ -30,6 +31,8 @@ import { HighlighterBadge } from './common/HighlighterBadge';
 import { GoalPin, Task } from '../types';
 import { api } from '../services/api';
 import { useAppSettings } from '../context/AppContext';
+import { WashiTape } from './common/PinOrnaments';
+import { Mascot } from './Mascot';
 
 const { width, height } = Dimensions.get('window');
 const SPINE_X = width / 2;
@@ -79,6 +82,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const hasScrolledRef = useRef(false);
+  const nodeLayoutsRef = useRef<{ [key: number]: { y: number; height: number } }>({});
 
   // Animations
   const drawerAnim = useRef(new Animated.Value(0)).current;
@@ -86,17 +90,11 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const glowAnim = useRef(new Animated.Value(0)).current;
   const scaleAnims = useRef(Array.from({ length: 20 }, () => new Animated.Value(1))).current;
 
-  // Floating emoji particles
-  interface FloatingEmojiParticle {
-    id: string;
-    emoji: string;
-    x: number;
-    y: number;
-    animY: Animated.Value;
-    animOpacity: Animated.Value;
-    animScale: Animated.Value;
-  }
-  const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmojiParticle[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const celebrationScale = useRef(new Animated.Value(0.5)).current;
+  const [nodeCoords, setNodeCoords] = useState<{ [key: number]: { x: number; y: number } }>({});
+
+
 
   // Pulse animation for active node
   useEffect(() => {
@@ -125,6 +123,18 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
     }).start();
   }, [drawerVisible]);
 
+  useEffect(() => {
+    if (showCelebration) {
+      celebrationScale.setValue(0.5);
+      Animated.spring(celebrationScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showCelebration]);
+
   // Stage logic
   const N = tasks.length;
   const numStages = goal.stages.length;
@@ -140,14 +150,38 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
     return tasks.slice(startIdx, startIdx + count);
   }, [tasks, N, numStages]);
 
+  const stageStatuses = useMemo(() => {
+    const statuses: NodeStatus[] = [];
+    let prevCompleted = true;
+    for (let i = 0; i < numStages; i++) {
+      const base = Math.floor(N / numStages);
+      const extra = N % numStages;
+      let startIdx = 0;
+      for (let j = 0; j < i; j++) {
+        startIdx += base + (j < extra ? 1 : 0);
+      }
+      const count = base + (i < extra ? 1 : 0);
+      const stageTasks = tasks.slice(startIdx, startIdx + count);
+      
+      const allDone = stageTasks.length > 0 && stageTasks.every((t) => t.completed);
+      if (i === 0) {
+        statuses.push(allDone ? 'completed' : 'active');
+      } else {
+        if (!prevCompleted) {
+          statuses.push('locked');
+        } else {
+          statuses.push(allDone ? 'completed' : 'active');
+        }
+      }
+      prevCompleted = (statuses[i] === 'completed');
+    }
+    return statuses;
+  }, [tasks, N, numStages]);
+
   const getStatus = useCallback((stageIdx: number): NodeStatus => {
-    const stageTasks = getTasksForStage(stageIdx);
-    const allDone = stageTasks.length > 0 && stageTasks.every((t) => t.completed);
-    if (stageIdx === 0) return allDone ? 'completed' : 'active';
-    const prevStatus = getStatus(stageIdx - 1);
-    if (prevStatus !== 'completed') return 'locked';
-    return allDone ? 'completed' : 'active';
-  }, [getTasksForStage]);
+    if (stageIdx < 0 || stageIdx >= stageStatuses.length) return 'locked';
+    return stageStatuses[stageIdx];
+  }, [stageStatuses]);
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const progressPercent = N > 0 ? Math.round((completedCount / N) * 100) : 0;
@@ -163,30 +197,41 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
     setDrawerVisible(true);
   };
 
-  const spawnEmojiBurst = (taskIndex: number) => {
-    const emojis = ['🎉', '✨', '👍', '🔥', '🌟', '🎯'];
-    const newParticles: FloatingEmojiParticle[] = [];
-    const baseX = width / 2;
-    const baseY = height * 0.55;
+  const pathD = useMemo(() => {
+    const coordsList = Object.keys(nodeCoords)
+      .map(Number)
+      .sort((a, b) => b - a) // from first stage (bottom) to last stage (top)
+      .map(idx => nodeCoords[idx]);
 
-    for (let i = 0; i < 6; i++) {
-      const id = Math.random().toString(36).substring(7);
-      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-      const x = baseX + (Math.random() * 120 - 60);
-      const y = baseY + (Math.random() * 20 - 10);
-      const animY = new Animated.Value(0);
-      const animOpacity = new Animated.Value(1);
-      const animScale = new Animated.Value(0.3);
+    if (coordsList.length === 0) return '';
 
-      newParticles.push({ id, emoji, x, y, animY, animOpacity, animScale });
-      Animated.parallel([
-        Animated.timing(animY,       { toValue: -110 - Math.random() * 60, duration: 1000, useNativeDriver: true }),
-        Animated.timing(animOpacity, { toValue: 0,  duration: 900,  useNativeDriver: true }),
-        Animated.timing(animScale,   { toValue: 1.6, duration: 700, useNativeDriver: true }),
-      ]).start(() => setFloatingEmojis((prev) => prev.filter((p) => p.id !== id)));
+    // Start coordinates (at the bottom, let's say ~100px below the first stage)
+    const startY = coordsList[0].y + 100;
+    let d = `M ${width / 2} ${startY}`;
+
+    // Winding control points
+    for (let i = 0; i < coordsList.length; i++) {
+      const curr = coordsList[i];
+      const prevY = i === 0 ? startY : coordsList[i - 1].y;
+      const midY = (prevY + curr.y) / 2;
+      // Alternate curves left and right
+      const isLeft = i % 2 === 0;
+      const offset = isLeft ? -45 : 45;
+      
+      d += ` Q ${width / 2 + offset} ${midY} ${width / 2} ${curr.y}`;
     }
-    setFloatingEmojis((prev) => [...prev, ...newParticles]);
-  };
+
+    // Finish coordinates (at the top, above the last stage)
+    const lastNode = coordsList[coordsList.length - 1];
+    const finishY = lastNode.y - 100;
+    const isLeft = coordsList.length % 2 === 0;
+    const offset = isLeft ? -45 : 45;
+    d += ` Q ${width / 2 + offset} ${(lastNode.y + finishY) / 2} ${width / 2} ${finishY}`;
+
+    return d;
+  }, [nodeCoords]);
+
+
 
   const toggleTask = async (taskId: string, currentlyCompleted: boolean, taskIndex: number = -1) => {
     if (taskIndex >= 0 && taskIndex < scaleAnims.length) {
@@ -196,11 +241,32 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         Animated.spring(scaleAnims[taskIndex],  { toValue: 1.0, friction: 4, tension: 40, useNativeDriver: true }),
       ]).start();
     }
-    if (!currentlyCompleted && taskIndex >= 0) spawnEmojiBurst(taskIndex);
 
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: !currentlyCompleted } : t))
-    );
+    const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, completed: !currentlyCompleted } : t));
+    setTasks(updatedTasks);
+
+    if (selectedStageIdx !== null) {
+      const base = Math.floor(N / numStages);
+      const extra = N % numStages;
+      let startIdx = 0;
+      for (let i = 0; i < selectedStageIdx; i++) {
+        startIdx += base + (i < extra ? 1 : 0);
+      }
+      const count = base + (selectedStageIdx < extra ? 1 : 0);
+      const stageTasks = updatedTasks.slice(startIdx, startIdx + count);
+      
+      const allDone = stageTasks.length > 0 && stageTasks.every((t) => t.completed);
+      if (allDone) {
+        setTimeout(() => {
+          setDrawerVisible(false);
+          setModalVisible(false);
+          setTimeout(() => {
+            setShowCelebration(true);
+          }, 350);
+        }, 750);
+      }
+    }
+
     try {
       await api.toggleTask(taskId, !currentlyCompleted);
       await refreshGoals();
@@ -288,6 +354,37 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         style={styles.mapScroll}
         showsVerticalScrollIndicator={false}
       >
+        {/* Absolute Background Decorations to make the map feel alive & adventure-themed */}
+        <Text style={[styles.bgDecoration, { top: height * 0.15, left: 30, transform: [{ rotate: '-12deg' }] }]}>🧭</Text>
+        <Text style={[styles.bgDecoration, { top: height * 0.38, right: 35, transform: [{ rotate: '15deg' }] }]}>🎈</Text>
+        <Text style={[styles.bgDecoration, { top: height * 0.62, left: 40, transform: [{ rotate: '-8deg' }] }]}>🌲</Text>
+        <Text style={[styles.bgDecoration, { top: height * 0.78, right: 45, transform: [{ rotate: '10deg' }] }]}>⛰️</Text>
+        <Text style={[styles.bgDecoration, { bottom: 80, left: 25, transform: [{ rotate: '5deg' }] }]}>🏕️</Text>
+
+        {/* Sketchy winding timeline path */}
+        {pathD !== '' && (
+          <Svg style={StyleSheet.absoluteFillObject} pointerEvents="none">
+            {/* Draw a subtle thick hand-drawn highlight behind */}
+            <Path
+              d={pathD}
+              fill="none"
+              stroke={goal.pinColor + '1C'}
+              strokeWidth={14}
+              strokeLinecap="round"
+            />
+            {/* Main dashed path */}
+            <Path
+              d={pathD}
+              fill="none"
+              stroke={colors.border}
+              strokeWidth={3}
+              strokeDasharray="6, 6"
+              strokeLinecap="round"
+              opacity={0.8}
+            />
+          </Svg>
+        )}
+
         {/* Finish banner */}
         <View style={styles.finishBanner}>
           <View style={[styles.finishIcon, { backgroundColor: goal.pinColor + '22' }]}>
@@ -300,65 +397,110 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         {displayedStages.map((stage, displayIdx) => {
           const realIdx = toRealIdx(displayIdx);
           const status = getStatus(realIdx);
-          const isRight = displayIdx % 2 === 0;
+          const labelOnRight = isRTL ? (displayIdx % 2 !== 0) : (displayIdx % 2 === 0);
 
           return (
-            <View key={stage.id} style={styles.nodeRow}>
-              {/* Connector dash above each node (connects to banner above or previous node) */}
-              <View style={[styles.connectorDash, { backgroundColor: colors.border }]} />
+            <View
+              key={stage.id}
+              style={styles.nodeRow}
+              onLayout={(e) => {
+                const { y, height } = e.nativeEvent.layout;
+                nodeLayoutsRef.current[realIdx] = { y, height };
+                
+                const centerY = y + 44 + 34;
+                setNodeCoords((prev) => {
+                  if (prev[realIdx]?.y === centerY) return prev;
+                  return { ...prev, [realIdx]: { x: width / 2, y: centerY } };
+                });
+              }}
+            >
+              {/* Spacer instead of dots to let the continuous winding path show through */}
+              <View style={{ height: 44 }} />
 
               <TouchableOpacity
                 onPress={() => handleNodePress(displayIdx)}
-                style={[styles.nodeLayout, isRight ? styles.nodeLayoutRight : styles.nodeLayoutLeft]}
+                style={styles.nodeLayout}
                 activeOpacity={0.8}
               >
-                {/* Label */}
-                <View style={[styles.labelContainer, isRight ? styles.labelRight : styles.labelLeft]}>
-                  {status === 'active' && (
-                    <View style={[styles.nowBadge, { backgroundColor: goal.pinColor }]}>
-                      <Text style={styles.nowBadgeText}>{jt.now}</Text>
+                {/* Column 1: Left Side */}
+                <View style={styles.nodeSideColumn}>
+                  {!labelOnRight && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+                      <View style={[styles.labelContainer, { alignItems: 'flex-end' }]}>
+                        {status === 'active' && (
+                          <View style={[styles.nowBadge, { backgroundColor: goal.pinColor }]}>
+                            <Text style={styles.nowBadgeText}>{jt.now}</Text>
+                          </View>
+                        )}
+                        <Text
+                          style={[
+                            styles.nodeLabel,
+                            status === 'completed' && { color: colors.accentAlt },
+                            status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
+                            status === 'locked'    && { color: colors.textMuted },
+                            { textAlign: 'right' }
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {stage.label}
+                        </Text>
+                        <Text style={[styles.nodeSub, { textAlign: 'right' }]}>{stage.sublabel}</Text>
+                      </View>
+                      <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
                     </View>
                   )}
-                  <Text
-                    style={[
-                      styles.nodeLabel,
-                      status === 'completed' && { color: colors.accentAlt },
-                      status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
-                      status === 'locked'    && { color: colors.textMuted },
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {stage.label}
-                  </Text>
-                  <Text style={styles.nodeSub}>{stage.sublabel}</Text>
                 </View>
 
-                {/* Connector line from label to node */}
-                <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
-
-                {/* Node circle */}
-                <View style={styles.nodeOrbitContainer}>
-                  {status === 'active' ? (
-                    <>
-                      {/* Outer pulse ring */}
-                      <Animated.View style={[
-                        styles.nodeOrbit,
-                        { borderColor: goal.pinColor + '55', transform: [{ scale: pulseAnim }] }
-                      ]} />
-                      {/* Node */}
-                      <View style={[styles.nodeCircle, { backgroundColor: goal.pinColor, borderColor: colors.border, shadowColor: colors.border }]}>
-                        <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
-                      </View>
-                    </>
-                  ) : status === 'completed' ? (
-                    <>
+                {/* Column 2: Center Node */}
+                <View style={styles.nodeCenterColumn}>
+                  <View style={styles.nodeOrbitContainer}>
+                    {status === 'active' ? (
+                      <>
+                        <Animated.View style={[
+                          styles.nodeOrbit,
+                          { borderColor: goal.pinColor + '55', transform: [{ scale: pulseAnim }] }
+                        ]} />
+                        <View style={[styles.nodeCircle, { backgroundColor: goal.pinColor, borderColor: colors.border, shadowColor: colors.border }]}>
+                          <Text style={styles.nodeEmoji}>{stage.emoji}</Text>
+                        </View>
+                      </>
+                    ) : status === 'completed' ? (
                       <View style={[styles.nodeCircle, styles.nodeCompleted]}>
                         <CheckIcon size={20} color="#FFFFFF" />
                       </View>
-                    </>
-                  ) : (
-                    <View style={[styles.nodeCircle, styles.nodeLocked]}>
-                      <LockIcon size={16} color={colors.textMuted} />
+                    ) : (
+                      <View style={[styles.nodeCircle, styles.nodeLocked]}>
+                        <LockIcon size={16} color={colors.textMuted} />
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Column 3: Right Side */}
+                <View style={styles.nodeSideColumn}>
+                  {labelOnRight && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
+                      <View style={[styles.connectorH, { backgroundColor: colors.border }]} />
+                      <View style={[styles.labelContainer, { alignItems: 'flex-start' }]}>
+                        {status === 'active' && (
+                          <View style={[styles.nowBadge, { backgroundColor: goal.pinColor }]}>
+                            <Text style={styles.nowBadgeText}>{jt.now}</Text>
+                          </View>
+                        )}
+                        <Text
+                          style={[
+                            styles.nodeLabel,
+                            status === 'completed' && { color: colors.accentAlt },
+                            status === 'active'    && { color: colors.textPrimary, fontSize: 14 },
+                            status === 'locked'    && { color: colors.textMuted },
+                            { textAlign: 'left' }
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {stage.label}
+                        </Text>
+                        <Text style={[styles.nodeSub, { textAlign: 'left' }]}>{stage.sublabel}</Text>
+                      </View>
                     </View>
                   )}
                 </View>
@@ -367,8 +509,8 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
           );
         })}
 
-        {/* Bottom connector from last node to start marker */}
-        <View style={[styles.connectorDash, { backgroundColor: colors.border }]} />
+        {/* Bottom spacer from last node to start marker */}
+        <View style={{ height: 44 }} />
 
         {/* Start marker */}
         <View style={styles.startMarker}>
@@ -377,24 +519,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
         </View>
       </ScrollView>
 
-      {/* ── Floating emojis ── */}
-      {floatingEmojis.map((p) => (
-        <Animated.Text
-          key={p.id}
-          pointerEvents="none"
-          style={[
-            styles.floatingEmoji,
-            {
-              left: p.x,
-              top: p.y,
-              transform: [{ translateY: p.animY }, { scale: p.animScale }],
-              opacity: p.animOpacity,
-            }
-          ]}
-        >
-          {p.emoji}
-        </Animated.Text>
-      ))}
+
 
       {/* ── Bottom Drawer ── */}
       {drawerVisible && drawerStage && (
@@ -454,7 +579,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
             </View>
           )}
 
-          {/* Locked */}
+          {/* Locked or Active/Completed checklist */}
           {drawerStatus === 'locked' ? (
             <View style={styles.drawerLockedBody}>
               <View style={[styles.drawerLockIcon, { backgroundColor: goal.pinColor + '15' }]}>
@@ -462,37 +587,8 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
               </View>
               <Text style={styles.drawerLockText}>{jt.lockMsg}</Text>
             </View>
-
-          ) : drawerStatus === 'completed' && !showCompletedTasks ? (
-            /* Celebration */
-            <View style={styles.celebrationBody}>
-              <Text style={{ fontSize: 42 }}>🏆</Text>
-              <Text style={styles.celebrationTitle}>{jt.stageDone}</Text>
-              {selectedStageIdx !== null && selectedStageIdx < goal.stages.length - 1 ? (
-                <SketchButton
-                  onPress={() => {
-                    setSelectedStageIdx(selectedStageIdx + 1);
-                    setShowCompletedTasks(false);
-                  }}
-                  title={jt.proceedNext}
-                  variant="primary"
-                  style={{ marginTop: 8 }}
-                />
-              ) : (
-                <SketchButton
-                  onPress={() => setDrawerVisible(false)}
-                  title={jt.goalDone}
-                  variant="accentAlt"
-                  style={{ marginTop: 8 }}
-                />
-              )}
-              <TouchableOpacity onPress={() => setShowCompletedTasks(true)} style={styles.reviewLink}>
-                <Text style={styles.reviewLinkText}>{jt.reviewTasks}</Text>
-              </TouchableOpacity>
-            </View>
-
           ) : (
-            /* Task list */
+            /* Active or Completed Task list */
             <View>
               <Text style={styles.tasksForLabel}>{jt.tasksFor}</Text>
               {drawerTasks.slice(0, 3).map((task, idx) => (
@@ -532,24 +628,23 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
                 </TouchableOpacity>
               )}
 
-              {/* CTA */}
-              <TouchableOpacity
-                onPress={() => setModalVisible(true)}
-                style={[styles.ctaBtn, { backgroundColor: goal.pinColor }]}
-                activeOpacity={0.8}
-              >
-                <TargetIcon size={16} color="#FFF" />
-                <Text style={styles.ctaBtnText}>{jt.viewAll}</Text>
-              </TouchableOpacity>
-
-              {drawerStatus === 'completed' && showCompletedTasks && (
+              {/* CTA or Claim Trophy Button */}
+              {drawerStatus === 'completed' ? (
+                <View style={{ marginTop: 14 }}>
+                  <SketchButton
+                    onPress={() => setShowCelebration(true)}
+                    variant="accentAlt"
+                    title={isRTL ? '🏆 عرض الكأس 🎉' : '🏆 View Stage Trophy 🎉'}
+                  />
+                </View>
+              ) : (
                 <TouchableOpacity
-                  onPress={() => setShowCompletedTasks(false)}
-                  style={styles.reviewLink}
+                  onPress={() => setModalVisible(true)}
+                  style={[styles.ctaBtn, { backgroundColor: goal.pinColor }]}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.reviewLinkText}>
-                    {isRTL ? 'الرجوع لصفحة الإنجاز 🏆' : 'Back to Celebration Page 🏆'}
-                  </Text>
+                  <TargetIcon size={16} color="#FFF" />
+                  <Text style={styles.ctaBtnText}>{jt.viewAll}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -609,6 +704,79 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
               ))}
             </ScrollView>
           </View>
+        </View>
+      </Modal>
+
+      {/* ── Milestone Achievement Modal ── */}
+      <Modal
+        visible={showCelebration}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowCelebration(false)}
+      >
+        <View style={styles.celebrationOverlay}>
+          <Animated.View style={[styles.celebrationCard, { transform: [{ scale: celebrationScale }] }]}>
+            <WashiTape style={{ top: -10, backgroundColor: 'rgba(255, 107, 107, 0.4)' }} />
+            
+            <View style={styles.celebrationBadgeWrap}>
+              <Text style={{ fontSize: 72 }}>{drawerStage?.emoji || '🏆'}</Text>
+              <View style={styles.celebrationSparkles}>
+                <Text style={{ fontSize: 28, position: 'absolute', top: -10, left: -20 }}>✨</Text>
+                <Text style={{ fontSize: 24, position: 'absolute', bottom: -10, right: -20 }}>⭐</Text>
+                <Text style={{ fontSize: 26, position: 'absolute', top: 30, right: -30 }}>✨</Text>
+              </View>
+            </View>
+
+            <Text style={styles.celebrationHeader}>{isRTL ? 'إنجاز جديد! 🎉' : 'Milestone Unlocked! 🎉'}</Text>
+            <Text style={styles.celebrationSubtitle}>
+              {isRTL ? 'لقد أكملت بنجاح مرحلة:' : 'You have successfully completed the stage:'}
+            </Text>
+            <View style={styles.celebrationStageBox}>
+              <Text style={styles.celebrationStageLabel}>{drawerStage?.label}</Text>
+            </View>
+
+            <View style={styles.celebrationMascotRow}>
+              <Mascot size={90} variant="ready" />
+              <View style={styles.celebrationSpeech}>
+                <Text style={[styles.celebrationSpeechText, { textAlign: isRTL ? 'right' : 'left' }]}>
+                  {isRTL 
+                    ? 'عمل مذهل! خطوة أخرى تقربك من تحقيق هدفك بالكامل. فخور بك! 🌟' 
+                    : 'Amazing work! One step closer to fully achieving your goal. So proud of you! 🌟'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ width: '100%', marginTop: 24 }}>
+              {selectedStageIdx !== null && selectedStageIdx < goal.stages.length - 1 ? (
+                <SketchButton
+                  onPress={() => {
+                    setShowCelebration(false);
+                    setDrawerVisible(false);
+                    setShowCompletedTasks(false);
+                    const nextIdx = selectedStageIdx + 1;
+                    setSelectedStageIdx(nextIdx);
+                    
+                    setTimeout(() => {
+                      const nextLayout = nodeLayoutsRef.current[nextIdx];
+                      if (nextLayout && scrollViewRef.current) {
+                        const viewportHeight = height - 200;
+                        const scrollY = nextLayout.y - (viewportHeight / 2) + (nextLayout.height / 2);
+                        scrollViewRef.current.scrollTo({ y: Math.max(0, scrollY), animated: true });
+                      }
+                    }, 100);
+                  }}
+                  title={jt.proceedNext}
+                  variant="primary"
+                />
+              ) : (
+                <SketchButton
+                  onPress={() => setShowCelebration(false)}
+                  title={jt.goalDone}
+                  variant="accentAlt"
+                />
+              )}
+            </View>
+          </Animated.View>
         </View>
       </Modal>
     </View>
@@ -822,21 +990,25 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     paddingHorizontal: 20,
     gap: 0,
   },
-  nodeLayoutRight: { flexDirection: 'row-reverse' },
-  nodeLayoutLeft:  { flexDirection: 'row' },
+  nodeSideColumn: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  nodeCenterColumn: {
+    width: 68,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   labelContainer: {
     flex: 1,
     gap: 2,
     paddingHorizontal: 8,
   },
-  labelRight: { alignItems: 'flex-end' },
-  labelLeft:  { alignItems: 'flex-start' },
   nowBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
-    alignSelf: 'flex-end',
     marginBottom: 3,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -1170,11 +1342,7 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  floatingEmoji: {
-    position: 'absolute',
-    fontSize: 26,
-    zIndex: 9999,
-  },
+
 
   modalOverlay: {
     flex: 1,
@@ -1282,5 +1450,116 @@ const makeStyles = (colors: any, theme: string) => StyleSheet.create({
   },
   mTaskTextDone: {
     color: colors.textMuted,
+  },
+  celebrationOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  celebrationCard: {
+    width: width * 0.88,
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    borderWidth: 3,
+    borderColor: colors.border,
+    padding: 28,
+    alignItems: 'center',
+    shadowColor: colors.border,
+    shadowOffset: { width: 5, height: 5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+    position: 'relative',
+  },
+  celebrationBadgeWrap: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 2.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginTop: 10,
+  },
+  celebrationSparkles: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+  },
+  celebrationHeader: {
+    fontSize: 20,
+    fontFamily: 'Cairo_700Bold',
+    color: colors.accentAlt,
+    marginTop: 18,
+    textAlign: 'center',
+  },
+  celebrationSubtitle: {
+    fontSize: 12,
+    fontFamily: 'Cairo_600SemiBold',
+    color: colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  celebrationStageBox: {
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginTop: 14,
+    alignSelf: 'center',
+  },
+  celebrationStageLabel: {
+    fontSize: 15,
+    fontFamily: 'Cairo_700Bold',
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  celebrationMascotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 22,
+    paddingHorizontal: 6,
+  },
+  celebrationSpeech: {
+    flex: 1,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: colors.border,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  celebrationSpeechText: {
+    fontSize: 11,
+    fontFamily: 'Cairo_700Bold',
+    color: colors.textPrimary,
+    lineHeight: 18,
+  },
+  bgDecoration: {
+    position: 'absolute',
+    fontSize: 28,
+    opacity: theme === 'light' ? 0.35 : 0.18,
+    zIndex: 0,
+  },
+  connectorContainer: {
+    height: 44,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  connectorPoint: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
 });

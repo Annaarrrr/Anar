@@ -30,10 +30,11 @@ interface Props {
   activeGoalId: string | null;
   onGoalPress: (goal: GoalPin) => void;
   onSetActiveGoal: (id: string) => Promise<void>;
-  refreshGoals: () => Promise<void>;
+  refreshGoals: () => Promise<void> | void;
+  active?: boolean;
 }
 
-export function VisionBoardScreen({ onNavigate, goals, activeGoalId, onGoalPress, onSetActiveGoal, refreshGoals }: Props) {
+function VisionBoardScreenInner({ onNavigate, goals, activeGoalId, onGoalPress, onSetActiveGoal, refreshGoals, active = false }: Props) {
   const { t, language, colors, theme } = useAppSettings();
   const isRTL = language === 'ar';
   const styles = useMemo(() => makeStyles(colors, theme), [colors, theme]);
@@ -979,4 +980,6 @@ function makeStyles(colors: Colors, theme: 'light' | 'dark') {
     },
   });
 }
+
+export const VisionBoardScreen = React.memo(VisionBoardScreenInner);
 
