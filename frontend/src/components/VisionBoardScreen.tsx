@@ -5,12 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Dimensions,
   Modal,
   Platform,
   TextInput,
 } from 'react-native';
+import { CustomAlert as Alert } from './common/Alert';
 import { ShareIcon, PlusIcon, CheckIcon, XIcon, ChatIcon, PencilIcon, TrashIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
 import { Pushpin } from './common/PinOrnaments';

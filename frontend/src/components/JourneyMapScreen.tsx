@@ -6,13 +6,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Dimensions,
   Modal,
   Platform,
   Animated,
   Easing,
 } from 'react-native';
+import { CustomAlert as Alert } from './common/Alert';
 import {
   LockIcon,
   CheckIcon,

@@ -5,9 +5,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Platform,
 } from 'react-native';
+import { showAlert } from './common/Alert';
 import { XIcon, MoonIcon, SunIcon, GlobeIcon, LogOutIcon, CheckIcon } from './common/CustomIcons';
 import { NotebookBackground } from './common/NotebookBackground';
 import { useAppSettings } from '../context/AppContext';
@@ -64,7 +64,7 @@ function SettingsScreenInner({ onClose, onLogout }: Props) {
   const { t, colors, language, theme, setLanguage, setTheme, isRTL } = useAppSettings();
 
   const handleLogout = () => {
-    Alert.alert(
+    showAlert(
       t.settings_logout,
       t.settings_logout_msg,
       [

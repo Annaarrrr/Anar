@@ -5,8 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  Alert,
 } from 'react-native';
+import { CustomAlert as Alert } from './common/Alert';
 import {
   BellIcon,
   PlusIcon,

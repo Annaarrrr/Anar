@@ -10,11 +10,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
   Dimensions,
   Animated,
   Easing,
 } from 'react-native';
+import { CustomAlert as Alert } from './common/Alert';
 import { ArrowLeftIcon, ArrowRightIcon, MicIcon, SendIcon, SparklesIcon } from './common/CustomIcons';
 import { SketchButton } from './common/SketchButton';
 import { ActiveTab, Message } from '../types';
