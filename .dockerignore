@@ -4,20 +4,20 @@
 .github
 
 # Node
-node_modules
+**/node_modules
 npm-debug.log
-dist
+**/dist
 
 # Python
-__pycache__
-*.pyc
-*.pyo
-venv
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/venv
 .pytest_cache
 
 # Environment variables
 .env
 
 # .NET
-bin/
-obj/
+**/bin/
+**/obj/

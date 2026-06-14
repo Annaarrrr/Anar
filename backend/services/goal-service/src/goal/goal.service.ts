@@ -31,4 +31,13 @@ export class GoalService {
   async getGoal(userId: string) {
     return this.goalRepo.getGoalWithTasks(userId);
   }
+
+  async updateGoal(goalId: string, userId: string, text: string): Promise<boolean> {
+    return this.goalRepo.updateGoal(goalId, userId, text);
+  }
+
+  async deleteGoal(goalId: string, userId: string): Promise<boolean> {
+    return this.goalRepo.deleteGoal(goalId, userId);
+  }
 }
+

@@ -36,4 +36,21 @@ export class GoalRepository {
       tasks: tasksRes.rows
     };
   }
+
+  async updateGoal(goalId: string, userId: string, text: string): Promise<boolean> {
+    const res = await this.pool.query(
+      'UPDATE goals SET text = $1 WHERE id = $2 AND user_id = $3',
+      [text, goalId, userId]
+    );
+    return (res.rowCount ?? 0) > 0;
+  }
+
+  async deleteGoal(goalId: string, userId: string): Promise<boolean> {
+    const res = await this.pool.query(
+      'DELETE FROM goals WHERE id = $1 AND user_id = $2',
+      [goalId, userId]
+    );
+    return (res.rowCount ?? 0) > 0;
+  }
 }
+
