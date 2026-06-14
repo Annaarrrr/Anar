@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { Goal, GoalPin, JourneyStage, Task } from '../types';
 
 // ─── Stage Generator ────────────────────────────────────────────────────────
@@ -92,7 +93,67 @@ const PIN_COLORS = ['#EF4444', '#6C5CE7', '#F59E0B', '#00BFA6', '#3B82F6', '#A85
 const ROTATIONS = [2.5, -2, 3, -1.5, 2, -3];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
+// Dynamically resolves IP based on environment: 'localhost' for web/iOS, '10.0.2.2' for Android Emulator.
+const BACKEND_IP = Platform.OS === 'web'
+  ? 'localhost'
+  : Platform.OS === 'android'
+    ? '10.0.2.2'
+    : 'localhost';
+
+async function request<T>(port: number, path: string, options: RequestInit = {}): Promise<T> {
+  const token = await api.getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const url = `http://${BACKEND_IP}:${port}${path}`;
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    let message = 'Request failed';
+    try {
+      const parsed = JSON.parse(text);
+      message = parsed.message || parsed.error || message;
+    } catch {
+      message = text || message;
+    }
+    throw new Error(message);
+  }
+
+  const text = await response.text();
+  return text ? (JSON.parse(text) as T) : ({} as T);
+}
+
 let cachedToken: string | null = null;
+
+interface AuthResponse {
+  token: string;
+  email: string;
+  userId: string;
+  expiresAt: string;
+}
+
+interface BackendGoal {
+  id: string;
+  user_id: string;
+  text: string;
+  tasks: Array<{
+    id: string;
+    goal_id: string;
+    text: string;
+    completed: boolean;
+    order_index: number;
+    completed_at: string | null;
+  }>;
+}
 
 export const api = {
   async setToken(token: string | null): Promise<void> {
@@ -110,170 +171,127 @@ export const api = {
     return cachedToken;
   },
 
-  async signup(email: string, _: string): Promise<{ token: string }> {
-    const token = 'mock_jwt_' + Math.random().toString(36).substring(7);
-    await this.setToken(token);
-    await AsyncStorage.setItem('mock_user_email', email);
-    return { token };
+  async signup(email: string, password: string): Promise<{ token: string }> {
+    const res = await request<AuthResponse>(3001, '/api/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    await this.setToken(res.token);
+    await AsyncStorage.setItem('mock_user_email', res.email);
+    return { token: res.token };
   },
 
-  async login(email: string, _: string): Promise<{ token: string }> {
-    const token = 'mock_jwt_' + Math.random().toString(36).substring(7);
-    await this.setToken(token);
-    await AsyncStorage.setItem('mock_user_email', email);
-    return { token };
+  async login(email: string, password: string): Promise<{ token: string }> {
+    const res = await request<AuthResponse>(3001, '/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    await this.setToken(res.token);
+    await AsyncStorage.setItem('mock_user_email', res.email);
+    return { token: res.token };
   },
 
   async logout(): Promise<void> {
     await this.setToken(null);
-    await AsyncStorage.multiRemove([
-      'anar_goals',
-      'mock_user_email',
-      'mock_goal',    // legacy
-      'mock_tasks',   // legacy
-    ]);
+    await AsyncStorage.removeItem('mock_user_email');
   },
 
   // ── All goals ──────────────────────────────────────────────────────────────
   async getGoals(): Promise<GoalPin[]> {
-    const json = await AsyncStorage.getItem('anar_goals');
-    if (!json) {
-      // Migrate legacy single-goal storage
-      const legacyGoalJson = await AsyncStorage.getItem('mock_goal');
-      const legacyTasksJson = await AsyncStorage.getItem('mock_tasks');
-      if (legacyGoalJson) {
-        const legacyGoal = JSON.parse(legacyGoalJson) as Goal;
-        const legacyTasks = legacyTasksJson ? (JSON.parse(legacyTasksJson) as Task[]) : [];
-        const pin: GoalPin = {
-          id: legacyGoal.id,
-          text: legacyGoal.text,
-          emoji: getGoalEmoji(legacyGoal.text),
-          color: CARD_COLORS[0],
-          pinColor: PIN_COLORS[0],
-          rotation: ROTATIONS[0],
-          createdAt: new Date().toISOString(),
-          tasks: legacyTasks,
-          stages: generateStages(legacyGoal.text),
-        };
-        await AsyncStorage.setItem('anar_goals', JSON.stringify([pin]));
-        return [pin];
-      }
-      return [];
-    }
-    return JSON.parse(json) as GoalPin[];
+    const goal = await request<BackendGoal | null>(3002, '/goal', {
+      method: 'GET',
+    });
+    if (!goal) return [];
+
+    const pin: GoalPin = {
+      id: goal.id,
+      text: goal.text,
+      emoji: getGoalEmoji(goal.text),
+      color: CARD_COLORS[0],
+      pinColor: PIN_COLORS[0],
+      rotation: ROTATIONS[0],
+      createdAt: new Date().toISOString(),
+      tasks: goal.tasks.map((t) => ({
+        id: t.id,
+        goal_id: t.goal_id,
+        text: t.text,
+        completed: t.completed,
+        order_index: t.order_index,
+        completed_at: t.completed_at,
+      })),
+      stages: generateStages(goal.text),
+    };
+    return [pin];
   },
 
   // ── Latest goal — used by Home + Progress screens ─────────────────────────
   async getGoal(): Promise<(Goal & { tasks: Task[] }) | null> {
-    const goals = await this.getGoals();
-    if (goals.length === 0) return null;
-    const latest = goals[goals.length - 1];
-    return { id: latest.id, text: latest.text, tasks: latest.tasks };
+    const goal = await request<BackendGoal | null>(3002, '/goal', {
+      method: 'GET',
+    });
+    if (!goal) return null;
+
+    return {
+      id: goal.id,
+      text: goal.text,
+      tasks: goal.tasks.map((t) => ({
+        id: t.id,
+        goal_id: t.goal_id,
+        text: t.text,
+        completed: t.completed,
+        order_index: t.order_index,
+        completed_at: t.completed_at,
+      })),
+    };
   },
 
   // ── Create a new goal pin ─────────────────────────────────────────────────
   async createGoal(goalText: string): Promise<GoalPin> {
-    const goals = await this.getGoals();
-    const idx = goals.length % CARD_COLORS.length;
-    const goalId = 'goal_' + Math.random().toString(36).substring(7);
+    const goal = await request<BackendGoal>(3002, '/goal', {
+      method: 'POST',
+      body: JSON.stringify({ goalText }),
+    });
 
-    const tasks: Task[] = [
-      { id: `${goalId}_t1`, goal_id: goalId, text: 'تحديد خطة العمل والجدول الزمني', completed: false },
-      { id: `${goalId}_t2`, goal_id: goalId, text: 'مراجعة الأساسيات والمتطلبات الأولية', completed: false },
-      { id: `${goalId}_t3`, goal_id: goalId, text: 'البدء بالتنفيذ الفعلي للخطوة الأولى', completed: false },
-      { id: `${goalId}_t4`, goal_id: goalId, text: 'حل التمارين ومراجعة الأخطاء', completed: false },
-      { id: `${goalId}_t5`, goal_id: goalId, text: 'قياس التقدم وتعديل الخطة للأسبوع المقبل', completed: false },
-    ];
-
-    const newPin: GoalPin = {
-      id: goalId,
-      text: goalText,
-      emoji: getGoalEmoji(goalText),
-      color: CARD_COLORS[idx],
-      pinColor: PIN_COLORS[idx],
-      rotation: ROTATIONS[idx],
+    const pin: GoalPin = {
+      id: goal.id,
+      text: goal.text,
+      emoji: getGoalEmoji(goal.text),
+      color: CARD_COLORS[0],
+      pinColor: PIN_COLORS[0],
+      rotation: ROTATIONS[0],
       createdAt: new Date().toISOString(),
-      tasks,
-      stages: generateStages(goalText),
+      tasks: goal.tasks.map((t) => ({
+        id: t.id,
+        goal_id: t.goal_id,
+        text: t.text,
+        completed: t.completed,
+        order_index: t.order_index,
+        completed_at: t.completed_at,
+      })),
+      stages: generateStages(goal.text),
     };
-
-    const updated = [...goals, newPin];
-    await AsyncStorage.setItem('anar_goals', JSON.stringify(updated));
-
-    // Keep legacy keys in sync so Home/Progress screens still work
-    await AsyncStorage.setItem('mock_goal', JSON.stringify({ id: goalId, text: goalText }));
-    await AsyncStorage.setItem('mock_tasks', JSON.stringify(tasks));
-
-    return newPin;
+    return pin;
   },
 
   // ── Toggle a task in any goal ─────────────────────────────────────────────
   async toggleTask(taskId: string, completed: boolean): Promise<void> {
-    const goals = await this.getGoals();
-    const updatedGoals = goals.map((g) => ({
-      ...g,
-      tasks: g.tasks.map((t) =>
-        t.id === taskId
-          ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null }
-          : t
-      ),
-    }));
-    await AsyncStorage.setItem('anar_goals', JSON.stringify(updatedGoals));
-
-    // Legacy sync
-    const tasksJson = await AsyncStorage.getItem('mock_tasks');
-    if (tasksJson) {
-      const tasks = JSON.parse(tasksJson) as Task[];
-      const updatedTasks = tasks.map((t) =>
-        t.id === taskId
-          ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null }
-          : t
-      );
-      await AsyncStorage.setItem('mock_tasks', JSON.stringify(updatedTasks));
-    }
+    await request<void>(3003, `/task/${taskId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ completed }),
+    });
   },
 
   async updateGoal(goalId: string, newText: string): Promise<void> {
-    const goals = await this.getGoals();
-    const updatedGoals = goals.map((g) =>
-      g.id === goalId ? { ...g, text: newText } : g
-    );
-    await AsyncStorage.setItem('anar_goals', JSON.stringify(updatedGoals));
-
-    // Update legacy key if it matches the edited goal
-    const legacyGoalJson = await AsyncStorage.getItem('mock_goal');
-    if (legacyGoalJson) {
-      const legacyGoal = JSON.parse(legacyGoalJson) as Goal;
-      if (legacyGoal.id === goalId) {
-        await AsyncStorage.setItem('mock_goal', JSON.stringify({ id: goalId, text: newText }));
-      }
-    }
+    await request<void>(3002, `/goal/${goalId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ goalText: newText }),
+    });
   },
 
   async deleteGoal(goalId: string): Promise<void> {
-    const goals = await this.getGoals();
-    const updatedGoals = goals.filter((g) => g.id !== goalId);
-    await AsyncStorage.setItem('anar_goals', JSON.stringify(updatedGoals));
-
-    // Fallback active goal logic if we deleted the current active goal
-    const activeId = await AsyncStorage.getItem('anar_active_goal');
-    if (activeId === goalId) {
-      if (updatedGoals.length > 0) {
-        const nextActiveId = updatedGoals[updatedGoals.length - 1].id;
-        await AsyncStorage.setItem('anar_active_goal', nextActiveId);
-      } else {
-        await AsyncStorage.removeItem('anar_active_goal');
-      }
-    }
-
-    // Clean up legacy keys if they matched this goal
-    const legacyGoalJson = await AsyncStorage.getItem('mock_goal');
-    if (legacyGoalJson) {
-      const legacyGoal = JSON.parse(legacyGoalJson) as Goal;
-      if (legacyGoal.id === goalId) {
-        await AsyncStorage.removeItem('mock_goal');
-        await AsyncStorage.removeItem('mock_tasks');
-      }
-    }
+    await request<void>(3002, `/goal/${goalId}`, {
+      method: 'DELETE',
+    });
   },
 };
+
