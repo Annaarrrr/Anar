@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { NotificationService } from './notification.service';
-import { EmailProvider } from '../providers/email.provider';
+import { PushProvider } from '../providers/push.providers';
+import { EmailProvider } from '../providers/email.providers';
 
 @Module({
-  imports: [ConfigModule],
-  providers: [EmailProvider, NotificationService],
+  providers: [
+    NotificationService,
+    PushProvider,
+    EmailProvider,
+  ],
+  // Export NotificationService so SchedulerModule can inject it into DailyCron.
   exports: [NotificationService],
 })
 export class NotificationModule {}

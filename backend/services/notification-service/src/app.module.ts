@@ -1,20 +1,23 @@
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
-
+import { ConfigModule } from '@nestjs/config';
+import { SchedulerModule } from './scheduler/scheduler.module';
 import { NotificationModule } from './notification/notification.module';
-import { DailyCron } from './scheduler/daily.cron';
 
 @Module({
   imports: [
-    // ── Registers the scheduler engine globally. Must be imported once at root. ──
-    ScheduleModule.forRoot(),
+    /**
+     * ConfigModule — loads .env into process.env globally.
+     * isGlobal: true means every module can read env vars without re-importing.
+     * envFilePath: '.env' is the default; listed explicitly for clarity.
+     */
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
 
+    // Feature modules.
     NotificationModule,
-  ],
-  providers: [
-    // ── DailyCron lives here because it is an app-level concern, not tied       ──
-    // ── to a specific feature module. Move it to a SchedulerModule if it grows. ──
-    DailyCron,
+    SchedulerModule,
   ],
 })
 export class AppModule {}

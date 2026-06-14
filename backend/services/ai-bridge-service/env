@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  ai-bridge-service — environment configuration
+#  Copy this to .env and fill in your real values.
+#  NEVER commit the real .env file to version control.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Service ───────────────────────────────────────────────────────────────────
+PORT=3004
+
+# ── LLM Provider (OpenAI-compatible) ─────────────────────────────────────────
+# OpenAI:
+LLM_API_URL=https://api.openai.com/v1/chat/completions
+LLM_API_KEY=sk-your-openai-api-key-here
+
+# Optional: override the model (defaults to gpt-4o-mini in generate.service.ts)
+LLM_MODEL=gpt-4o-mini
+
+# ── Auth Guard ────────────────────────────────────────────────────────────────
+# Secret token accepted by the mock AuthGuard.
+# The hardcoded fallback is "dev3-local-secret-token" (safe for local dev only).
+# Set this to a strong secret for staging / production.
+GUARD_SECRET=dev3-local-secret-token
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
+# Restrict to API Gateway origin in production, e.g. http://localhost:3000
+CORS_ORIGIN=*
+
+# ── Inter-service URLs (for future integration) ───────────────────────────────
+AUTH_SERVICE_URL=http://localhost:3001
+TASK_SERVICE_URL=http://localhost:3003

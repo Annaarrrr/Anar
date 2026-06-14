@@ -1,117 +1,71 @@
-export interface DigestTemplateData {
-  name: string;
-  taskCount: number;
-  date: string;
+/** Shape returned by the template factory. */
+export interface NotificationPayload {
+  title: string;
+  body: string;
 }
 
-export function buildDailyDigestTemplate(data: DigestTemplateData): string {
-  const { name, taskCount, date } = data;
+/**
+ * Pure, stateless template factory.
+ * All methods are static so no DI wiring is needed — import and call directly.
+ */
+export class NotificationTemplate {
+  /**
+   * Builds a motivational progress notification for the daily tasks screen.
+   *
+   * Edge-cases handled:
+   *  - 0 total tasks  → encourages the user to add tasks
+   *  - all completed  → celebrates completion
+   *  - none completed → gentle nudge to start
+   *  - in-progress    → shows X/Y with percentage and remaining count
+   */
+  static buildDailyProgress(
+    totalTasks: number,
+    completedTasks: number,
+  ): NotificationPayload {
+    const title = '📋 Your Daily Progress Update';
 
-  const taskWord = taskCount === 1 ? 'task' : 'tasks';
-  const urgencyColor = taskCount >= 5 ? '#e53e3e' : '#3182ce';
+    if (totalTasks <= 0) {
+      return {
+        title,
+        body: "🌱 You haven't set any tasks yet. Open the app and plan your day!",
+      };
+    }
 
-  return /* html */ `
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Daily Digest</title>
-  </head>
-  <body style="margin:0;padding:0;background-color:#f7fafc;font-family:'Segoe UI',Arial,sans-serif;">
+    // Clamp completed to valid range (defensive against bad upstream data).
+    const completed = Math.min(Math.max(0, completedTasks), totalTasks);
+    const remaining = totalTasks - completed;
+    const percentage = Math.round((completed / totalTasks) * 100);
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7fafc;padding:40px 0;">
-      <tr>
-        <td align="center">
+    if (completed === 0) {
+      return {
+        title,
+        body: `🚀 You have ${totalTasks} task${totalTasks > 1 ? 's' : ''} waiting for you today. Let's get started — every step counts!`,
+      };
+    }
 
-          <!-- Card -->
-          <table width="560" cellpadding="0" cellspacing="0"
-            style="background-color:#ffffff;border-radius:8px;
-                   box-shadow:0 2px 8px rgba(0,0,0,0.08);overflow:hidden;">
+    if (completed === totalTasks) {
+      return {
+        title: '🏆 All Tasks Completed!',
+        body: `Amazing work! You crushed all ${totalTasks} tasks today. Take a moment to celebrate — you earned it! 🎉`,
+      };
+    }
 
-            <!-- Header -->
-            <tr>
-              <td style="background-color:#2d3748;padding:28px 40px;">
-                <p style="margin:0;font-size:13px;color:#a0aec0;letter-spacing:1px;
-                           text-transform:uppercase;">AI Bridge</p>
-                <h1 style="margin:6px 0 0;font-size:22px;color:#ffffff;font-weight:600;">
-                  Daily Digest
-                </h1>
-              </td>
-            </tr>
+    // Determine an emoji-based motivational suffix based on progress band.
+    const motivationSuffix = NotificationTemplate.getMotivationSuffix(percentage);
 
-            <!-- Body -->
-            <tr>
-              <td style="padding:36px 40px;">
-                <p style="margin:0 0 16px;font-size:16px;color:#4a5568;">
-                  Hi <strong style="color:#2d3748;">${name}</strong>,
-                </p>
-                <p style="margin:0 0 28px;font-size:15px;color:#718096;line-height:1.6;">
-                  Here is your summary for <strong style="color:#2d3748;">${date}</strong>.
-                </p>
+    return {
+      title,
+      body:
+        `🎯 You've completed ${completed} out of ${totalTasks} tasks (${percentage}%). ` +
+        `${remaining} task${remaining > 1 ? 's' : ''} left — ${motivationSuffix}`,
+    };
+  }
 
-                <!-- Stat box -->
-                <table width="100%" cellpadding="0" cellspacing="0"
-                  style="background-color:#f7fafc;border-left:4px solid ${urgencyColor};
-                         border-radius:4px;margin-bottom:28px;">
-                  <tr>
-                    <td style="padding:20px 24px;">
-                      <p style="margin:0 0 4px;font-size:13px;color:#718096;
-                                 text-transform:uppercase;letter-spacing:0.5px;">
-                        Pending Tasks
-                      </p>
-                      <p style="margin:0;font-size:36px;font-weight:700;color:${urgencyColor};">
-                        ${taskCount}
-                        <span style="font-size:16px;font-weight:400;color:#718096;">
-                          ${taskWord} left
-                        </span>
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-
-                <p style="margin:0 0 28px;font-size:15px;color:#718096;line-height:1.6;">
-                  ${
-                    taskCount === 0
-                      ? '🎉 Great work — your task list is clear! Enjoy the rest of your day.'
-                      : `You still have <strong style="color:#2d3748;">${taskCount} ${taskWord}</strong> waiting for your attention. Stay focused and keep moving forward!`
-                  }
-                </p>
-
-                <!-- CTA -->
-                <table cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="background-color:#2d3748;border-radius:6px;">
-                      <a href="#" style="display:inline-block;padding:12px 28px;
-                                         font-size:15px;font-weight:600;
-                                         color:#ffffff;text-decoration:none;">
-                        View My Tasks →
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-            <!-- Footer -->
-            <tr>
-              <td style="background-color:#f7fafc;padding:20px 40px;
-                          border-top:1px solid #e2e8f0;">
-                <p style="margin:0;font-size:12px;color:#a0aec0;text-align:center;">
-                  You are receiving this email because you have daily digests enabled.<br/>
-                  © ${new Date().getFullYear()} AI Bridge. All rights reserved.
-                </p>
-              </td>
-            </tr>
-
-          </table>
-          <!-- /Card -->
-
-        </td>
-      </tr>
-    </table>
-
-  </body>
-</html>
-  `.trim();
+  /** Returns an encouraging phrase based on how far along the user is. */
+  private static getMotivationSuffix(percentage: number): string {
+    if (percentage < 25) return "you're just getting warmed up. Keep going! 💪";
+    if (percentage < 50) return "great start! You're building momentum. 🔥";
+    if (percentage < 75) return "you're past the halfway mark. Finish strong! ⚡";
+    return "almost there! You're so close to the finish line! 🏁";
+  }
 }
