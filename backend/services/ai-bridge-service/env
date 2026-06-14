@@ -9,8 +9,8 @@ PORT=3004
 
 # ── LLM Provider (OpenAI-compatible) ─────────────────────────────────────────
 # OpenAI:
-LLM_API_URL=https://api.openai.com/v1/chat/completions
-LLM_API_KEY=sk-your-openai-api-key-here
+LLM_API_URL=http://localhost:8000/generate
+LLM_API_KEY=not-needed
 
 # Optional: override the model (defaults to gpt-4o-mini in generate.service.ts)
 LLM_MODEL=gpt-4o-mini
@@ -20,11 +20,10 @@ LLM_MODEL=gpt-4o-mini
 # The hardcoded fallback is "dev3-local-secret-token" (safe for local dev only).
 # Set this to a strong secret for staging / production.
 GUARD_SECRET=dev3-local-secret-token
-
 # ── CORS ──────────────────────────────────────────────────────────────────────
 # Restrict to API Gateway origin in production, e.g. http://localhost:3000
 CORS_ORIGIN=*
 
 # ── Inter-service URLs (for future integration) ───────────────────────────────
-AUTH_SERVICE_URL=http://localhost:3001
 TASK_SERVICE_URL=http://localhost:3003
+AUTH_SERVICE_URL=http://localhost:3001

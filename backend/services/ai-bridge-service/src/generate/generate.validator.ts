@@ -22,8 +22,9 @@ export interface ValidationResult {
 export class GenerateValidator {
   private readonly logger = new Logger(GenerateValidator.name);
 
-  static readonly MIN_TASKS = 3;
-  static readonly MAX_TASKS = 5;
+  // generate.validator.ts — change these two lines
+static readonly MIN_TASKS = 4;  // was 3
+static readonly MAX_TASKS = 4;  // was 5
 
   validate(raw: string): ValidationResult {
     // ── Step 1: Parse JSON ──────────────────────────────────────────

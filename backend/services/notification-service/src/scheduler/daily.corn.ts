@@ -19,8 +19,8 @@ export class DailyCron {
    * Current mode: ✅ PRODUCTION (EVERY_DAY_AT_9AM)
    *               💡 To test: comment out line below and uncomment the @Cron above.
    */
-  //@Cron(CronExpression.EVERY_DAY_AT_9AM)
-  @Cron('*/10 * * * * *') // ← UNCOMMENT for rapid local testing (every 10s)
+  @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  //@Cron('*/10 * * * * *') // ← UNCOMMENT for rapid local testing (every 10s)
   async handleDailyProgressNotifications(): Promise<void> {
     this.logger.log('⏰ Cron triggered: handleDailyProgressNotifications');
 
