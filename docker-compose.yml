@@ -1,70 +1,8 @@
+version: '3.8'
+
 services:
-  auth-service:
-    build:
-      context: .
-      dockerfile: ./backend/services/auth-service/Dockerfile
-    ports:
-      - "3001:3001"
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
 
-  goal-service:
-    build:
-      context: .
-      dockerfile: ./backend/services/goal-service/Dockerfile
-    ports:
-      - "3002:3002"
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  task-service:
-    build:
-      context: .
-      dockerfile: ./backend/services/task-service/Dockerfile
-    ports:
-      - "3003:3003"
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  notification-service:
-    build:
-      context: .
-      dockerfile: ./backend/services/notification-service/Dockerfile
-    ports:
-      - "3005:3005"
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  ai-bridge-service:
-    build:
-      context: .
-      dockerfile: ./backend/services/ai-bridge-service/Dockerfile
-    ports:
-      - "3006:3006"
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  ai-logic:
-    build:
-      context: .
-      dockerfile: ./ai-logic/Dockerfile
-    ports:
-      - "3004:3004"
-    env_file: .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-
+  # ── Database ────────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg15
     ports:
@@ -76,21 +14,111 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Updated path: Now points to backend/shared/migrations
       - ./backend/shared/migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
+  # ── Email (local dev only) ──────────────────────────────────────────────────
   mailpit:
     image: axllent/mailpit
     ports:
-      - "1025:1025" # SMTP port for NestJS to send emails to
-      - "8025:8025" # Web UI port for you to view the emails
+      - "1025:1025"   # SMTP — NestJS sends emails here
+      - "8025:8025"   # Web UI — open http://localhost:8025 to read emails
     environment:
       MP_MAX_MESSAGES: 5000
+    restart: unless-stopped
+
+  # ── Python AI Logic (SambaNova + Llama) ────────────────────────────────────
+  ai-logic:
+    build:
+      context: .
+      dockerfile: ./ai-logic/Dockerfile
+    ports:
+      - "3006:3004"   
+    env_file: .env
+    restart: unless-stopped
+
+  # ── Auth Service (Dev 1) ────────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./backend/services/auth-service/Dockerfile
+    environment:
+    - ASPNETCORE_URLS=http://+:3001
+    ports:
+      - "3001:3001"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+  # ── Goal Service (Dev 2) ────────────────────────────────────────────────────
+  goal-service:
+    build:
+      context: .
+      dockerfile: ./backend/services/goal-service/Dockerfile
+    ports:
+      - "3002:3002"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Task Service (Dev 2) ────────────────────────────────────────────────────
+  task-service:
+    build:
+      context: .
+      dockerfile: ./backend/services/task-service/Dockerfile
+    ports:
+      - "3003:3003"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── AI Bridge Service (Dev 3) ───────────────────────────────────────────────
+  ai-bridge-service:
+    build:
+      context: .
+      dockerfile: ./backend/services/ai-bridge-service/Dockerfile
+    ports:
+      - "3004:3004"
+    env_file: .env
+    environment:
+      LLM_API_URL: http://ai-logic:3004/generate   # internal Docker network
+    depends_on:
+      ai-logic:
+        condition: service_started 
+    restart: unless-stopped
+
+  # ── Notification Service (Dev 3) ────────────────────────────────────────────
+  notification-service:
+    build:
+      context: .
+      dockerfile: ./backend/services/notification-service/Dockerfile
+    ports:
+      - "3005:3005"
+    env_file: .env
+    environment:
+      TASK_SERVICE_URL: http://task-service:3003    # internal Docker network
+      AUTH_SERVICE_URL: http://auth-service:3001    # internal Docker network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      task-service:
+        condition: service_started
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
 
 volumes:
   postgres_data:

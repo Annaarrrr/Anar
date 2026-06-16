@@ -1,11 +1,19 @@
-from openai import OpenAI
 import os
 import json
+import httpx
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+
+custom_http_client = httpx.Client(trust_env=False)
 
 client = OpenAI(
     api_key=os.getenv("SAMBANOVA_API_KEY"),
-    base_url="https://api.sambanova.ai/v1"
+    base_url="https://api.sambanova.ai/v1",
+    http_client=custom_http_client
 )
+
 
 def extract_goal(user_input):
 
