@@ -171,6 +171,10 @@ export const api = {
     return cachedToken;
   },
 
+  async getUserId(): Promise<string | null> {
+    return await AsyncStorage.getItem('mock_user_id');
+  },
+
   async signup(email: string, password: string): Promise<{ token: string }> {
     const res = await request<AuthResponse>(3001, '/api/auth/signup', {
       method: 'POST',
@@ -178,6 +182,7 @@ export const api = {
     });
     await this.setToken(res.token);
     await AsyncStorage.setItem('mock_user_email', res.email);
+    await AsyncStorage.setItem('mock_user_id', res.userId);
     return { token: res.token };
   },
 
@@ -188,13 +193,16 @@ export const api = {
     });
     await this.setToken(res.token);
     await AsyncStorage.setItem('mock_user_email', res.email);
+    await AsyncStorage.setItem('mock_user_id', res.userId);
     return { token: res.token };
   },
 
   async logout(): Promise<void> {
     await this.setToken(null);
     await AsyncStorage.removeItem('mock_user_email');
+    await AsyncStorage.removeItem('mock_user_id');
   },
+
 
   // ── All goals ──────────────────────────────────────────────────────────────
   async getGoals(): Promise<GoalPin[]> {
@@ -293,5 +301,13 @@ export const api = {
       method: 'DELETE',
     });
   },
+
+  async registerPushToken(userId: string, token: string): Promise<void> {
+    await request<void>(3001, `/users/${userId}/tokens`, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
 };
+
 

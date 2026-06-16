@@ -17,6 +17,8 @@ import { useFonts, Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold } from '@e
 import { AppScreen, ActiveTab, Goal, GoalPin, Task } from './src/types';
 import { api } from './src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerForPushNotificationsAsync } from './src/services/notifications';
+
 
 // Context
 import { AppProvider, useAppSettings } from './src/context/AppContext';
@@ -211,6 +213,10 @@ function AppInner() {
         const storedToken    = await api.getToken();
         if (storedToken) {
           setToken(storedToken);
+          const userId = await api.getUserId();
+          if (userId) {
+            registerForPushNotificationsAsync(userId);
+          }
           const savedActiveId = await AsyncStorage.getItem('anar_active_goal');
           setActiveGoalId(savedActiveId);
           await fetchGoals(savedActiveId);
@@ -246,6 +252,10 @@ function AppInner() {
 
   const handleAuthSuccess = useCallback(async (newToken: string) => {
     setToken(newToken);
+    const userId = await api.getUserId();
+    if (userId) {
+      registerForPushNotificationsAsync(userId);
+    }
     const savedActiveId = await AsyncStorage.getItem('anar_active_goal');
     setActiveGoalId(savedActiveId);
     await fetchGoals(savedActiveId);
