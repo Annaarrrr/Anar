@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using auth_service.Models;
 
 namespace auth_service.Data;
@@ -43,6 +43,17 @@ public class AppDbContext : DbContext
             .HasForeignKey(t => t.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // خريطة الجدول والأعمدة لرموز FCM لتطابق قاعدة البيانات
+        modelBuilder.Entity<FcmToken>().ToTable("fcm_tokens");
+        modelBuilder.Entity<FcmToken>(entity =>
+        {
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Token).HasColumnName("device_token");
+            entity.Property(e => e.DeviceName).HasColumnName("device_type");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.UpdatedAt).HasColumnName("last_updated");
+            entity.Ignore(e => e.CreatedAt); // تجاهل لعدم وجوده في قاعدة البيانات
+        });
     }
 
     // Configuration for connecton string and database
