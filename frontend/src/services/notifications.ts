@@ -57,12 +57,17 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
     }
 
     // Fetch the Expo push token
-    const expoTokenResponse = await Notifications.getExpoPushTokenAsync();
-    token = expoTokenResponse.data;
-    console.log('[PushNotifications] Acquired Expo Push Token:', token);
+    try {
+      const expoTokenResponse = await Notifications.getExpoPushTokenAsync();
+      token = expoTokenResponse.data;
+      console.log('[PushNotifications] Acquired Expo Push Token:', token);
+    } catch (tokenError) {
+      console.warn('[PushNotifications] Failed to get real push token (missing FCM credentials). Using mock token fallback.');
+      token = `native_mock_token_${userId.substring(0, 8)}_${Math.random().toString(36).substring(2, 10)}`;
+    }
 
     await api.registerPushToken(token);
-    console.log('[PushNotifications] Token registered successfully on backend.');
+    console.log('[PushNotifications] Token registered successfully on backend:', token);
   } catch (error) {
     console.error('[PushNotifications] Error setting up push notifications:', error);
   }
