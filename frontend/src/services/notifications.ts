@@ -22,7 +22,7 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
     // Generate a browser-specific mock token for local testing
     token = `web_mock_token_${userId.substring(0, 8)}_${Math.random().toString(36).substring(2, 10)}`;
     try {
-      await api.registerPushToken(userId, token);
+      await api.registerPushToken(token);
       console.log('[PushNotifications] Web mock token registered successfully:', token);
     } catch (error) {
       console.error('[PushNotifications] Failed to register web mock token:', error);
@@ -34,7 +34,7 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
     console.log('[PushNotifications] Running on simulator. Simulating token registration.');
     token = `simulator_mock_token_${userId.substring(0, 8)}_${Math.random().toString(36).substring(2, 10)}`;
     try {
-      await api.registerPushToken(userId, token);
+      await api.registerPushToken(token);
       console.log('[PushNotifications] Simulator mock token registered successfully:', token);
     } catch (error) {
       console.error('[PushNotifications] Failed to register simulator mock token:', error);
@@ -61,7 +61,7 @@ export async function registerForPushNotificationsAsync(userId: string): Promise
     token = expoTokenResponse.data;
     console.log('[PushNotifications] Acquired Expo Push Token:', token);
 
-    await api.registerPushToken(userId, token);
+    await api.registerPushToken(token);
     console.log('[PushNotifications] Token registered successfully on backend.');
   } catch (error) {
     console.error('[PushNotifications] Error setting up push notifications:', error);

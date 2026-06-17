@@ -302,10 +302,10 @@ export const api = {
     });
   },
 
-  async registerPushToken(userId: string, token: string): Promise<void> {
-    await request<void>(3001, `/users/${userId}/tokens`, {
+  async registerPushToken(token: string): Promise<void> {
+    await request<void>(3001, '/api/fcm/register', {
       method: 'POST',
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token, deviceName: Platform.OS }),
     });
   },
 };
