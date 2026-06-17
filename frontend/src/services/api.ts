@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { Goal, GoalPin, JourneyStage, Task } from '../types';
 
 // ─── Stage Generator ────────────────────────────────────────────────────────
@@ -93,12 +94,21 @@ const PIN_COLORS = ['#EF4444', '#6C5CE7', '#F59E0B', '#00BFA6', '#3B82F6', '#A85
 const ROTATIONS = [2.5, -2, 3, -1.5, 2, -3];
 
 // ─── API ─────────────────────────────────────────────────────────────────────
-// Dynamically resolves IP based on environment: 'localhost' for web/iOS, '10.0.2.2' for Android Emulator.
-const BACKEND_IP = Platform.OS === 'web'
-  ? 'localhost'
-  : Platform.OS === 'android'
-    ? '10.0.2.2'
-    : 'localhost';
+// Dynamically resolves the host IP of the machine running the Metro bundler.
+// This allows testing on physical devices across any local network without hardcoding IPs.
+const getBackendIp = (): string => {
+  if (Platform.OS === 'web') {
+    return 'localhost';
+  }
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    if (ip) return ip;
+  }
+  return Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+};
+
+const BACKEND_IP = getBackendIp();
 
 async function request<T>(port: number, path: string, options: RequestInit = {}): Promise<T> {
   const token = await api.getToken();
