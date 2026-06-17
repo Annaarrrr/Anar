@@ -5,6 +5,7 @@ import * as admin from 'firebase-admin';
 export class PushProvider implements OnModuleInit {
   private readonly logger = new Logger(PushProvider.name);
   private app!: admin.app.App;
+  private isFcmInitialized = false;
 
   onModuleInit(): void {
     const projectId = process.env.FCM_PROJECT_ID;
@@ -17,21 +18,29 @@ export class PushProvider implements OnModuleInit {
         'FCM env vars (FCM_PROJECT_ID, FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY) are not fully set. ' +
           'Push notifications will be logged but NOT actually sent.',
       );
+      this.isFcmInitialized = false;
+      return;
     }
 
-    // Guard: avoid re-initialising if the app already exists (e.g. hot-reload).
-    if (admin.apps.length === 0) {
-      this.app = admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey,
-        }),
-      });
-      this.logger.log('Firebase Admin SDK initialised successfully.');
-    } else {
-      this.app = admin.apps[0] as admin.app.App;
-      this.logger.log('Reusing existing Firebase Admin SDK instance.');
+    try {
+      // Guard: avoid re-initialising if the app already exists (e.g. hot-reload).
+      if (admin.apps.length === 0) {
+        this.app = admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey,
+          }),
+        });
+        this.logger.log('Firebase Admin SDK initialised successfully.');
+      } else {
+        this.app = admin.apps[0] as admin.app.App;
+        this.logger.log('Reusing existing Firebase Admin SDK instance.');
+      }
+      this.isFcmInitialized = true;
+    } catch (err: any) {
+      this.logger.error(`Failed to initialize Firebase Admin SDK: ${err.message}`);
+      this.isFcmInitialized = false;
     }
   }
 
@@ -53,6 +62,14 @@ export class PushProvider implements OnModuleInit {
     if (!tokens || tokens.length === 0) {
       this.logger.warn('sendPushNotification called with an empty token list — skipping.');
       return 0;
+    }
+
+    if (!this.isFcmInitialized) {
+      this.logger.log(
+        `[FCM MOCK SEND] Would send push notification to ${tokens.length} tokens. ` +
+          `Title: "${title}", Body: "${body}"`,
+      );
+      return tokens.length;
     }
 
     const message: admin.messaging.MulticastMessage = {
@@ -79,7 +96,7 @@ export class PushProvider implements OnModuleInit {
       );
 
       // Log individual failures so they can be acted upon (e.g. remove stale tokens).
-      response.responses.forEach((res, idx) => {
+      response.responses.forEach((res: any, idx: number) => {
         if (!res.success) {
           this.logger.error(
             `Token [${idx}] "${tokens[idx]}" failed: ${res.error?.message ?? 'unknown error'}`,
