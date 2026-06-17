@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using auth_service.DTOs;
 using auth_service.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -51,6 +51,22 @@ public class FcmController : ControllerBase
         var userId = GetUserId();
         var tokens = await _fcmTokenService.GetTokensForUserAsync(userId);
         return Ok(tokens);
+    }
+
+    /// <summary>
+    /// نقطة نهاية داخلية للحصول على جميع معرفات المستخدمين الذين لديهم رموز.
+    /// </summary>
+    [HttpGet("internal/users-with-tokens")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUsersWithTokensInternal([FromHeader(Name = "X-Internal-API-Key")] string apiKey)
+    {
+        var validApiKey = Environment.GetEnvironmentVariable("INTERNAL_API_KEY")
+                          ?? "your-internal-api-key-change-me";
+        if (string.IsNullOrEmpty(apiKey) || apiKey != validApiKey)
+            return Unauthorized(new { message = "Invalid internal API key" });
+
+        var userIds = await _fcmTokenService.GetAllUserIdsWithTokensAsync();
+        return Ok(userIds);
     }
 
     /// <summary>

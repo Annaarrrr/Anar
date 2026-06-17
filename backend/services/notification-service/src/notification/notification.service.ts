@@ -145,12 +145,9 @@ export class NotificationService {
    * observe every template branch fire in your terminal.
    */
   private async getMockPendingUsers(): Promise<UserTaskProgress[]> {
-    this.logger.debug('[MOCK] getMockPendingUsers() — returning hardcoded fixture data.');
+    this.logger.debug('[MOCK] getMockPendingUsers() — returning hardcoded fixture data and fetching real users with tokens.');
 
-    // Artificial delay to simulate a real network round-trip (remove in prod).
-    await this.simulateNetworkDelay(80);
-
-    return [
+    const mockUsers: UserTaskProgress[] = [
       // Scenario A: Just getting started (0% complete)
       { userId: 'user-001', totalTasks: 8, completedTasks: 0 },
 
@@ -172,6 +169,35 @@ export class NotificationService {
       // Scenario G: Single task, not done
       { userId: 'user-007', totalTasks: 1, completedTasks: 0 },
     ];
+
+    const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3001';
+    const apiKey = process.env.INTERNAL_API_KEY || 'your-internal-api-key-change-me';
+
+    try {
+      const response = await fetch(`${authServiceUrl}/api/fcm/internal/users-with-tokens`, {
+        method: 'GET',
+        headers: {
+          'X-Internal-API-Key': apiKey,
+        },
+      });
+
+      if (response.ok) {
+        const userIds = await response.json() as string[];
+        this.logger.log(`Fetched ${userIds.length} real active user ID(s) with tokens from auth-service.`);
+        for (const userId of userIds) {
+          // Add the real user with 3/10 completed tasks to trigger progress push
+          mockUsers.push({
+            userId,
+            totalTasks: 10,
+            completedTasks: 3,
+          });
+        }
+      }
+    } catch (err: any) {
+      this.logger.error(`Failed to fetch real users with tokens: ${err?.message || err}`);
+    }
+
+    return mockUsers;
   }
 
   /**

@@ -1,4 +1,4 @@
-﻿using auth_service.Data;
+using auth_service.Data;
 using auth_service.DTOs;
 using auth_service.Models;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +64,17 @@ public class FcmTokenService
             .ToListAsync();
 
         return tokens.Select(MapToDto).ToList();
+    }
+
+    /// <summary>
+    /// جلب جميع معرفات المستخدمين الذين لديهم رموز مسجلة.
+    /// </summary>
+    public async Task<List<Guid>> GetAllUserIdsWithTokensAsync()
+    {
+        return await _context.FcmTokens
+            .Select(t => t.UserId)
+            .Distinct()
+            .ToListAsync();
     }
 
     private static FcmTokenDto MapToDto(FcmToken token)
