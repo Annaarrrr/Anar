@@ -3,40 +3,36 @@
   "WorkspaceRootPath": "C:\\Anar\\backend\\services\\auth-service\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\auth-service.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}",
-      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:auth-service.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\auth-service.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:auth-service.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\controllers\\fcmcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:controllers\\fcmcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\services\\fcmtokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:services\\fcmtokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\services\\jwtservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:services\\jwtservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\dtos\\fcmtokendto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:dtos\\fcmtokendto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\dtos\\fcmtokenregisterdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:dtos\\fcmtokenregisterdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\middleware\\jwtmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:middleware\\jwtmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|c:\\anar\\backend\\services\\auth-service\\models\\fcmtoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6CDCC4BD-C90A-CBE1-99E9-56198F46A4B0}|auth-service.csproj|solutionrelative:models\\fcmtoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -46,123 +42,110 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 8,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "auth-service.http",
-              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\auth-service.http",
-              "RelativeDocumentMoniker": "auth-service.http",
-              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\auth-service.http",
-              "RelativeToolTip": "auth-service.http",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003502|",
-              "WhenOpened": "2026-05-24T13:13:49.175Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "AuthService.cs",
-              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Services\\AuthService.cs",
-              "RelativeDocumentMoniker": "Services\\AuthService.cs",
-              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Services\\AuthService.cs",
-              "RelativeToolTip": "Services\\AuthService.cs",
-              "ViewState": "AgIAABEAAAAANA37sIwLwEkAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-24T13:12:00.345Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "User.cs",
-              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Models\\User.cs",
-              "RelativeDocumentMoniker": "Models\\User.cs",
-              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Models\\User.cs",
-              "RelativeToolTip": "Models\\User.cs",
-              "ViewState": "AgIAAAQAAADAWZ5EzAg2wAoAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-24T13:13:06.769Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "auth-service",
-              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\auth-service.csproj",
-              "RelativeDocumentMoniker": "auth-service.csproj",
-              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\auth-service.csproj",
-              "RelativeToolTip": "auth-service.csproj",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-05-24T13:12:57.915Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
               "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAA0AAABgRabPrCgkwBgAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-24T13:12:29.337Z",
+              "WhenOpened": "2026-06-17T15:58:50.928Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "JwtMiddleware.cs",
-              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Middleware\\JwtMiddleware.cs",
-              "RelativeDocumentMoniker": "Middleware\\JwtMiddleware.cs",
-              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Middleware\\JwtMiddleware.cs",
-              "RelativeToolTip": "Middleware\\JwtMiddleware.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAiAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "FcmController.cs",
+              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Controllers\\FcmController.cs",
+              "RelativeDocumentMoniker": "Controllers\\FcmController.cs",
+              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Controllers\\FcmController.cs",
+              "RelativeToolTip": "Controllers\\FcmController.cs",
+              "ViewState": "AgIAAC8AAAAAAAAAAADwv0gAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-24T13:12:19.386Z",
+              "WhenOpened": "2026-06-17T15:57:50.147Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "FcmTokenService.cs",
+              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Services\\FcmTokenService.cs",
+              "RelativeDocumentMoniker": "Services\\FcmTokenService.cs",
+              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Services\\FcmTokenService.cs",
+              "RelativeToolTip": "Services\\FcmTokenService.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAADwv08AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T15:56:52.806Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "FcmTokenDto.cs",
+              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\DTOs\\FcmTokenDto.cs",
+              "RelativeDocumentMoniker": "DTOs\\FcmTokenDto.cs",
+              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\DTOs\\FcmTokenDto.cs",
+              "RelativeToolTip": "DTOs\\FcmTokenDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T15:55:55.276Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "FcmTokenRegisterDto.cs",
+              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\DTOs\\FcmTokenRegisterDto.cs",
+              "RelativeDocumentMoniker": "DTOs\\FcmTokenRegisterDto.cs",
+              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\DTOs\\FcmTokenRegisterDto.cs",
+              "RelativeToolTip": "DTOs\\FcmTokenRegisterDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T15:55:03.239Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 5,
-              "Title": "JwtService.cs",
-              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Services\\JwtService.cs",
-              "RelativeDocumentMoniker": "Services\\JwtService.cs",
-              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Services\\JwtService.cs",
-              "RelativeToolTip": "Services\\JwtService.cs",
-              "ViewState": "AgIAAAcAAAAAAAAAAAAAAAkAAAAsAAAAAAAAAA==",
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Models\\User.cs",
+              "RelativeDocumentMoniker": "Models\\User.cs",
+              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Models\\User.cs",
+              "RelativeToolTip": "Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAABQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-24T13:12:02.383Z",
+              "WhenOpened": "2026-06-17T15:54:30.442Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 6,
               "Title": "AppDbContext.cs",
               "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Data\\AppDbContext.cs",
               "RelativeDocumentMoniker": "Data\\AppDbContext.cs",
               "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Data\\AppDbContext.cs",
               "RelativeToolTip": "Data\\AppDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABsAAAAAYrtlPZUVwCwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-24T13:11:04.837Z",
+              "WhenOpened": "2026-06-17T15:51:39.853Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\appsettings.json",
-              "RelativeDocumentMoniker": "appsettings.json",
-              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\appsettings.json",
-              "RelativeToolTip": "appsettings.json",
-              "ViewState": "AgIAAAsAAADAypPI33UYwBEAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-05-24T13:10:46.675Z",
+              "DocumentIndex": 7,
+              "Title": "FcmToken.cs",
+              "DocumentMoniker": "C:\\Anar\\backend\\services\\auth-service\\Models\\FcmToken.cs",
+              "RelativeDocumentMoniker": "Models\\FcmToken.cs",
+              "ToolTip": "C:\\Anar\\backend\\services\\auth-service\\Models\\FcmToken.cs",
+              "RelativeToolTip": "Models\\FcmToken.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T15:49:58.706Z",
               "EditorCaption": ""
             }
           ]

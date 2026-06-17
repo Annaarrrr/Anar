@@ -14,4 +14,6 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    // في Models/User.cs
+    public ICollection<FcmToken> FcmTokens { get; set; } = new List<FcmToken>();
 }

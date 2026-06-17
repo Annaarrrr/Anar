@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<FcmTokenService>();
 
 // إعداد DbContext (PostgreSQL كمثال)
 builder.Services.AddDbContext<AppDbContext>(options =>

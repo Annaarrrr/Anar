@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using auth_service.Models;
 
 namespace auth_service.Data;
@@ -8,6 +8,7 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<FcmToken> FcmTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,6 +25,24 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        // فهرس فريد على البريد الإلكتروني
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        // فهرس فريد على رمز FCM نفسه (لضمان عدم تكراره عبر المستخدمين)
+        modelBuilder.Entity<FcmToken>()
+            .HasIndex(t => t.Token)
+            .IsUnique();
+
+        // العلاقة: مستخدم واحد ← عدة رموز
+        modelBuilder.Entity<FcmToken>()
+            .HasOne(t => t.User)
+            .WithMany(u => u.FcmTokens)   // سنضيف خاصية التنقل في User
+            .HasForeignKey(t => t.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
     }
 
     // Configuration for connecton string and database
