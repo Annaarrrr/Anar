@@ -182,31 +182,39 @@ export class NotificationService {
    * user-006 intentionally has no tokens to test the empty-token guard.
    */
   private async getMockTokens(userId: string): Promise<UserTokensResponse> {
-    this.logger.debug(`[MOCK] getMockTokens("${userId}") — returning hardcoded fixture data.`);
+    this.logger.log(`Fetching real tokens from auth-service for userId="${userId}"...`);
+    const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service:3001';
+    const apiKey = process.env.INTERNAL_API_KEY || 'your-internal-api-key-change-me';
 
-    await this.simulateNetworkDelay(40);
+    try {
+      const response = await fetch(`${authServiceUrl}/api/fcm/internal/tokens/${userId}`, {
+        method: 'GET',
+        headers: {
+          'X-Internal-API-Key': apiKey,
+        },
+      });
 
-    const tokenMap: Record<string, string[]> = {
-      'user-001': [
-        'fcm_mock_token_user001_android_A1B2C3D4E5F6',
-        'fcm_mock_token_user001_ios_G7H8I9J0K1L2',
-      ],
-      'user-002': ['fcm_mock_token_user002_android_M3N4O5P6Q7R8'],
-      'user-003': [
-        'fcm_mock_token_user003_android_S9T0U1V2W3X4',
-        'fcm_mock_token_user003_ios_Y5Z6A7B8C9D0',
-        'fcm_mock_token_user003_web_E1F2G3H4I5J6',
-      ],
-      'user-004': ['fcm_mock_token_user004_android_K7L8M9N0O1P2'],
-      'user-005': ['fcm_mock_token_user005_ios_Q3R4S5T6U7V8'],
-      'user-006': [], // ← intentionally empty — tests the no-token guard branch
-      'user-007': ['fcm_mock_token_user007_android_W9X0Y1Z2A3B4'],
-    };
+      if (!response.ok) {
+        throw new Error(`Failed to fetch tokens from auth-service: ${response.status} ${response.statusText}`);
+      }
 
-    return {
-      userId,
-      tokens: tokenMap[userId] ?? [],
-    };
+      const fcmTokens = await response.json() as Array<{ token?: string; Token?: string }>;
+      const tokens = fcmTokens
+        .map(t => t.token || t.Token)
+        .filter((t): t is string => typeof t === 'string' && t.length > 0);
+
+      this.logger.log(`Successfully fetched ${tokens.length} tokens for userId="${userId}"`);
+      return {
+        userId,
+        tokens,
+      };
+    } catch (error: any) {
+      this.logger.error(`Error fetching real tokens from auth-service: ${error?.message || error}`);
+      return {
+        userId,
+        tokens: [],
+      };
+    }
   }
 
   /** Simulates async network latency — remove when switching to real HTTP calls. */
