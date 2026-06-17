@@ -1,4 +1,4 @@
-﻿namespace auth_service.DTOs;
+namespace auth_service.DTOs;
 
 public class FcmTokenDto
 {
@@ -7,5 +7,4 @@ public class FcmTokenDto
     public string? DeviceName { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-}
 }
