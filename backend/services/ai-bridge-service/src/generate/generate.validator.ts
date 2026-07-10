@@ -1,78 +1,72 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+export interface StageItem {
+  label: string;
+  sublabel: string;
+  emoji: string;
+  tasks: string[];
+}
+
 export interface ValidationResult {
   valid: boolean;
-  tasks: string[];
+  stages: StageItem[];
   reason?: string;
 }
 
-/**
- * GenerateValidator
- *
- * Responsible for one thing: deciding whether what the LLM returned
- * is safe to hand back to the caller.
- *
- * Rules enforced:
- *  1. The raw string must be parseable as JSON.
- *  2. The parsed value must contain a `tasks` key that is an array.
- *  3. Every element in that array must be a non-empty string.
- *  4. The array length must be between MIN_TASKS and MAX_TASKS (3–5).
- */
 @Injectable()
 export class GenerateValidator {
   private readonly logger = new Logger(GenerateValidator.name);
 
-  // generate.validator.ts — change these two lines
-static readonly MIN_TASKS = 4;  // was 3
-static readonly MAX_TASKS = 4;  // was 5
-
   validate(raw: string): ValidationResult {
-    // ── Step 1: Parse JSON ──────────────────────────────────────────
     let parsed: unknown;
     try {
-      // LLMs often wrap JSON in markdown fences — strip them first.
       const cleaned = this.stripMarkdownFences(raw);
       parsed = JSON.parse(cleaned);
     } catch {
       return this.fail(`LLM response is not valid JSON. Raw snippet: "${raw.slice(0, 120)}…"`);
     }
 
-    // ── Step 2: Expect an object with a `tasks` array ───────────────
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
       return this.fail('Parsed JSON is not an object.');
     }
 
     const obj = parsed as Record<string, unknown>;
 
-    if (!Object.prototype.hasOwnProperty.call(obj, 'tasks')) {
-      return this.fail('Parsed JSON does not contain a "tasks" key.');
+    if (!Object.prototype.hasOwnProperty.call(obj, 'stages')) {
+      return this.fail('Parsed JSON does not contain a "stages" key.');
     }
 
-    if (!Array.isArray(obj['tasks'])) {
-      return this.fail('"tasks" is not an array.');
+    if (!Array.isArray(obj['stages'])) {
+      return this.fail('"stages" is not an array.');
     }
 
-    const rawTasks = obj['tasks'] as unknown[];
+    const rawStages = obj['stages'] as unknown[];
+    const stages: StageItem[] = [];
 
-    // ── Step 3: All elements must be non-empty strings ───────────────
-    const tasks: string[] = [];
-    for (let i = 0; i < rawTasks.length; i++) {
-      const item = rawTasks[i];
-      if (typeof item !== 'string' || item.trim().length === 0) {
-        return this.fail(`tasks[${i}] is not a non-empty string (got: ${JSON.stringify(item)}).`);
+    for (let i = 0; i < rawStages.length; i++) {
+      const item = rawStages[i] as any;
+      if (!item || typeof item !== 'object') return this.fail(`stages[${i}] is not an object`);
+      if (typeof item.label !== 'string') return this.fail(`stages[${i}].label missing`);
+      if (typeof item.sublabel !== 'string') return this.fail(`stages[${i}].sublabel missing`);
+      if (typeof item.emoji !== 'string') return this.fail(`stages[${i}].emoji missing`);
+      if (!Array.isArray(item.tasks)) return this.fail(`stages[${i}].tasks is not an array`);
+      
+      const tasks: string[] = [];
+      for (let j = 0; j < item.tasks.length; j++) {
+        const t = item.tasks[j];
+        if (typeof t === 'string' && t.trim().length > 0) tasks.push(t.trim());
       }
-      tasks.push(item.trim());
+      
+      stages.push({
+        label: item.label.trim(),
+        sublabel: item.sublabel.trim(),
+        emoji: item.emoji.trim(),
+        tasks
+      });
     }
 
-    // ── Step 4: Enforce 3–5 task count ──────────────────────────────
-    if (tasks.length < GenerateValidator.MIN_TASKS || tasks.length > GenerateValidator.MAX_TASKS) {
-      return this.fail(
-        `Expected ${GenerateValidator.MIN_TASKS}–${GenerateValidator.MAX_TASKS} tasks, got ${tasks.length}.`,
-      );
-    }
-
-    this.logger.log(`Validation passed — ${tasks.length} tasks accepted from LLM.`);
-    return { valid: true, tasks };
+    this.logger.log(`Validation passed — ${stages.length} stages accepted from LLM.`);
+    return { valid: true, stages };
   }
 
   // ── Private helpers ───────────────────────────────────────────────
@@ -91,6 +85,6 @@ static readonly MAX_TASKS = 4;  // was 5
 
   private fail(reason: string): ValidationResult {
     this.logger.warn(`Validation failed — ${reason}`);
-    return { valid: false, tasks: [], reason };
+    return { valid: false, stages: [], reason };
   }
 }

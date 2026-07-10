@@ -14,9 +14,27 @@ export class GoalController {
     return this.goalService.createGoal(req.user.id, createGoalDto.goalText);
   }
 
+  @Post('chat')
+  async chat(
+    @Body() body: { messages: Array<{ role: string; content: string }>; lang?: string },
+    @Request() req: { user: { id: string } }
+  ) {
+    return this.goalService.chat(body.messages, body.lang || 'ar', req.user.id);
+  }
+
+  @Get('chat/history')
+  async getChatHistory(@Request() req: { user: { id: string } }) {
+    return this.goalService.getChatHistory(req.user.id);
+  }
+
   @Get()
   async get(@Request() req: { user: { id: string } }) {
     return this.goalService.getGoal(req.user.id);
+  }
+
+  @Get('all')
+  async getAll(@Request() req: { user: { id: string } }) {
+    return this.goalService.getAllGoals(req.user.id);
   }
 
   @Patch(':id')

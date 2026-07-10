@@ -53,7 +53,16 @@ export class GenerateController {
   ): Promise<GenerateResponseDto> {
     this.logger.log(`POST /generate-tasks — goalText="${dto.goalText}"`);
     const result = await this.generateService.generateTasks(dto);
-    this.logger.log(`POST /generate-tasks — source="${result.source}", tasks=${result.tasks.length}`);
+    this.logger.log(`POST /generate-tasks — source="${result.source}", stages=${result.stages?.length || 0}`);
     return result;
+  }
+
+  @Post('chat')
+  @HttpCode(HttpStatus.OK)
+  async chat(
+    @Body() body: { messages: Array<{ role: string; content: string }>; lang?: string },
+  ) {
+    this.logger.log(`POST /chat — messageCount=${body.messages.length}, lang=${body.lang}`);
+    return this.generateService.chat(body.messages, body.lang || 'ar');
   }
 }

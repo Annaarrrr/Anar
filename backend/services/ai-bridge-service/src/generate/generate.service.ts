@@ -11,8 +11,15 @@ import { GenerateFallback } from './generate.fallback';
  * Shape returned by the FastAPI ai-logic service (POST /generate).
  * Mirrors the GenerateResponse Pydantic model in main.py.
  */
-interface FastApiResponse {
+interface StageItem {
+  label: string;
+  sublabel: string;
+  emoji: string;
   tasks: string[];
+}
+
+interface FastApiResponse {
+  stages: StageItem[];
   main_goal: string;
   response_ar: string;
 }
@@ -39,21 +46,21 @@ export class GenerateService {
       // Call FastAPI ai-logic service and get raw response
       const fastApiData = await this.callFastApi(dto.goalText);
 
-      // Wrap tasks in JSON string so GenerateValidator can parse it normally
-      const rawForValidator = JSON.stringify({ tasks: fastApiData.tasks });
+      // Wrap stages in JSON string so GenerateValidator can parse it normally
+      const rawForValidator = JSON.stringify({ stages: fastApiData.stages });
       const result = this.validator.validate(rawForValidator);
 
       if (result.valid) {
-        this.logger.log(`AI pipeline succeeded — returning ${result.tasks.length} tasks.`);
+        this.logger.log(`AI pipeline succeeded — returning ${result.stages.length} stages.`);
         return {
-          tasks: result.tasks,
+          stages: result.stages,
           source: 'llm',
           main_goal: fastApiData.main_goal,
           response_ar: fastApiData.response_ar,
         };
       }
 
-      // FastAPI responded but task shape was wrong — fall through to fallback
+      // FastAPI responded but shape was wrong — fall through to fallback
       return this.useFallback(
         dto.goalText,
         `AI response failed validation: ${result.reason}`,
@@ -94,15 +101,43 @@ export class GenerateService {
     const data = response.data;
 
     // Validate the shape coming back from FastAPI
-    if (!data || !Array.isArray(data.tasks) || data.tasks.length === 0) {
+    if (!data || !Array.isArray(data.stages) || data.stages.length === 0) {
       throw new Error('FastAPI returned an unexpected or empty response shape.');
     }
 
     this.logger.log(`Extracted Arabic goal : "${data.main_goal}"`);
     this.logger.log(`Arabic confirmation   : "${data.response_ar}"`);
-    this.logger.log(`Tasks received        : ${data.tasks.length}`);
+    this.logger.log(`Stages received       : ${data.stages.length}`);
 
     return data;
+  }
+
+  async chat(messages: Array<{ role: string; content: string }>, lang: string): Promise<{ response_ar: string; suggestedGoal: string | null }> {
+    this.logger.log(`chat() called with ${messages.length} messages, lang=${lang}`);
+    const apiUrl = process.env.LLM_API_URL;
+    if (!apiUrl) {
+      throw new Error('LLM_API_URL is not set.');
+    }
+    const chatUrl = apiUrl.replace('/generate', '/chat');
+
+    try {
+      const request$ = this.httpService
+        .post<{ response_ar: string; suggestedGoal: string | null }>(
+          chatUrl,
+          { messages, lang },
+          { headers: { 'Content-Type': 'application/json' } },
+        )
+        .pipe(timeout(GenerateService.LLM_TIMEOUT_MS));
+
+      const response = await firstValueFrom(request$);
+      return response.data;
+    } catch (error: unknown) {
+      this.logger.error(`FastAPI chat request failed: ${this.describeError(error)}`);
+      return {
+        response_ar: 'معلش يا بطل، في مشكلة في السيرفر حالياً. قولي تاني حابب تركز على إيه؟',
+        suggestedGoal: null
+      };
+    }
   }
 
   // ── Private: fallback helper ──────────────────────────────────────
@@ -111,7 +146,12 @@ export class GenerateService {
     this.logger.warn(`Activating fallback. Reason: ${reason}`);
     const tasks = this.fallback.getFallbackTasks(goalText, reason);
     return {
-      tasks,
+      stages: [{
+        label: "الأساسيات",
+        sublabel: "البداية",
+        emoji: "🚀",
+        tasks: tasks
+      }],
       source: 'fallback',
       main_goal: goalText,
       response_ar: 'عذراً، حدث خطأ. إليك بعض المهام الافتراضية للبدء.',
