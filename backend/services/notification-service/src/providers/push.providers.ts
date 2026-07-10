@@ -5,11 +5,11 @@ import * as admin from 'firebase-admin';
 export class PushProvider implements OnModuleInit {
   private readonly logger = new Logger(PushProvider.name);
   private app!: admin.app.App;
+  private isMock = false;
 
   onModuleInit(): void {
     const projectId = process.env.FCM_PROJECT_ID;
     const clientEmail = process.env.FCM_CLIENT_EMAIL;
-    // Firebase stores private keys with literal \n — we unescape them at runtime.
     const privateKey = (process.env.FCM_PRIVATE_KEY ?? '').replace(/\\n/g, '\n');
 
     if (!projectId || !clientEmail || !privateKey) {
@@ -17,21 +17,27 @@ export class PushProvider implements OnModuleInit {
         'FCM env vars (FCM_PROJECT_ID, FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY) are not fully set. ' +
           'Push notifications will be logged but NOT actually sent.',
       );
+      this.isMock = true;
+      return;
     }
 
-    // Guard: avoid re-initialising if the app already exists (e.g. hot-reload).
-    if (admin.apps.length === 0) {
-      this.app = admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey,
-        }),
-      });
-      this.logger.log('Firebase Admin SDK initialised successfully.');
-    } else {
-      this.app = admin.apps[0] as admin.app.App;
-      this.logger.log('Reusing existing Firebase Admin SDK instance.');
+    try {
+      if (admin.apps.length === 0) {
+        this.app = admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey,
+          }),
+        });
+        this.logger.log('Firebase Admin SDK initialised successfully.');
+      } else {
+        this.app = admin.apps[0] as admin.app.App;
+        this.logger.log('Reusing existing Firebase Admin SDK instance.');
+      }
+    } catch (err: any) {
+      this.logger.error(`Failed to initialize Firebase Admin SDK: ${err?.message || err}. Falling back to mock mode.`);
+      this.isMock = true;
     }
   }
 
@@ -53,6 +59,13 @@ export class PushProvider implements OnModuleInit {
     if (!tokens || tokens.length === 0) {
       this.logger.warn('sendPushNotification called with an empty token list — skipping.');
       return 0;
+    }
+
+    if (this.isMock) {
+      this.logger.log(
+        `[MOCK NOTIFICATION] To: ${tokens.join(', ')} | Title: "${title}" | Body: "${body}"`
+      );
+      return tokens.length;
     }
 
     const message: admin.messaging.MulticastMessage = {
@@ -79,7 +92,7 @@ export class PushProvider implements OnModuleInit {
       );
 
       // Log individual failures so they can be acted upon (e.g. remove stale tokens).
-      response.responses.forEach((res, idx) => {
+      response.responses.forEach((res: any, idx: number) => {
         if (!res.success) {
           this.logger.error(
             `Token [${idx}] "${tokens[idx]}" failed: ${res.error?.message ?? 'unknown error'}`,
