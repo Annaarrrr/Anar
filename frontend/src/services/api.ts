@@ -225,6 +225,13 @@ export const api = {
     });
   },
 
+  async saveChatMessage(role: string, content: string): Promise<void> {
+    await request<void>(3002, '/goal/chat/message', {
+      method: 'POST',
+      body: JSON.stringify({ role, content }),
+    });
+  },
+
   async getChatHistory(): Promise<Array<{ role: string; content: string }>> {
     return request<Array<{ role: string; content: string }>>(3002, '/goal/chat/history', {
       method: 'GET',

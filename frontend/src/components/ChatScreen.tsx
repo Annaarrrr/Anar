@@ -275,6 +275,9 @@ function ChatScreenInner({ onNavigate, refreshGoal, messages, setMessages, activ
       setMessages((prev) => [...prev, successMsg]);
       setSuggestedGoal(null);
 
+      // Save the system message to the backend history so it persists
+      await api.saveChatMessage('assistant', successMsg.text).catch(e => console.error('Failed to save success message:', e));
+
       setTimeout(() => onNavigate('vision'), 1400);
     } catch (err) {
       Alert.alert(isRTL ? 'خطأ' : 'Error', isRTL ? 'فشل اعتماد الهدف، يرجى المحاولة مرة أخرى.' : 'Failed to approve goal, please try again.');
@@ -492,13 +495,6 @@ function ChatScreenInner({ onNavigate, refreshGoal, messages, setMessages, activ
               onSubmitEditing={() => handleSendMessage()}
               multiline={false}
             />
-            <TouchableOpacity
-              onPress={() => Alert.alert(isRTL ? 'التسجيل الصوتي' : 'Voice Input', isRTL ? 'ميزة الإدخال الصوتي ستتوفر قريباً' : 'Voice input coming soon')}
-              style={styles.micBtn}
-              activeOpacity={0.7}
-            >
-              <MicIcon size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
           </View>
         </View>
     </View>

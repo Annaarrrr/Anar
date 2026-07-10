@@ -93,6 +93,10 @@ export class GoalService {
     return this.goalRepo.getChatHistory(userId);
   }
 
+  async saveChatMessage(userId: string, role: string, content: string) {
+    return this.goalRepo.saveChatMessage(userId, role, content);
+  }
+
   async updateGoal(goalId: string, userId: string, text: string): Promise<boolean> {
     return this.goalRepo.updateGoal(goalId, userId, text);
   }

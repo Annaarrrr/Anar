@@ -27,6 +27,14 @@ export class GoalController {
     return this.goalService.getChatHistory(req.user.id);
   }
 
+  @Post('chat/message')
+  async saveChatMessage(
+    @Body() body: { role: string; content: string },
+    @Request() req: { user: { id: string } }
+  ) {
+    return this.goalService.saveChatMessage(req.user.id, body.role, body.content);
+  }
+
   @Get()
   async get(@Request() req: { user: { id: string } }) {
     return this.goalService.getGoal(req.user.id);
