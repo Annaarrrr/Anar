@@ -247,7 +247,8 @@ function AuthScreenInner({ onAuthSuccess }: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'android' ? 60 : 0}
         style={{ flex: 1 }}
       >
         <ScrollView

@@ -404,28 +404,41 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
   const numStages = goal.stages.length;
 
   const getTasksForStage = useCallback((stageIdx: number): Task[] => {
-    const base = Math.floor(N / numStages);
-    const extra = N % numStages;
-    let startIdx = 0;
-    for (let i = 0; i < stageIdx; i++) {
-      startIdx += base + (i < extra ? 1 : 0);
+    if (stageIdx < 0 || stageIdx >= numStages) return [];
+    
+    let useDynamic = true;
+    for (const stage of goal.stages) {
+      if (!Array.isArray(stage.tasks)) {
+        useDynamic = false;
+        break;
+      }
     }
-    const count = base + (stageIdx < extra ? 1 : 0);
-    return tasks.slice(startIdx, startIdx + count);
-  }, [tasks, N, numStages]);
+
+    if (useDynamic) {
+      let startIdx = 0;
+      for (let i = 0; i < stageIdx; i++) {
+        startIdx += goal.stages[i].tasks?.length || 0;
+      }
+      const count = goal.stages[stageIdx].tasks?.length || 0;
+      return tasks.slice(startIdx, startIdx + count);
+    } else {
+      // Fallback: distribute evenly
+      const base = Math.floor(N / numStages);
+      const extra = N % numStages;
+      let startIdx = 0;
+      for (let i = 0; i < stageIdx; i++) {
+        startIdx += base + (i < extra ? 1 : 0);
+      }
+      const count = base + (stageIdx < extra ? 1 : 0);
+      return tasks.slice(startIdx, startIdx + count);
+    }
+  }, [tasks, N, numStages, goal.stages]);
 
   const stageStatuses = useMemo(() => {
     const statuses: NodeStatus[] = [];
     let prevCompleted = true;
     for (let i = 0; i < numStages; i++) {
-      const base = Math.floor(N / numStages);
-      const extra = N % numStages;
-      let startIdx = 0;
-      for (let j = 0; j < i; j++) {
-        startIdx += base + (j < extra ? 1 : 0);
-      }
-      const count = base + (i < extra ? 1 : 0);
-      const stageTasks = tasks.slice(startIdx, startIdx + count);
+      const stageTasks = getTasksForStage(i);
       
       const allDone = stageTasks.length > 0 && stageTasks.every((t) => t.completed);
       if (i === 0) {
@@ -440,7 +453,7 @@ export function JourneyMapScreen({ goal, onBack, refreshGoals }: Props) {
       prevCompleted = (statuses[i] === 'completed');
     }
     return statuses;
-  }, [tasks, N, numStages]);
+  }, [numStages, getTasksForStage]);
 
   const getStatus = useCallback((stageIdx: number): NodeStatus => {
     if (stageIdx < 0 || stageIdx >= stageStatuses.length) return 'locked';

@@ -9,6 +9,7 @@ export interface JourneyStage {
   label: string;
   sublabel: string;
   emoji: string;
+  tasks?: string[];
 }
 
 export interface GoalPin {

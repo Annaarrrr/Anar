@@ -13,6 +13,8 @@ import {
   Dimensions,
   Animated,
   Easing,
+  Keyboard,
+  StatusBar,
 } from 'react-native';
 import { CustomAlert as Alert } from './common/Alert';
 import { ArrowLeftIcon, ArrowRightIcon, MicIcon, SendIcon, SparklesIcon } from './common/CustomIcons';
@@ -28,6 +30,8 @@ interface Props {
   onNavigate: (s: ActiveTab) => void;
   refreshGoal: () => Promise<void>;
   active?: boolean;
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
 interface ChatMessageRowProps {
@@ -103,29 +107,18 @@ const ChatMessageRow = React.memo(({
 });
 ChatMessageRow.displayName = 'ChatMessageRow';
 
-function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
+function ChatScreenInner({ onNavigate, refreshGoal, messages, setMessages, active = false }: Props) {
   const { colors, t, language } = useAppSettings();
   const isRTL = language === 'ar';
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
-
-  const welcomeMsg = isRTL
-    ? 'أهلاً بك! أنا انار، مرشدك الذكي. كيف يمكنني مساعدتك اليوم في رحلتك التعليمية أو المهنية؟'
-    : 'Welcome! I am Anar, your AI guide. How can I help you today on your learning or career journey?';
-
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      role: 'ai',
-      text: welcomeMsg,
-      time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
   const [inputVal, setInputVal] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [creating, setCreating] = useState(false);
   const [suggestedGoal, setSuggestedGoal] = useState<string | null>(null);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [editedGoalText, setEditedGoalText] = useState('');
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -171,7 +164,35 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
     return () => loop.stop();
   }, [isTyping]);
 
-  const handleSendMessage = React.useCallback((textToSend?: string) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [messages.length, isTyping, suggestedGoal]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setIsKeyboardVisible(true);
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
+      }
+    );
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  const handleSendMessage = React.useCallback(async (textToSend?: string) => {
     const messageText = textToSend || inputVal;
     if (!messageText.trim()) return;
 
@@ -182,52 +203,47 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
       time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     if (!textToSend) setInputVal('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      setIsTyping(false);
+    try {
+      const history = updatedMessages.map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
 
-      let aiText = '';
-      let goalText = '';
-      const text = messageText.toLowerCase();
-
-      if (text.includes('برمج') || text.includes('كود') || text.includes('بايثون') || text.includes('برنامج') || text.includes('مهارة') || text.includes('web') || text.includes('code') || text.includes('تطوير')) {
-        aiText = 'خطوة ممتازة! البرمجة وتطوير المهارات التقنية هي استثمار رائع للمستقبل. لا تقلق بشأن البداية، سنرسم خريطة طريق واضحة معاً. لقد صممت لك هذا الهدف المقترح:';
-        goalText = 'تعلم أساسيات البرمجة (بايثون) في 30 يوماً';
-      } else if (text.includes('رياض') || text.includes('وزن') || text.includes('صحة') || text.includes('جسم') || text.includes('نادي') || text.includes('فتنس') || text.includes('تمرين')) {
-        aiText = 'رائع جداً! العقل السليم في الجسم السليم. ممارسة الرياضة ستحسن من طاقتك وصحتك النفسية والجسدية بشكل مذهل. إليك هذا الهدف المقترح للبدء فوراً:';
-        goalText = 'ممارسة الرياضة المنزلية 4 مرات أسبوعياً وإنقاص الوزن';
-      } else if (text.includes('قراء') || text.includes('كتاب') || text.includes('رواية') || text.includes('ثقافة') || text.includes('علم')) {
-        aiText = 'يا لها من خطوة قيمة! القراءة هي أفضل وسيلة لتوسيع المدارك وتطوير التفكير المنطقي وزيادة المعرفة. لقد قمت بصياغة هذا الهدف البصري لك:';
-        goalText = 'قراءة كتابين وتلخيص أهم الأفكار منهما هذا الشهر';
-      } else if (text.includes('درس') || text.includes('دراست') || text.includes('أكاديم') || text.includes('مذاكر') || text.includes('امتحان') || text.includes('مدرسة') || text.includes('جامعة')) {
-        aiText = 'الدراسة والتحصيل العلمي هما أساس المستقبل والارتقاء الفكري. سنقسم موادك الدراسية ونضع خطة مراجعة مريحة وفعالة. إليك هدفك الدراسي المقترح:';
-        goalText = 'المذاكرة اليومية المركزة لمدة ساعتين والمراجعة الأسبوعية';
-      } else if (text.includes('نوم') || text.includes('وقت') || text.includes('تنظيم') || text.includes('يوم') || text.includes('جدول') || text.includes('ترتيب') || text.includes('إدارة')) {
-        aiText = 'تنظيم الوقت وإدارة المهام اليومية هو سر النجاح والانضباط. ترتيب يومك سيقلل من التوتر ويزيد من إنتاجيتك بشكل ملحوظ. إليك هذا الهدف المقترح لتنظيم وقتك:';
-        goalText = 'تنظيم النوم والاستيقاظ مبكراً الساعة 6 صباحاً يومياً';
-      } else if (text.includes('لغة') || text.includes('إنجليز') || text.includes('english') || text.includes('تحدث')) {
-        aiText = 'تعلم لغة جديدة يفتح لك آفاقاً واسعة للدراسة والعمل والسفر. الممارسة اليومية والاستماع هما مفتاح النجاح. إليك هدفك الجديد المقترح:';
-        goalText = 'تعلم وممارسة اللغة الإنجليزية لمدة 20 دقيقة يومياً';
-      } else {
-        const summary = messageText.length > 25 ? messageText.substring(0, 25) + '...' : messageText;
-        aiText = `رائع! السعي نحو "${summary}" هو بداية التغيير الحقيقي للأفضل. سنعمل معاً خطوة بخطوة للوصول إلى غايتك. لقد صممت هذا الهدف بناءً على طلبك:`;
-        goalText = messageText.trim();
-      }
+      const res = await api.chatWithAi(history, language);
 
       const aiReply: Message = {
         id: Date.now() + 1,
         role: 'ai',
-        text: aiText,
+        text: res.response_ar,
         time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, aiReply]);
-      setSuggestedGoal(goalText);
-    }, 1500);
-  }, [inputVal, isRTL]);
+      if (res.suggestedGoal) {
+        setSuggestedGoal(res.suggestedGoal);
+      } else {
+        setSuggestedGoal(null);
+      }
+    } catch (err) {
+      console.error('Chat error:', err);
+      const aiReply: Message = {
+        id: Date.now() + 1,
+        role: 'ai',
+        text: isRTL 
+          ? 'معلش يا بطل، حصل مشكلة في الاتصال بالخادم. قولي تاني حابب تحقق إيه؟' 
+          : 'Sorry, there was a connection issue. Can you repeat what you want to achieve?',
+        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, aiReply]);
+    } finally {
+      setIsTyping(false);
+    }
+  }, [messages, inputVal, isRTL]);
 
   const handleChipSelect = React.useCallback((chipText: string) => {
     let text = '';
@@ -272,13 +288,11 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
     setIsEditingGoal(true);
   };
 
+  const tabHeight = Platform.OS === 'ios' ? 82 : 64;
+  const paddingBottom = isKeyboardVisible ? keyboardHeight : tabHeight;
+
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
+    <View style={[styles.container, { paddingBottom }]}>
         {/* ── Header ── */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => onNavigate('home')} style={styles.backBtn} activeOpacity={0.7}>
@@ -305,8 +319,10 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
 
         {/* ── Message stream ── */}
         <FlatList
+          style={{ flex: 1 }}
           ref={flatListRef}
-          data={messages}
+          data={[...messages].reverse()}
+          inverted={true}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <ChatMessageRow
@@ -317,13 +333,12 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
               styles={styles}
             />
           )}
-          contentContainerStyle={styles.streamContent}
+          contentContainerStyle={[styles.streamContent, { paddingTop: 20 }]}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           removeClippedSubviews={Platform.OS === 'android'}
-          ListFooterComponent={
+          ListHeaderComponent={
             <View>
               {/* ── Suggested Goal Card ── */}
               {suggestedGoal && (
@@ -486,7 +501,6 @@ function ChatScreenInner({ onNavigate, refreshGoal, active = false }: Props) {
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -546,7 +560,7 @@ function makeStyles(colors: any) {
 
     /* ── Stream ── */
     streamContent: {
-      paddingHorizontal: 18, paddingTop: 20, paddingBottom: 160,
+      paddingHorizontal: 18, paddingTop: 160, paddingBottom: 20,
     },
     msgWrapper: {
       flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 18,
@@ -654,7 +668,6 @@ function makeStyles(colors: any) {
 
     /* ── Input area ── */
     inputArea: {
-      position: 'absolute', bottom: 70, left: 0, right: 0,
       backgroundColor: colors.surface, borderTopWidth: 2, borderColor: colors.border,
       paddingHorizontal: 14, paddingVertical: 12,
       flexDirection: 'row', alignItems: 'center', gap: 10,

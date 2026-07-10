@@ -11,10 +11,11 @@ import {
   Modal,
   Animated,
   Easing,
+  Keyboard,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold } from '@expo-google-fonts/cairo';
-import { AppScreen, ActiveTab, Goal, GoalPin, Task } from './src/types';
+import { AppScreen, ActiveTab, Goal, GoalPin, Task, Message } from './src/types';
 import { api } from './src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -125,7 +126,7 @@ const TabBarItem = React.memo(({
 TabBarItem.displayName = 'TabBarItem';
 
 function AppInner() {
-  const { colors, t, theme } = useAppSettings();
+  const { colors, t, theme, language } = useAppSettings();
 
   const tabs = useMemo(
     () =>
@@ -185,7 +186,37 @@ function AppInner() {
   const [selectedGoal, setSelectedGoal]   = useState<GoalPin | null>(null);
   const [settingsOpen, setSettingsOpen]   = useState(false);
 
-  // preferredId: which goal to mark active; falls back to latest
+  const isRTL = language === 'ar';
+  const welcomeMsg = isRTL
+    ? 'أهلاً بك! أنا انار، مرشدك الذكي. كيف يمكنني مساعدتك اليوم في رحلتك التعليمية أو المهنية؟'
+    : 'Welcome! I am Anar, your AI guide. How can I help you today on your learning or career journey?';
+
+  const [chatMessages, setChatMessages] = useState<Message[]>([
+    {
+      id: 1,
+      role: 'ai',
+      text: welcomeMsg,
+      time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    },
+  ]);
+
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const fetchGoals = useCallback(async (preferredId?: string | null) => {
     try {
       const allGoals = await api.getGoals();
@@ -205,6 +236,31 @@ function AppInner() {
     }
   }, []);
 
+  const loadChatHistory = useCallback(async () => {
+    try {
+      const history = await api.getChatHistory();
+      if (history && history.length > 0) {
+        setChatMessages(history.map((msg, index) => ({
+          id: index + 1000,
+          role: msg.role === 'user' ? 'user' : 'ai',
+          text: msg.content,
+          time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+        })));
+      } else {
+        setChatMessages([
+          {
+            id: 1,
+            role: 'ai',
+            text: welcomeMsg,
+            time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      }
+    } catch (e) {
+      console.error('Failed to load chat history:', e);
+    }
+  }, [welcomeMsg]);
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -214,6 +270,7 @@ function AppInner() {
           const savedActiveId = await AsyncStorage.getItem('anar_active_goal');
           setActiveGoalId(savedActiveId);
           await fetchGoals(savedActiveId);
+          await loadChatHistory();
           setScreen('main');
           setActiveTab('home');
           setRenderedTab('home');
@@ -227,9 +284,8 @@ function AppInner() {
       }
     };
     initializeApp();
-  }, [fetchGoals]);
+  }, [fetchGoals, loadChatHistory]);
 
-  // Android hardware back — close journey map or settings first
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -249,12 +305,13 @@ function AppInner() {
     const savedActiveId = await AsyncStorage.getItem('anar_active_goal');
     setActiveGoalId(savedActiveId);
     await fetchGoals(savedActiveId);
+    await loadChatHistory();
     setPrevTabIndex(0);
     setCurrentTabIndex(0);
     setScreen('main');
     setActiveTab('home');
     setRenderedTab('home');
-  }, [fetchGoals]);
+  }, [fetchGoals, loadChatHistory]);
 
   const handleSetActiveGoal = useCallback(async (id: string) => {
     setActiveGoalId(id);
@@ -274,7 +331,15 @@ function AppInner() {
     setScreen('onboarding');
     setActiveTab('home');
     setRenderedTab('home');
-  }, []);
+    setChatMessages([
+      {
+        id: 1,
+        role: 'ai',
+        text: welcomeMsg,
+        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+  }, [welcomeMsg]);
 
   const handleGoalPress = useCallback((goal: GoalPin) => {
     setSelectedGoal(goal);
@@ -380,6 +445,8 @@ function AppInner() {
                     active={renderedTab === 'chat'}
                     onNavigate={handleTabPress}
                     refreshGoal={fetchGoals}
+                    messages={chatMessages}
+                    setMessages={setChatMessages}
                   />
                 </View>
                 <View style={{ flex: 1, display: renderedTab === 'vision' ? 'flex' : 'none' }}>
@@ -402,20 +469,22 @@ function AppInner() {
                 </View>
               </Animated.View>
 
-              <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.border }]} pointerEvents="box-none">
-                {tabs.map(({ key, label, Icon }) => (
-                  <TabBarItem
-                    key={key}
-                    tabKey={key}
-                    label={label}
-                    Icon={Icon}
-                    active={activeTab === key}
-                    colors={colors}
-                    onPress={handleTabPress}
-                    styles={styles}
-                  />
-                ))}
-              </View>
+              {!isKeyboardVisible && (
+                <View style={[styles.tabBar, { backgroundColor: colors.tabBar, borderTopColor: colors.border }]} pointerEvents="box-none">
+                  {tabs.map(({ key, label, Icon }) => (
+                    <TabBarItem
+                      key={key}
+                      tabKey={key}
+                      label={label}
+                      Icon={Icon}
+                      active={activeTab === key}
+                      colors={colors}
+                      onPress={handleTabPress}
+                      styles={styles}
+                    />
+                  ))}
+                </View>
+              )}
             </View>
           )}
         </View>
